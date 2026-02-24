@@ -1,0 +1,19 @@
+node_modules
+dist
+.env
+.DS_Store
+*.local
+
+# Phased Push Folders
+Phase_*
+
+# Backups
+qfp_saved_stable_version
+qfp_v2_backup
+qfp_v3_cleanup_backup_server
+qfp_v3_cleanup_backup_src
+
+# IDE
+.vscode
+.idea
+.gemini
