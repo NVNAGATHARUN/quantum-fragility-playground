@@ -344,6 +344,17 @@ export default function SternGerlach() {
                   <div>[{blochState.x.toFixed(2)}, {blochState.y.toFixed(2)}, {blochState.z.toFixed(2)}]</div>
                 </div>
               </Card>
+              <div className="flex flex-col gap-8">
+                {[
+                  { title: 'Born Rule', body: 'P(↑) = cos²(θ/2) where θ is the angle from |↑⟩ on the Bloch sphere.' },
+                  { title: 'No Middle Ground', body: 'Spin is quantized — measured as ±ℏ/2 only. Classical physics has no equivalent.' },
+                ].map(k => (
+                  <div key={k.title} className="p-12 rounded-xl border border-white/5" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                    <div className="text-[9px] font-orbitron text-[#22d3ee] uppercase tracking-wider mb-4">{k.title}</div>
+                    <p className="text-[10px] text-text-muted leading-relaxed">{k.body}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

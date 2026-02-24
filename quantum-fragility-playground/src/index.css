@@ -6,38 +6,18 @@
 
 @layer base {
   :root {
-    --color-background: #020209;
-    --color-surface: #080818;
-    --color-surface-raised: #0d0d24;
-    --color-text-primary: #f1f5f9;
-    --color-text-secondary: #cbd5e1;
-    /* Increased contrast from #94a3b8 */
-    --color-text-muted: #94a3b8;
-    /* Increased contrast from #475569 */
-    --color-brand-border: rgba(99, 102, 241, 0.15);
-    --color-brand-border-hover: rgba(99, 102, 241, 0.40);
     color-scheme: dark;
   }
 
-  :root.light {
-    --color-background: #f8fafc;
-    --color-surface: #ffffff;
-    --color-surface-raised: #f1f5f9;
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #334155;
-    --color-text-muted: #64748b;
-    --color-brand-border: rgba(99, 102, 241, 0.2);
-    --color-brand-border-hover: rgba(99, 102, 241, 0.5);
-    color-scheme: light;
-  }
-
   body {
-    @apply bg-background text-text-primary font-inter m-0 p-0 overflow-x-hidden antialiased transition-colors duration-300;
+    @apply bg-background text-text-primary font-inter m-0 p-0 overflow-x-hidden antialiased;
     background-image:
-      radial-gradient(circle at 50% 0%, var(--color-background-glow, rgba(99, 102, 241, 0.08)) 0%, transparent 50%),
-      radial-gradient(circle at 0% 100%, var(--color-background-glow-alt, rgba(34, 211, 238, 0.05)) 0%, transparent 50%);
+      radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(34, 211, 238, 0.05) 0%, transparent 50%);
     min-height: 100vh;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
@@ -46,7 +26,7 @@
   h4,
   h5,
   h6 {
-    @apply font-orbitron font-semibold tracking-tight transition-colors duration-300;
+    @apply font-orbitron font-semibold tracking-tight;
     letter-spacing: -0.01em;
   }
 
@@ -95,8 +75,8 @@
   .btn-ghost {}
 
   .btn-ghost:hover {
-    @apply text-text-primary;
-    border-color: var(--color-brand-border-hover);
+    @apply text-slate-200;
+    border-color: rgba(255, 255, 255, 0.25);
   }
 
   .btn-sm {

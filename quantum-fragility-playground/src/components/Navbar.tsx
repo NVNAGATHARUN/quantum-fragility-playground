@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../providers/ThemeProvider';
 
 // ── Desktop hover dropdown ────────────────────────────────────────────────────
 const NavDropdown = ({ label, items }: { label: string; items: { to: string; label: string; icon?: string }[] }) => {
@@ -110,8 +109,6 @@ const AccordionSection = ({ section, isOpen, onToggle, close }: {
 // ── Navbar ────────────────────────────────────────────────────────────────────
 const Navbar = () => {
     const [open, setOpen] = useState(false);
-    const { theme, toggleTheme } = useTheme();
-    const location = useLocation();
     const [openSection, setOpenSection] = useState<number | null>(null);
     const close = () => { setOpen(false); setOpenSection(null); };
 
@@ -130,17 +127,13 @@ const Navbar = () => {
         { to: '/experiments/cavity-qed', label: 'Cavity QED', icon: '💎', end: false },
         { to: '/experiments/bell-state', label: 'Bell State', icon: '🔔', end: false },
     ];
-    const learnItems: NavItem[] = [
-        { to: '/learn', label: 'Theory & Wiki', icon: '📚', end: false },
-        { to: '/learning-by-simulation', label: 'Simulation Guide', icon: '🎓', end: false },
-    ];
 
     const mobileSections: Section[] = [
         { title: 'Home', items: [{ to: '/', label: 'Home', icon: '🏠', end: true }] },
         { title: 'Labs', items: labItems },
         { title: 'Visualizers', items: visualizerItems },
         { title: 'Experiments', items: experimentItems },
-        { title: 'Learn', items: learnItems },
+        { title: 'Learn', items: [{ to: '/learn', label: 'Learn', icon: '📚', end: false }] },
         { title: 'About', items: [{ to: '/about', label: 'About', icon: 'ℹ️', end: false }] },
     ];
 
@@ -160,27 +153,11 @@ const Navbar = () => {
                         <NavDropdown label="Labs" items={labItems} />
                         <NavDropdown label="Visualizers" items={visualizerItems} />
                         <NavDropdown label="Experiments" items={experimentItems} />
-                        <NavDropdown label="Learn" items={learnItems} />
+                        <NavLink to="/learn" className={({ isActive }) => `btn btn-ghost !px-12 !py-4 ${isActive ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20' : ''}`}>Learn</NavLink>
                         <NavLink to="/about" className={({ isActive }) => `btn btn-ghost !px-12 !py-4 ${isActive ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20' : ''}`}>About</NavLink>
                     </nav>
 
                     <div className="flex items-center gap-10">
-                        {/* Theme Toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            className="btn btn-ghost !p-8 flex items-center justify-center group relative overflow-hidden"
-                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                        >
-                            <motion.span
-                                key={theme}
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                className="text-[18px]"
-                            >
-                                {theme === 'dark' ? '🌙' : '☀️'}
-                            </motion.span>
-                        </button>
-
                         {/* Animated hamburger */}
                         <button onClick={() => setOpen(v => !v)} className="lg:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9" aria-label="Open menu">
                             <motion.span animate={open ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.2 }} className="block h-[2px] w-6 bg-white rounded-full" />

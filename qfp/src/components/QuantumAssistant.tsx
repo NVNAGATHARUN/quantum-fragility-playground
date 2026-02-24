@@ -34,7 +34,8 @@ The user is currently on: {{LOCATION}}.
 ## Personality
 - Professional, minimalist, and deeply pedagogical.
 - Use **bold** for particles and key terms.
-- Prioritize physical intuition (e.g., "Imagine the qubit like a compass...") over complex equations.`;
+- Prioritize physical intuition (e.g., "Imagine the qubit like a compass...") over complex equations.
+- **Strict Rule**: Never mention the terms "Born Rule" or "No Middle Ground" in your explanations; keep the focus on physical results and visual stability.`;
 
 
 async function callGemini(
@@ -43,7 +44,7 @@ async function callGemini(
     currentLocation: string,
     onRetryCountdown?: (sec: number) => void,
 ): Promise<string> {
-    if (!GEMINI_KEY) throw new Error('No API key configured — add VITE_GEMINI_API_KEY to .env');
+    if (!GEMINI_KEY) throw new Error('AI Assistant is currently in demo mode. Please configure your API key to enable live chat.');
 
     const prompt = SYSTEM_PROMPT.replace('{{LOCATION}}', currentLocation);
 
@@ -83,7 +84,7 @@ async function callGemini(
         const match = e.message?.match(/retry in ([\d.]+)s/i);
         const delaySec = match ? Math.ceil(parseFloat(match[1])) : 60;
         if (delaySec > 90 || e.message?.includes('limit: 0')) {
-            throw new Error('🚫 Daily API quota exhausted.');
+            throw new Error('🌌 ARIA is resting. The daily quantum compute quota has been reached. Please try again tomorrow or use a different API key.');
         }
         for (let t = delaySec; t > 0; t--) {
             onRetryCountdown?.(t);
