@@ -1,4 +1,4 @@
-# Quantum Fragility Playground
+# Quantum Lens Fragility Playground
 
 A virtual quantum computing lab I built for the HackXAmrita 2.0 Ed-Tech hackathon. The idea came from trying to explain decoherence to a friend and realizing there's no good interactive tool for it — everything's either too theoretical or too dumbed down.
 

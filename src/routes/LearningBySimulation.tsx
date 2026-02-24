@@ -28,7 +28,7 @@ const EXPERIMENTS: Experiment[] = [
         steps: [
             {
                 title: 'Step 1 – Concept Introduction',
-                description: 'Think of tiny particles as small compass needles. In the quantum world, they have "spin." When they pass through a magnet, they don’t just go anywhere—they are forced to split into exactly two paths: UP or DOWN. There is no middle ground!'
+                description: 'Think of tiny particles as small compass needles. In the quantum world, they have "spin." When they pass through a magnet, they don’t just go anywhere—they are forced into one of two specific states: UP or DOWN. This is the heart of quantum quantization!'
             },
             {
                 title: 'Step 2 – Controlled Interaction',

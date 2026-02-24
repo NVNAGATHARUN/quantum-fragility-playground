@@ -70,7 +70,7 @@ export default function App() {
 
         <footer className="border-t border-brand-border/50 bg-surface/30 backdrop-blur">
           <div className="max-w-[1280px] mx-auto px-24 py-12 flex items-center justify-center text-[11px] font-mono text-text-muted tracking-widest uppercase">
-            <span>&copy; {new Date().getFullYear()} Quantum Fragility Playground</span>
+            <span>&copy; {new Date().getFullYear()} Quantum Lens — Virtual Quantum Laboratory</span>
           </div>
         </footer>
 

@@ -150,7 +150,7 @@ const Navbar = () => {
             <header className="fixed top-0 left-0 right-0 z-[1000] h-[60px] bg-background/90 backdrop-blur-xl border-b border-brand-border">
                 <div className="max-w-[1280px] mx-auto h-full px-20 flex items-center justify-between">
                     <Link to="/" className="flex flex-col group">
-                        <span className="font-orbitron font-black text-[18px] tracking-[2px] group-hover:opacity-80 transition-opacity">⚛ QFragility</span>
+                        <span className="font-orbitron font-black text-[18px] tracking-[2px] group-hover:opacity-80 transition-opacity">⚛ Quantum Lens</span>
                         <span className="text-[9px] font-mono tracking-widest text-text-muted -mt-1 uppercase">Virtual Quantum Lab</span>
                     </Link>
 
@@ -205,7 +205,7 @@ const Navbar = () => {
                     >
                         {/* Header row */}
                         <div className="flex items-center justify-between px-20 h-[60px] border-b border-white/10 shrink-0">
-                            <Link to="/" onClick={close} className="font-orbitron font-black text-[17px]">⚛ QFragility</Link>
+                            <Link to="/" onClick={close} className="font-orbitron font-black text-[17px]">⚛ Quantum Lens</Link>
                             <button onClick={close} className="w-9 h-9 flex items-center justify-center rounded-xl border border-white/10 text-white/60 hover:text-white transition-all text-lg">✕</button>
                         </div>
 
