@@ -4,12 +4,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#020209',
-        surface: '#080818',
-        'surface-raised': '#0d0d24',
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+        'surface-raised': 'var(--color-surface-raised)',
         brand: {
-          border: 'rgba(99, 102, 241, 0.15)',
-          'border-hover': 'rgba(99, 102, 241, 0.40)',
+          border: 'var(--color-brand-border)',
+          'border-hover': 'var(--color-brand-border-hover)',
           primary: '#6366f1',
           cyan: '#22d3ee',
           purple: '#a78bfa',
@@ -18,9 +18,9 @@ module.exports = {
           red: '#ef4444',
         },
         text: {
-          primary: '#f1f5f9',
-          secondary: '#94a3b8',
-          muted: '#475569',
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
         }
       },
       fontFamily: {

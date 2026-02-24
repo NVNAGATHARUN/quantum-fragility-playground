@@ -187,6 +187,70 @@ export function stopCavityHum() {
     if (humGain) { humGain = null; }
 }
 
+// ─── Continuous Health Sonification (Fragility Lab) ──────────────────────────
+let healthOsc: OscillatorNode | null = null;
+let healthNoise: AudioBufferSourceNode | null = null;
+let healthOscGain: GainNode | null = null;
+let healthNoiseGain: GainNode | null = null;
+let healthMasterGain: GainNode | null = null;
+
+export function initHealthSonification() {
+    if (healthMasterGain) return;
+    const ctx = getCtx();
+    healthMasterGain = ctx.createGain();
+    healthMasterGain.gain.value = 0; // Quiet by default
+    healthMasterGain.connect(ctx.destination);
+
+    // Clean sine
+    healthOsc = ctx.createOscillator();
+    healthOsc.type = 'sine';
+    healthOsc.frequency.value = 440;
+    healthOscGain = ctx.createGain();
+    healthOscGain.gain.value = 0;
+    healthOsc.connect(healthOscGain);
+    healthOscGain.connect(healthMasterGain);
+    healthOsc.start();
+
+    // Noisy static
+    const bufferSize = ctx.sampleRate * 2;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    healthNoise = ctx.createBufferSource();
+    healthNoise.buffer = buffer;
+    healthNoise.loop = true;
+    healthNoiseGain = ctx.createGain();
+    healthNoiseGain.gain.value = 0;
+    healthNoise.connect(healthNoiseGain);
+    healthNoiseGain.connect(healthMasterGain);
+    healthNoise.start();
+}
+
+export function updateHealthSonification(health: number, enabled: boolean) {
+    if (!healthMasterGain) initHealthSonification();
+    const ctx = resume(); // Ensure context is resumed
+    const now = ctx.currentTime;
+
+    if (!enabled) {
+        healthMasterGain?.gain.setTargetAtTime(0, now, 0.1);
+        return;
+    }
+
+    healthMasterGain?.gain.setTargetAtTime(0.12, now, 0.1);
+    const h01 = Math.max(0, Math.min(1, health / 100));
+
+    // Pure state = clean tone
+    healthOscGain?.gain.setTargetAtTime(h01 * 0.8, now, 0.1);
+    // Mixed state = chaos/noise
+    const noiseLevel = Math.pow(1 - h01, 1.5) * 0.5;
+    healthNoiseGain?.gain.setTargetAtTime(noiseLevel, now, 0.1);
+}
+
+export function stopHealthSonification() {
+    healthMasterGain?.gain.setTargetAtTime(0, getCtx().currentTime, 0.1);
+}
+
 // ─── React hook ──────────────────────────────────────────────────────────────
 export function useSound(enabled = true) {
     const enabledRef = useRef(enabled);
@@ -196,5 +260,16 @@ export function useSound(enabled = true) {
         if (enabledRef.current) fn();
     }, []);
 
-    return { play };
+    // New: Sonification integration
+    const updateHealth = useCallback((health: number, audioEnabled: boolean) => {
+        if (enabledRef.current) {
+            updateHealthSonification(health, audioEnabled);
+        } else {
+            stopHealthSonification();
+        }
+    }, []);
+
+    const resumeAudio = useCallback(() => resume(), []);
+
+    return { play, updateHealth, resumeAudio };
 }

@@ -47,15 +47,15 @@ const DecoherenceGraph: React.FC<DecoherenceGraphProps> = ({ data, visibleLines 
                         />
                         <YAxis
                             domain={[-1.1, 1.1]}
-                            stroke="#475569"
+                            stroke="var(--color-text-muted)"
                             fontSize={10}
                             ticks={[-1, -0.5, 0, 0.5, 1]}
                         />
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#0d0d24', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', fontSize: '11px' }}
+                            contentStyle={{ backgroundColor: 'var(--color-surface-raised)', border: '1px solid var(--color-brand-border)', borderRadius: '8px', fontSize: '11px', color: 'var(--color-text-primary)' }}
                             itemStyle={{ padding: '2px 0' }}
                         />
-                        <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }} />
+                        <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-secondary)' }} />
 
                         {visibleLines.health && (
                             <Line
@@ -111,9 +111,9 @@ const DecoherenceGraph: React.FC<DecoherenceGraphProps> = ({ data, visibleLines 
                     <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                         <XAxis dataKey="time" hide />
-                        <YAxis domain={[0, 1]} stroke="#475569" fontSize={8} ticks={[0, 0.5, 1]} />
+                        <YAxis domain={[0, 1]} stroke="var(--color-text-muted)" fontSize={8} ticks={[0, 0.5, 1]} />
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#0d0d24', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', fontSize: '11px' }}
+                            contentStyle={{ backgroundColor: 'var(--color-surface-raised)', border: '1px solid var(--color-brand-border)', borderRadius: '8px', fontSize: '11px', color: 'var(--color-text-primary)' }}
                         />
                         <Area
                             type="monotone"

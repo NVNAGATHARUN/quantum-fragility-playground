@@ -22,7 +22,7 @@ QFragility is an interactive, browser-based quantum physics education platform. 
 6. **QASM Visualizer** (/qasm-visualizer) — Paste OpenQASM code and visualize the resulting quantum circuit.
 7. **Learn** (/learn) — Educational hub covering: The Bloch Sphere (|ψ⟩ = cos(θ/2)|0⟩ + e^{iφ}sin(θ/2)|1⟩), Quantum Decoherence (T₁ amplitude damping, T₂ phase damping, depolarizing), Entanglement (Bell states, teleportation), Quantum Algorithms (Grover, Shor). Includes an interactive quiz.
 8. **Experiments Index** (/experiments) — Hub linking to all virtual experiments.
-9. **Stern-Gerlach** (/experiments/stern-gerlach) — Simulates the classic experiment: spin quantization, Born rule probabilities, adjustable magnetic field angle.
+9. **Stern-Gerlach** (/experiments/stern-gerlach) — Simulates the classic experiment: spin quantization and adjustable magnetic field angle.
 10. **Bell State** (/experiments/bell-state) — Creates entangled Bell pairs, measures correlations, tests CHSH inequality violation, shows interference fringes.
 11. **Cavity QED** (/experiments/cavity-qed) — Jaynes-Cummings model: Rabi oscillations, photon-atom coupling strength, vacuum Rabi splitting.
 12. **About** (/about) — Project mission, scientific acknowledgments, tech stack (Vite + React + Three.js + TypeScript), and team info.
@@ -88,7 +88,11 @@ app.post('/api/chat', async (req: Request, res: Response) => {
     return res.json({ reply: result.response.text() })
   } catch (err: any) {
     console.error('Gemini error:', err?.message)
-    return res.status(500).json({ error: err?.message ?? 'AI error' })
+    const isQuota = err?.message?.includes('429') || err?.message?.includes('quota') || err?.message?.includes('limit');
+    const userMessage = isQuota
+      ? '🌌 ARIA is resting. The daily quantum compute quota has been reached. Please try again tomorrow.'
+      : (err?.message ?? 'AI error');
+    return res.status(isQuota ? 429 : 500).json({ error: userMessage })
   }
 })
 

@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const Divider = () => <div className="h-px bg-brand-border/40 w-full my-12" />;
 
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="text-[10px] font-orbitron text-text-muted uppercase tracking-[2px] mb-12">
+  <div className="text-[10px] font-orbitron text-text-muted uppercase tracking-[2px] mb-12 transition-colors duration-300">
     {children}
   </div>
 );
 
 export const Card = ({ children, className = '', raised = false, style }: { children: React.ReactNode; className?: string; raised?: boolean; style?: React.CSSProperties }) => (
-  <div className={`${raised ? 'glass-card-raised' : 'glass-card'} ${className}`} style={style}>
+  <div className={`${raised ? 'glass-card-raised' : 'glass-card'} transition-all duration-300 ${className}`} style={style}>
     {children}
   </div>
 );
@@ -35,10 +35,10 @@ export const Badge = ({ children, color = 'primary' }: { children: React.ReactNo
 
 export const SectionHeader = ({ title, subtitle, gradient = true }: { title: string; subtitle?: string; gradient?: boolean }) => (
   <div className="mb-32">
-    <h2 className={`text-2xl md:text-3xl mb-8 ${gradient ? 'gradient-text' : 'text-text-primary'}`}>
+    <h2 className={`text-2xl md:text-3xl mb-8 transition-colors duration-300 ${gradient ? 'gradient-text' : 'text-text-primary'}`}>
       {title}
     </h2>
-    {subtitle && <p className="text-text-secondary text-sm max-w-2xl">{subtitle}</p>}
+    {subtitle && <p className="text-text-secondary text-sm max-w-2xl transition-colors duration-300">{subtitle}</p>}
   </div>
 );
 
@@ -47,9 +47,9 @@ export const PageHeader = ({ title, subtitle, icon, backLink }: { title: string;
     <div className="flex flex-col">
       <div className="flex items-center gap-16 mb-8">
         {icon && <span className="text-3xl">{icon}</span>}
-        <h1 className="text-4xl gradient-text">{title}</h1>
+        <h1 className="text-4xl gradient-text transition-colors duration-300">{title}</h1>
       </div>
-      {subtitle && <p className="text-text-secondary text-lg max-w-3xl">{subtitle}</p>}
+      {subtitle && <p className="text-text-secondary text-lg max-w-3xl transition-colors duration-300">{subtitle}</p>}
     </div>
     {backLink && (
       <Link to={backLink} className="btn btn-secondary !px-16 !py-6 text-[10px]">

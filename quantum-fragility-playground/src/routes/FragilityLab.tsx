@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import BlochSphere3D from '../components/BlochSphere3D';
 import type { BlochSphere3DHandle } from '../components/BlochSphere3D';
 import DecoherenceGraph from '../components/DecoherenceGraph';
+import TimeMachine from '../components/TimeMachine';
 import { Card, PageHeader, SectionHeader, Badge, InfoBox, Divider } from '../components/UI';
 import { useTimeEvolution } from '../hooks/useTimeEvolution';
+import { useSound } from '../hooks/useSound';
 import { PRESET_VECTORS } from '../types/quantum';
 import type { BlochVector, NoiseParams, PresetState } from '../types/quantum';
+import { useTour } from '../providers/GuidedTourProvider';
+import ShotVisualizer from '../components/ShotVisualizer';
 
 const NOISE_CHANNELS = [
   { id: 'depolarizing', label: 'Depolarizing', desc: 'Random Pauli errors in all directions.' },
@@ -37,20 +41,23 @@ export default function FragilityLab() {
   const [stepCount, setStepCount] = useState(0);
   const [visibleLines, setVisibleLines] = useState({ health: true, x: true, y: true, z: true });
   const [snapshots, setSnapshots] = useState<{ id: string; state: BlochVector; timestamp: number; imageUrl: string }[]>([]);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [samplingMode, setSamplingMode] = useState(false);
 
   const blochRef = useRef<BlochSphere3DHandle>(null);
+  const { startTour } = useTour();
 
   const lastGraphUpdate = useRef(0);
+  const { updateHealth, resumeAudio } = useSound(true);
 
-  const { state, running, setRunning, resetTo } = useTimeEvolution({
+  const { state, history: evoHistory, running, setRunning, resetTo, scrubToIndex, getShot } = useTimeEvolution({
     initialState: PRESET_VECTORS[preset],
     noise,
   });
 
-  // Track history and update graph
+  // Update graph from state
   useEffect(() => {
     if (running) {
-      setHistory(prev => [...prev.slice(-120), state]);
       setStepCount(s => s + 1);
 
       const now = Date.now();
@@ -74,6 +81,13 @@ export default function FragilityLab() {
       }
     }
   }, [state, running, stepCount]);
+
+  // Handle Sonification
+  useEffect(() => {
+    const health = Math.sqrt(state.x ** 2 + state.y ** 2 + state.z ** 2) * 100;
+    updateHealth(health, audioEnabled && running);
+    return () => updateHealth(0, false);
+  }, [state, audioEnabled, running, updateHealth]);
 
   const r = Math.sqrt(state.x ** 2 + state.y ** 2 + state.z ** 2);
   const transverseCoherence = Math.sqrt(state.x ** 2 + state.y ** 2);
@@ -108,13 +122,51 @@ export default function FragilityLab() {
     });
   };
 
+  const startResearchTour = () => {
+    startTour("Decoherence Discovery", [
+      {
+        target: "state-init",
+        content: "Welcome, researcher. Let's begin by initializing our qubit in the |+⟩ state (superposition).",
+        action: () => {
+          setPreset('plus');
+          resetTo(PRESET_VECTORS['plus']);
+          setNoise(prev => ({ ...prev, depolarizing: 0, phaseFlip: 0, bitFlip: 0, amplitudeDamping: 0 }));
+        }
+      },
+      {
+        target: "noise-phase",
+        content: "Now, watch carefully as we introduce 'Phase Flip' noise. Notice how the Bloch vector shrinks towards the Z-axis, destroying phase coherence.",
+        action: () => setNoise(prev => ({ ...prev, phaseFlip: 0.6 }))
+      },
+      {
+        target: "sonification",
+        content: "Listen to the 'Sonification'. The clean tone becomes distorted as entropy increases. This is the audible signal of information leakage.",
+        action: () => setAudioEnabled(true)
+      },
+      {
+        target: "time-machine",
+        content: "We can use the 'Time Machine' to rewind and see exactly when the coherence was lost. Research complete.",
+        action: () => setRunning(false)
+      }
+    ]);
+  };
+
   return (
     <div className="flex flex-col gap-24">
-      <PageHeader
-        title="Fragility Lab"
-        subtitle="Explore how environmental interactions destroy quantum coherence through real-time noise simulation."
-        icon="🔬"
-      />
+      <div className="flex justify-between items-start">
+        <PageHeader
+          title="Fragility Lab"
+          subtitle="Explore how environmental interactions destroy quantum coherence through real-time noise simulation."
+          icon="🔬"
+        />
+        <button
+          onClick={startResearchTour}
+          className="mt-16 btn btn-ghost !px-12 !py-6 border border-brand-primary/20 hover:bg-brand-primary/10 flex items-center gap-6 transition-all"
+        >
+          <span className="text-sm">🎬</span>
+          <span className="font-orbitron text-[9px] font-bold tracking-widest uppercase opacity-80">Research Tour</span>
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_360px] gap-24 items-start">
         {/* Left: Controls */}
@@ -150,6 +202,21 @@ export default function FragilityLab() {
             </div>
 
             <div className="flex flex-col gap-8 mt-12">
+              <button
+                onClick={() => {
+                  setAudioEnabled(!audioEnabled);
+                  resumeAudio();
+                }}
+                className={`btn text-[10px] font-orbitron ${audioEnabled ? 'bg-brand-cyan/20 border-brand-cyan text-brand-cyan' : 'border-brand-border text-text-muted'}`}
+              >
+                {audioEnabled ? '🔊 Sonification ON' : '🔇 Audio Disabled'}
+              </button>
+              <button
+                onClick={() => setSamplingMode(!samplingMode)}
+                className={`btn text-[10px] font-orbitron ${samplingMode ? 'bg-brand-purple/20 border-brand-purple text-brand-purple' : 'border-brand-border text-text-muted'}`}
+              >
+                {samplingMode ? '🎲 Sampling Active' : '📉 Simulation Mode'}
+              </button>
               <button
                 onClick={() => setRunning(!running)}
                 className={`btn btn-primary w-full ${running ? 'bg-brand-red' : ''}`}
@@ -187,8 +254,28 @@ export default function FragilityLab() {
             <div className="absolute top-20 right-20 z-10 flex gap-8">
               <button onClick={takeSnapshot} className="px-12 py-6 rounded-lg bg-surface/50 border border-brand-border text-[10px] font-orbitron hover:bg-surface transition-all">📸 Photo</button>
             </div>
-            <BlochSphere3D ref={blochRef} state={state} health={r * 100} history={history} />
+            <BlochSphere3D ref={blochRef} state={state} health={r * 100} history={evoHistory} />
+            <AnimatePresence>
+              {samplingMode && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute inset-x-20 bottom-20 top-20 z-20"
+                >
+                  <ShotVisualizer getShot={getShot} active={running && samplingMode} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Card>
+
+          <TimeMachine
+            history={evoHistory}
+            onScrub={scrubToIndex}
+            currentIndex={evoHistory.length - 1}
+            isRunning={running}
+            onTogglePlay={() => setRunning(!running)}
+          />
 
           <div className="h-[300px] min-w-0">
             <DecoherenceGraph data={graphData} visibleLines={visibleLines} />

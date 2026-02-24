@@ -56,6 +56,12 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
         const sphereMatRef = useRef<THREE.MeshPhongMaterial | null>(null);
         const glowLightRef = useRef<THREE.PointLight | null>(null);
         const lastInteractionTime = useRef(Date.now());
+        const healthRef = useRef(health);
+
+        // Sync health ref for the persistent animation loop
+        useEffect(() => {
+            healthRef.current = health;
+        }, [health]);
 
         // Expose canvas capture to parent
         useImperativeHandle(ref, () => ({
@@ -205,10 +211,75 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
             (grid.material as THREE.Material).opacity = 0.07;
             scene.add(grid);
 
+            // ─── Decoherence Storm Particles ──────────────────────────────────────
+            const particleCount = 2000;
+            const particleGeo = new THREE.BufferGeometry();
+            const posArray = new Float32Array(particleCount * 3);
+            const velArray = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                // Randomly distributed around sphere surface
+                const r = SPHERE_R * (1 + Math.random() * 0.5);
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                posArray[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                posArray[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                posArray[i * 3 + 2] = r * Math.cos(phi);
+
+                velArray[i * 3] = (Math.random() - 0.5) * 0.01;
+                velArray[i * 3 + 1] = (Math.random() - 0.5) * 0.01;
+                velArray[i * 3 + 2] = (Math.random() - 0.5) * 0.01;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                color: 0x22d3ee,
+                size: 0.015,
+                transparent: true,
+                opacity: 0,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
             // ── Animation loop ──────────────────────────────────────────────────
             const animate = () => {
                 rafIdRef.current = requestAnimationFrame(animate);
                 controls.update();
+
+                const h01 = (healthRef.current ?? 100) / 100;
+                const noiseLevel = 1 - h01;
+
+                // Animate particles based on noise
+                particleMat.opacity = noiseLevel * 0.4;
+                const positions = particleGeo.attributes.position.array as Float32Array;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const idx = i * 3;
+                    // Swirl effect increases with noise
+                    const swirl = noiseLevel * 0.02;
+                    const x = positions[idx];
+                    const z = positions[idx + 2];
+
+                    positions[idx] += -z * swirl + velArray[idx];
+                    positions[idx + 2] += x * swirl + velArray[idx + 2];
+                    positions[idx + 1] += velArray[idx + 1] * (1 + noiseLevel * 5);
+
+                    // Keep particles in range
+                    const dist = Math.sqrt(positions[idx] ** 2 + positions[idx + 1] ** 2 + positions[idx + 2] ** 2);
+                    if (dist > SPHERE_R * 2.5 || dist < SPHERE_R * 0.8) {
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        const r = SPHERE_R * (0.9 + Math.random() * 0.4);
+                        positions[idx] = r * Math.sin(phi) * Math.cos(theta);
+                        positions[idx + 1] = r * Math.sin(phi) * Math.sin(theta);
+                        positions[idx + 2] = r * Math.cos(phi);
+                    }
+                }
+                particleGeo.attributes.position.needsUpdate = true;
+
                 if (Date.now() - lastInteractionTime.current > 3000) {
                     scene.rotation.y += 0.004;
                 }

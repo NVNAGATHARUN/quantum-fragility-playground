@@ -64,9 +64,12 @@ function applyNoiseStep(v: BlochVector, noise: NoiseParams, dt: number): BlochVe
 
 export type TimeEvolutionHook = {
   state: BlochVector
+  history: BlochVector[]
   running: boolean
   setRunning: (b: boolean) => void
   resetTo: (next: BlochVector) => void
+  scrubToIndex: (index: number) => void
+  getShot: () => number
 }
 
 export function useTimeEvolution({
@@ -77,12 +80,15 @@ export function useTimeEvolution({
   noise: NoiseParams
 }): TimeEvolutionHook {
   const [state, setStateRaw] = useState<BlochVector>({ ...initialState })
-  const [running, setRunning] = useState(true)  // start running immediately
+  const [history, setHistory] = useState<BlochVector[]>([{ ...initialState }])
+  const [running, setRunning] = useState(true)
 
   const stateRef = useRef<BlochVector>({ ...initialState })
+  const historyRef = useRef<BlochVector[]>([{ ...initialState }])
   const noiseRef = useRef(noise)
   const rafRef = useRef<number | null>(null)
   const lastTsRef = useRef<number>(0)
+  const MAX_HISTORY = 600
 
   // Keep noiseRef fresh without re-subscribing
   useEffect(() => { noiseRef.current = noise }, [noise])
@@ -90,12 +96,14 @@ export function useTimeEvolution({
   // When initialState changes externally (preset change), reset
   useEffect(() => {
     stateRef.current = { ...initialState }
+    historyRef.current = [{ ...initialState }]
     setStateRaw({ ...initialState })
+    setHistory([{ ...initialState }])
   }, [initialState])
 
   const loop = useCallback((ts: number) => {
     if (!lastTsRef.current) lastTsRef.current = ts
-    const elapsed = Math.min((ts - lastTsRef.current) / 1000, 0.05) // cap at 50ms
+    const elapsed = Math.min((ts - lastTsRef.current) / 1000, 0.05)
     lastTsRef.current = ts
 
     const steps = Math.max(1, Math.round(elapsed / BASE_DT))
@@ -103,8 +111,13 @@ export function useTimeEvolution({
     for (let i = 0; i < steps; i++) {
       v = applyNoiseStep(v, noiseRef.current, BASE_DT)
     }
+
     stateRef.current = v
+    historyRef.current = [...historyRef.current, { ...v }].slice(-MAX_HISTORY)
+
     setStateRaw({ ...v })
+    setHistory([...historyRef.current])
+
     rafRef.current = requestAnimationFrame(loop)
   }, [])
 
@@ -125,7 +138,17 @@ export function useTimeEvolution({
 
   const resetTo = useCallback((next: BlochVector) => {
     stateRef.current = { ...next }
+    historyRef.current = [{ ...next }]
     setStateRaw({ ...next })
+    setHistory([{ ...next }])
+  }, [])
+
+  const scrubToIndex = useCallback((index: number) => {
+    const target = historyRef.current[index]
+    if (!target) return
+    setRunning(false)
+    stateRef.current = { ...target }
+    setStateRaw({ ...target })
   }, [])
 
   const setRunningWrapped = useCallback((b: boolean) => {
@@ -133,5 +156,10 @@ export function useTimeEvolution({
     setRunning(b)
   }, [])
 
-  return { state, running, setRunning: setRunningWrapped, resetTo }
+  const getShot = useCallback(() => {
+    const p0 = (stateRef.current.z + 1) / 2
+    return Math.random() < p0 ? 0 : 1
+  }, [])
+
+  return { state, history, running, setRunning: setRunningWrapped, resetTo, scrubToIndex, getShot }
 }
