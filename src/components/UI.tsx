@@ -16,7 +16,7 @@ export const Card = ({ children, className = '', raised = false, style }: { chil
   </div>
 );
 
-export const Badge = ({ children, color = 'primary' }: { children: React.ReactNode; color?: 'primary' | 'cyan' | 'purple' | 'green' | 'gold' | 'red' }) => {
+export const Badge = ({ children, color = 'primary', className = '' }: { children: React.ReactNode; color?: 'primary' | 'cyan' | 'purple' | 'green' | 'gold' | 'red'; className?: string }) => {
   const colorMap = {
     primary: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
     cyan: 'bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20',
@@ -27,7 +27,7 @@ export const Badge = ({ children, color = 'primary' }: { children: React.ReactNo
   };
 
   return (
-    <span className={`px-8 py-2 rounded-full border text-[10px] font-bold uppercase tracking-wider ${colorMap[color]}`}>
+    <span className={`px-8 py-2 rounded-full border text-[10px] font-bold uppercase tracking-wider ${colorMap[color]} ${className}`}>
       {children}
     </span>
   );
