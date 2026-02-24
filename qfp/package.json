@@ -1,0 +1,49 @@
+{
+  "name": "quantum-fragility-playground",
+  "version": "2.0.0",
+  "description": "virtual quantum lab i built for HackXAmrita 2.0",
+  "author": "NVNAGATHARUN",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "ts-node --project tsconfig.server.json server/index.ts",
+    "server:build": "tsc --project tsconfig.server.json",
+    "server:start": "node dist-server/server/index.js",
+    "build:full": "npm run server:build && npm run build",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "framer-motion": "^10.18.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0"
+  },
+  "devDependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/three": "^0.183.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.4.33",
+    "recharts": "^3.7.0",
+    "tailwindcss": "^3.4.1",
+    "three": "^0.183.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0"
+  }
+}
