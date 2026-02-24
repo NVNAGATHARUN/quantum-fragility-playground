@@ -6,6 +6,13 @@ import Navbar from './components/Navbar'
 const Home = lazy(() => import('./routes/Home'))
 const About = lazy(() => import('./routes/About'))
 const Learn = lazy(() => import('./routes/Learn'))
+const FragilityLab = lazy(() => import('./routes/FragilityLab'))
+const ExperimentsIndex = lazy(() => import('./routes/Experiments/Index'))
+const SternGerlach = lazy(() => import('./routes/Experiments/SternGerlach'))
+const BellState = lazy(() => import('./routes/Experiments/BellState'))
+const CavityQed = lazy(() => import('./routes/Experiments/CavityQed'))
+const QiskitVisualizer = lazy(() => import('./routes/QiskitVisualizer'))
+const QasmVisualizer = lazy(() => import('./routes/QasmVisualizer'))
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -26,6 +33,13 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/learn" element={<Learn />} />
+            <Route path="/fragility-lab" element={<FragilityLab />} />
+            <Route path="/experiments" element={<ExperimentsIndex />} />
+            <Route path="/experiments/stern-gerlach" element={<SternGerlach />} />
+            <Route path="/experiments/bell-state" element={<BellState />} />
+            <Route path="/experiments/cavity-qed" element={<CavityQed />} />
+            <Route path="/qiskit-visualizer" element={<QiskitVisualizer />} />
+            <Route path="/qasm-visualizer" element={<QasmVisualizer />} />
           </Routes>
         </Suspense>
       </main>
