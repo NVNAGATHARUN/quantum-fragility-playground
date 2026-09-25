@@ -23,7 +23,7 @@ export default function About() {
                                 Unlike classical bits (0 or 1), which are robust and can be stored for years, quantum bits (superpositions of 0 and 1) are incredibly fragile. Even the slightest interaction with the environment—a stray magnetic field or a microscopic temperature change—destroys the quantum state.
                             </p>
                             <p>
-                                The <strong>Quantum Fragility Playground</strong> was built to visualize this fragility. Our goal is to make the complex mathematics of noise channels intuitive through interactive 3D simulations and virtual labs.
+                                <strong>Quantum Lens AI</strong> was engineered for <strong>Smart India Hackathon (SIH 2026 PS26140)</strong> to make the complex mathematics of open quantum systems, density matrix kinetics, and hardware decoherence intuitive through interactive 3D simulations, real-time noise channels, and grounded pedagogical virtual laboratories.
                             </p>
                         </div>
                     </section>

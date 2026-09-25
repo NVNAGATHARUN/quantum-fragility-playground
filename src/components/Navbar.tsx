@@ -416,7 +416,7 @@ export default function Navbar({ onOpenCommandPalette }: NavbarProps) {
                 </span>
               </div>
               <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 tracking-wider -mt-0.5">
-                Fragility Playground &bull; PS26140
+                Grounded Quantum Lab &bull; SIH PS26140
               </span>
             </div>
           </Link>

@@ -1,7 +1,7 @@
 {
-  "name": "quantum-fragility-playground",
+  "name": "quantum-lens-ai",
   "version": "2.0.0",
-  "description": "virtual quantum lab i built for HackXAmrita 2.0",
+  "description": "Quantum Lens AI — Next-Generation Quantum Computing Laboratory & Grounded Pedagogical Platform for Smart India Hackathon (SIH 2026 PS26140)",
   "author": "NVNAGATHARUN",
   "scripts": {
     "dev": "vite",

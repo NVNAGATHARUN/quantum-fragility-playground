@@ -8,7 +8,7 @@ import type { Bb84RunConfig, SternGerlachConfig } from '../src/types/quantum'
 const GEMINI_KEY = process.env.GEMINI_API_KEY ?? ''
 const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null
 
-const QUANTUM_SYSTEM_PROMPT = `You are ARIA (Adaptive Research Intelligence Assistant), the premium AI tutor inside "Quantum Lens" — a high-fidelity virtual quantum computing laboratory built for HackXAmrita 2.0.
+const QUANTUM_SYSTEM_PROMPT = `You are ARIA (Adaptive Research Intelligence Assistant), the premium AI tutor inside "Quantum Lens AI" — a high-fidelity virtual quantum computing laboratory and grounded pedagogical platform built for Smart India Hackathon (SIH 2026 PS26140).
 
 ## About Quantum Lens — Complete Website Guide
 Quantum Lens is an interactive, browser-based quantum physics education platform. Here is every page and feature:
@@ -194,7 +194,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 function startServer(port: number): void {
   const server = app.listen(port, () => {
-    console.log(`\n⚛  Quantum Fragility Playground API`)
+    console.log(`\n⚛  Quantum Lens AI API (SIH 2026 PS26140)`)
     console.log(`   Listening on http://localhost:${port}`)
     console.log(`   Health: http://localhost:${port}/health`)
     if (port !== PORT) {
