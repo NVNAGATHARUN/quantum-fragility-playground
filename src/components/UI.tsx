@@ -10,8 +10,8 @@ export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export const Card = ({ children, className = '', raised = false, style }: { children: React.ReactNode; className?: string; raised?: boolean; style?: React.CSSProperties }) => (
-  <div className={`${raised ? 'glass-card-raised' : 'glass-card'} transition-all duration-300 ${className}`} style={style}>
+export const Card = ({ children, className = '', raised = false, style, id, ...props }: { children: React.ReactNode; className?: string; raised?: boolean; style?: React.CSSProperties; id?: string; [key: string]: any }) => (
+  <div id={id} className={`${raised ? 'glass-card-raised' : 'glass-card'} transition-all duration-300 ${className}`} style={style} {...props}>
     {children}
   </div>
 );

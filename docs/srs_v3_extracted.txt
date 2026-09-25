@@ -1,0 +1,1897 @@
+QUANTUM LENS AI
+
+FINAL SOFTWARE REQUIREMENTS SPECIFICATION & BUILD CONTRACT
+
+Version 3.0 — SIH-Traceable Production Baseline
+
+FINAL PRODUCT CONTRACT
+
+Build a real, deployable quantum learning platform. No fake dashboards, no random user analytics, no mocked critical flows, no AI-generated physics presented as truth. Every visible result must come from stored user activity, deterministic business logic, or an identified quantum simulator/backend.
+
+Field
+
+Frozen Decision
+
+Problem Statement
+
+SIH 2026 — 26140: AI-Based Interactive Quantum Algorithm Learning Platform
+
+Organization / Theme
+
+Egreen Quanta / Smart Education / Software
+
+Product
+
+Quantum Lens AI
+
+Product type
+
+Adaptive, simulation-verified quantum learning laboratory
+
+Build strategy
+
+Controlled V2 experience rebuild; preserve valid assets, replace scientifically weak mock/simplified engines
+
+Primary navigation
+
+Home • Learn • Labs • Explore • Progress • Instructor (role-based)
+
+Core differentiator
+
+Predict → Verify → Compare → Correct misconception → Re-test → Master
+
+Primary simulation
+
+Qiskit Aer; PennyLane and Cirq operational adapters; qBraid interoperability/runtime connector
+
+Frontend
+
+React + TypeScript + Vite; premium custom design system
+
+Backend
+
+FastAPI + PostgreSQL + Redis/job worker; Python quantum SDKs
+
+Status
+
+FINAL / FROZEN build source of truth
+
+Freeze date
+
+23 September 2026
+
+NORTH STAR: Learn → Predict → Experiment → Observe → Compare → Explain → Modify → Re-test → Master
+
+0. Executive Decision — What Is Final Now
+
+This Version 3.0 supersedes the prior v2.0 SRS. The product concept is retained, but the build contract is corrected after a line-by-line review of the official SIH26140 document, the existing Quantum Fragility Playground codebase, and current quantum-learning / simulation products.
+
+FREEZE
+
+Do not redesign the information architecture or restart the codebase again because a new AI coding model appears. Future changes require evidence from usability testing, technical failure, SIH clarification, or scientific correctness review.
+
+0.1 Changes from v2.0
+
+Multi-framework support is promoted to a core SIH compliance requirement.
+
+VQE is added to the algorithm curriculum alongside QAOA.
+
+AI code generation and circuit optimization become explicit first-class features.
+
+Assessment, coding challenges, automated grading and performance analytics become formal subsystems.
+
+Lightweight collaboration (share, fork, assign) is included without realtime multiplayer scope.
+
+Statevector display becomes explicit in the learner UI.
+
+Cloud deployment, API integration and backend health become acceptance requirements.
+
+The previous custom multi-qubit / Qiskit-visualizer simplifications are not accepted as authoritative physics.
+
+A strict No-Fake-Data / No-Mocked-Critical-Flow contract is added.
+
+Hardware Explorer remains a differentiator, but cannot delay SIH compliance or pedagogy.
+
+1. Research Basis and Problem-Statement Decomposition
+
+The official SIH26140 brief describes a web platform for students, researchers and professionals that combines structured quantum learning, graphical and code-based circuit creation, real-time simulation across multiple backends/frameworks, quantum-state/result visualization, AI assistance, assessment, progress tracking and instructor dashboards.
+
+1.1 Official deliverables translated into build obligations
+
+SIH deliverable
+
+Build obligation
+
+Learning Content & Curriculum Module
+
+Real structured modules on qubits, gates, entanglement and standard algorithms including Deutsch-Jozsa, Grover, QAOA and VQE; interactive examples, not static cards.
+
+Quantum Circuit Designer
+
+Professional drag/drop multi-qubit circuit workspace plus code-based circuit creation with syntax highlighting and synchronization.
+
+Multi-Framework Simulation Engine
+
+Operational Qiskit Aer, PennyLane and Cirq adapters; qBraid interoperability/runtime connector; real backend execution and normalized result retrieval.
+
+Quantum State & Result Visualization
+
+Bloch/reduced-state view, explicit statevector, probabilities/counts/histograms, circuit rendering, gate-by-gate state evolution.
+
+Assessment & Progress Tracking
+
+Quizzes, circuit/code challenges, automated grading, real learner progress, performance analytics and instructor views.
+
+Complete Web Application
+
+Responsive UX, authentication, persistent database, API integration, deployment readiness, real error/loading/empty states and monitoring.
+
+AI-assisted learning
+
+Grounded explanations, code/circuit generation, debugging, optimization suggestions and personalized next-step recommendations.
+
+Collaborative / modular learning
+
+Share/fork experiment, instructor assignment, reusable modules; no need for realtime collaborative editing in the core build.
+
+1.2 Reference platforms — what to learn, not copy
+
+Platform
+
+Observed strength
+
+Quantum Lens response
+
+QInsight Visual Quantum Lab / Studio
+
+Visualization-first education; Bloch-state transformation, gate/matrix analysis, algorithm visualizations, research-oriented presentation.
+
+Match scientific credibility and visual depth, but integrate them into a continuous learner model instead of isolated demos.
+
+QForge / QInsight engineering stack
+
+Company demonstrations emphasize design, simulation, optimization and verification; circuit reductions are shown with explicit equivalence checks.
+
+Circuit Insights must verify optimizations before application and clearly separate measured/computed evidence from AI suggestions.
+
+IBM Quantum Composer
+
+Mature drag/drop composer, code synchronization, inspect mode and multiple circuit/state visualizations.
+
+Use a professional resizable workspace and step-through state timeline; do not clone IBM visual identity.
+
+qBraid Lab / qBook
+
+Integrated learn-build-run experience, framework breadth, executable curriculum, auto-graders and instructor/cohort workflows.
+
+Make labs executable, grading real, and multi-framework execution visible.
+
+Quirk
+
+Very fast direct manipulation and immediate state feedback in the browser.
+
+Keep simple local previews instant while authoritative backend execution remains separate and clearly labeled.
+
+Quantum Inspire
+
+Editor + project/backend execution model, multiple hardware/simulator backends and SDK integration.
+
+Treat backend selection and job/result lifecycle as real product behavior, not decorative dropdowns.
+
+Research note: QInsight/QForge capability statements in this document are treated as vendor-described benchmark references, not as independently verified performance claims.
+
+2. Previous Project Audit — Quantum Fragility Playground
+
+The previous project is valuable proof that the team can build interactive quantum visualizations. It should be mined for working assets, not treated as the production scientific core.
+
+2.1 Proven strengths worth preserving
+
+React/Vite/TypeScript frontend foundation.
+
+Three.js Bloch-sphere work and interactive state-trajectory presentation.
+
+Fragility/noise-learning concept and real-time control UX.
+
+Density/Bloch-vector noise-evolution work for single-qubit educational visualization.
+
+Drag/drop interaction experience and circuit-diagram rendering ideas.
+
+Time-machine / state-history interaction pattern.
+
+Existing Bell, GHZ, BB84, Stern-Gerlach, Deutsch and Cavity-QED educational content as reusable references.
+
+Existing AI-assistant integration as a connectivity proof.
+
+Deployed Vercel frontend and documented repository structure.
+
+2.2 Critical findings that must NOT be carried forward as authoritative
+
+Finding
+
+Production decision
+
+Bell/GHZ API sampling is hand-coded from known 50/50 distributions using JavaScript randomness.
+
+Replace as authoritative execution with actual circuits run by the quantum engine. Random shot sampling must come from the simulator/backend, with seed metadata when reproducibility is requested.
+
+Current Gate Builder tracks one Bloch vector; its CNOT path is simplified and cannot represent general multi-qubit entanglement correctly.
+
+Retain interaction ideas only. Rebuild on canonical multi-qubit Circuit IR + authoritative simulator output.
+
+Current Qiskit Visualizer parses JSON-like circuit data and uses a simplified single-qubit Bloch model; it is not real Qiskit execution.
+
+Replace with real Qiskit adapter and safe code/QASM compilation.
+
+Current QASM parser is regex-based and the state panel explicitly tracks only qubit 0.
+
+Replace with OpenQASM 3 validation/parser tooling and true multi-qubit execution.
+
+Current Learn page is largely static content plus a small client-side quiz.
+
+Replace with structured curriculum, interactive lesson activities, persistent attempts and mastery evidence.
+
+ARIA knows a website/system prompt but is not grounded in each verified simulator result.
+
+Replace with a context builder that injects circuit IR, result facts, learner prediction and lesson context before the LLM responds.
+
+Current visual language uses dark glassmorphism, particles, large hero emphasis and hackathon/project framing.
+
+Rebuild into a calm premium scientific product UI. Keep dark lab mode only where it improves inspection.
+
+No durable user/class/progress database is present in the existing stack.
+
+Add PostgreSQL-backed identity, progress, circuits, runs, assessments, evidence and classroom data.
+
+MIGRATION VERDICT
+
+Do NOT delete the old repository first. Create a V3 branch/worktree, audit each existing component, migrate scientifically valid assets, and retire simplified/mock engines only after the replacement passes parity and correctness tests.
+
+3. Final Product Definition
+
+FROZEN DEFINITION
+
+Quantum Lens AI is an adaptive quantum learning laboratory where a learner studies a concept, predicts circuit behavior, builds visually or in code, executes verified quantum simulations, observes state evolution, compares expectation with reality, receives grounded guidance, tests conceptual misunderstandings through targeted experiments, and builds measurable mastery.
+
+3.1 Product goals
+
+Make abstract quantum behavior observable, manipulable and testable.
+
+Turn simulation into a teaching mechanism rather than a result viewer.
+
+Make visual circuit construction and code construction two views of the same canonical program.
+
+Make multi-framework support real and inspectable.
+
+Make AI a grounded tutor and code assistant, never the physics engine.
+
+Measure learning from actual evidence and attempts, not arbitrary completion percentages.
+
+Give instructors real class-level evidence about concept mastery and recurring misconceptions.
+
+Deliver a product-quality website that can be used without a presenter.
+
+3.2 Explicit non-goals
+
+No attempt to replace IBM Quantum Platform, qBraid Lab or a full research cloud IDE.
+
+No unrestricted arbitrary Python execution in the application server.
+
+No realtime Google-Docs-style circuit collaboration in the SIH core.
+
+No social feed, NFT/blockchain certificate system, metaverse or decorative AI agents.
+
+No manufacturing-grade digital-twin claim for the Hardware Explorer.
+
+No unsupported quantum-advantage claims.
+
+No 50-algorithm catalog at the cost of incomplete core functionality.
+
+4. Personas, Roles and Permissions
+
+Role
+
+Primary need
+
+Permissions
+
+Guest
+
+Try the product instantly
+
+Run curated public labs/circuits in an ephemeral guest session; no fake pre-filled personal progress.
+
+Student
+
+Learn, experiment, practice and track understanding
+
+Own circuits/runs, lessons, labs, assessments, shares/forks, mentor history and progress.
+
+Instructor
+
+Teach a class and find learning bottlenecks
+
+Student capabilities plus class creation, assignments, analytics and remediation.
+
+Admin/Content Maintainer
+
+Operate the platform
+
+Curriculum publishing, backend health, feature flags, audit views; restricted.
+
+4.1 Experience modes
+
+Beginner — progressive disclosure; hides statevector/backend details until requested.
+
+Advanced — exposes statevector, amplitudes/phase, backend metadata, code, noise and optimization metrics.
+
+Explore — free experimentation without curriculum gating.
+
+5. Final Information Architecture
+
+FROZEN NAVIGATION
+
+Home • Learn • Labs • Explore • Progress • Instructor (role-based)
+
+QUANTUM LENS│├── Home       What should I do next?├── Learn      Teach me this concept├── Labs       Let me experiment│   ├── Circuit Studio│   ├── Guided Virtual Labs│   └── Challenges├── Explore    Go deeper│   ├── Algorithms│   └── Hardware / Three-Lens├── Progress   What do I actually understand?└── Instructor Where is my class struggling?Contextual everywhere:Search / Command Palette • Quantum Mentor • Help • Profile
+
+5.1 Route contract
+
+Route
+
+Purpose
+
+/
+
+Public product landing / interactive preview
+
+/login, /signup
+
+Authentication
+
+/app/home
+
+Student home
+
+/learn
+
+Curriculum path
+
+/learn/:module/:lesson
+
+Interactive lesson
+
+/labs
+
+Lab directory
+
+/labs/studio/:circuitId?
+
+Circuit Studio
+
+/labs/:slug
+
+Guided virtual lab
+
+/challenges
+
+Coding/circuit/debugging challenges
+
+/explore/algorithms/:slug
+
+Algorithm experience
+
+/explore/hardware
+
+3D Hardware Explorer
+
+/progress
+
+Skill graph, evidence and recommendations
+
+/instructor/*
+
+Classroom, assignments and analytics
+
+/settings
+
+Profile, accessibility, privacy and preferences
+
+6. Premium UX / Visual Design Contract
+
+DESIGN RULE
+
+Complexity belongs in the system. Clarity belongs in the interface.
+
+Visual direction: Scientific Editorial × Precision Instrumentation × Premium Software.
+
+Default theme: light/soft-neutral. Dark mode is a true theme and is especially useful in Lab/3D contexts.
+
+Use one controlled scientific blue/indigo brand family; semantic colors only for meaning.
+
+Typography: precise modern sans + mono for code/technical metadata; KaTeX/MathJax for equations.
+
+Moderate radii, disciplined spacing, subtle borders/shadows; no bubble UI.
+
+Avoid random particles, crypto/neon aesthetics, excessive glassmorphism, huge gradients, giant marketing typography and fake KPI cards.
+
+The wow factor must come from state evolution, direct manipulation, verified comparisons and 3D scientific visualization.
+
+Every primary screen must pass the five-second test: where am I, what am I seeing, what should I do next?
+
+6.1 Global product-shell requirements
+
+Collapsible left navigation with five student destinations.
+
+Top command/search bar (Ctrl/Cmd+K) for concepts, lessons, labs, circuits, algorithms and actions.
+
+Contextual mentor drawer, not a permanent chat page.
+
+Responsive desktop-first layout; Circuit Studio optimized for 1280–1440px+.
+
+Meaningful empty, loading, error, offline/degraded and disabled states.
+
+No hardcoded 'live users', 'success rate', 'progress', 'jobs running' or similar marketing metrics.
+
+7. Identity, Onboarding and Home
+
+7.1 Authentication
+
+Email/password registration and login; secure password hashing and session/token handling.
+
+Role-based authorization for student/instructor/admin.
+
+Logout, refresh/session expiry, password reset flow.
+
+Optional Google OAuth only after core auth is stable.
+
+Guest trial uses an explicit ephemeral session; it never pretends to be a persisted learner profile.
+
+7.2 Onboarding
+
+Two short questions only: prior quantum familiarity and primary learning goal. Store answers and use them to set initial path/mode; do not ask unnecessary demographics.
+
+7.3 Home acceptance
+
+Continue-learning card is derived from the learner's actual last incomplete activity.
+
+Recommended next activity is generated from prerequisite/mastery rules and evidence; show the reason.
+
+Skill snapshot is computed from stored evidence.
+
+Recent experiments list real saved runs/circuits.
+
+If the user has no history, show a true empty/onboarding state instead of fabricated progress.
+
+8. Learn — Structured Interactive Curriculum
+
+Module
+
+Required concepts
+
+0. Orientation / Math Primer
+
+Complex amplitudes, probability, vectors/matrices only as needed; optional diagnostic skip.
+
+1. Qubits & Measurement
+
+Basis states, qubits, probability, measurement, Bloch sphere.
+
+2. Quantum Gates
+
+X/Y/Z/H/S/T, rotations, controlled gates, circuit composition.
+
+3. Superposition, Phase & Interference
+
+Relative phase, interference, basis changes.
+
+4. Entanglement & Correlation
+
+Bell states, reduced states, correlation, no-signalling intuition.
+
+5. Standard Algorithms
+
+Deutsch-Jozsa, Grover, Teleportation, QFT overview.
+
+6. Variational / Hybrid
+
+QAOA, VQE, parameters, expectation values, classical optimizer loop.
+
+7. Real Quantum Systems
+
+Noise, T1/T2, readout, decoherence, hardware/control context.
+
+8.1 Lesson contract
+
+Every concept lesson contains, in this order where appropriate:
+
+Why this matters
+
+Intuition
+
+Minimal theory / equation
+
+Interactive visualization
+
+Prediction checkpoint
+
+Linked experiment
+
+Practice / challenge
+
+Reflection / re-test
+
+Mastery evidence update
+
+9. Labs — First-Class Experimentation Layer
+
+9.1 Circuit Studio vs Guided VLab
+
+Dimension
+
+Circuit Studio
+
+Guided Virtual Lab
+
+Purpose
+
+Free sandbox / engineering workspace
+
+Teach one concept through a controlled experiment
+
+Flow
+
+Build → Run → Inspect → Compare
+
+Objective → Predict → Experiment → Observe → Explain → Challenge → Re-test
+
+Freedom
+
+High
+
+Purposefully constrained
+
+Grading
+
+Optional
+
+Built into activity where relevant
+
+Persistence
+
+Save/version/share
+
+Attempt + evidence + mastery
+
+9.2 Required guided labs
+
+Tier
+
+Lab
+
+Core
+
+Qubit & Bloch Sphere
+
+Core
+
+Superposition: H and H→H
+
+Core
+
+Relative Phase & Interference: H→Z→H
+
+Core
+
+Measurement and basis choice
+
+Core
+
+Bell State / Entanglement & Correlation
+
+Core
+
+Quantum Fragility: ideal vs noisy state
+
+Core
+
+Grover amplitude amplification
+
+Finale
+
+Quantum Teleportation
+
+Finale
+
+QAOA MaxCut
+
+Finale
+
+VQE small Hamiltonian
+
+Finale
+
+BB84 protocol
+
+Optional legacy
+
+GHZ, Stern-Gerlach, Cavity QED — only after core PS functionality is complete
+
+10. Circuit Studio — Flagship Technical Workspace
+
+┌──────────────────────────────────────────────────────────────┐│ Circuit name   Backend   Shots   Seed?                 RUN  │├──────────┬───────────────────────────────┬───────────────────┤│ Gate     │        CIRCUIT CANVAS         │ STATE / RESULT    ││ palette  │                               │ INSPECTOR         ││          │ q0 ──H────●────M             │                   ││          │           │                   │ Statevector       ││          │ q1 ───────X────M             │ Probability       ││          │                               │ Correlation       │├──────────┴───────────────────────────────┴───────────────────┤│ Code | Timeline | What Changed | Noise | Insights | Mentor  │└──────────────────────────────────────────────────────────────┘
+
+10.1 Core operations
+
+H, X, Y, Z, S, T, RX, RY, RZ, CX, CZ, SWAP, Measure, Reset. Controlled/parameterized operations can expand after parity tests.
+
+10.2 UX requirements
+
+Drag/drop with snapping and explicit invalid-drop reason.
+
+Undo/redo, keyboard delete, copy/paste, zoom/pan, selected-gate inspector.
+
+Resizable/collapsible panels; canvas receives the majority of space.
+
+Circuit versioning on meaningful save/run events.
+
+Backend status is live; unavailable providers are disabled with the actual reason.
+
+A simple local preview may update instantly, but it is labeled PREVIEW and never overrides authoritative backend results.
+
+11. Canonical Circuit IR and Code Authoring
+
+{  "schemaVersion": "1.0",  "qubits": 2,  "classicalBits": 2,  "operations": [    {"id":"op1","gate":"H","targets":[0],"params":[]},    {"id":"op2","gate":"CX","controls":[0],"targets":[1],"params":[]},    {"id":"op3","gate":"MEASURE","targets":[0],"classicalTargets":[0]}  ]}
+
+11.1 IR rules
+
+The IR is the single source of truth for the visual circuit.
+
+Visual edits update IR; code import compiles to IR; backend adapters consume IR.
+
+IR is versioned and validated before execution.
+
+Unsupported operations fail explicitly; they are never silently ignored.
+
+Circuit hashes support reproducibility and result caching where safe.
+
+11.2 Code modes
+
+Mode
+
+Editing / execution contract
+
+OpenQASM 3
+
+Primary fully editable language. Validate/compile with real parser tooling; import/export supported. Legacy OpenQASM 2 import may be supported.
+
+Qiskit Python (safe subset)
+
+Whitelisted AST parser for QuantumCircuit construction and supported gates only; no arbitrary Python execution.
+
+PennyLane
+
+Generated synchronized code for supported circuits; editable advanced subset only after parser/validator exists.
+
+Cirq
+
+Generated synchronized code for supported circuits; editable advanced subset only after parser/validator exists.
+
+qBraid
+
+Use qBraid/PyQASM for interoperability/validation/conversion and optional configured runtime connector.
+
+SECURITY RULE
+
+Do not execute arbitrary user Python with eval/exec/subprocess on the application server. If a future general Python sandbox is added, it must be isolated with CPU/memory/time/network restrictions.
+
+12. Multi-Framework Quantum Simulation Engine
+
+Circuit IR   │   ├── Qiskit Adapter ──→ Qiskit Aer   ├── PennyLane Adapter → default.qubit / default.mixed   ├── Cirq Adapter ─────→ Simulator / DensityMatrixSimulator   └── qBraid Adapter ───→ conversion / validation / configured runtime   │Normalized Result Model   │Pedagogy + Visualization + Assessment
+
+12.1 Backend responsibilities
+
+Backend
+
+Required use
+
+Qiskit Aer
+
+Primary authoritative general simulator: ideal statevector, shots, density matrix/noise, circuit metrics.
+
+PennyLane
+
+QAOA/VQE and differentiable/variational workflows; optional mixed-state checks.
+
+Cirq
+
+Independent framework execution/parity and selected noisy/moment-step workflows.
+
+qBraid
+
+Working interoperability via SDK/PyQASM; cloud/runtime jobs only when API credentials/credits are configured. UI must never fake availability.
+
+12.2 Normalized result schema
+
+run_id, circuit_version_id, backend/framework/version
+
+status, timing, seed, shots
+
+counts and probabilities
+
+statevector when mathematically available
+
+density matrix when requested/available
+
+expectation values where relevant
+
+per-step snapshots/timeline for supported mode
+
+reduced single-qubit states
+
+correlation data / entanglement indicators where justified
+
+noise model and parameters
+
+warnings, limits and raw backend metadata reference
+
+12.3 Resource limits
+
+Limits are based on actual deployment memory, not marketing. Before execution the backend estimates memory/cost and rejects unsafe jobs with a clear message. Statevector and density-matrix limits are independently configurable. The hosted demo should prefer small, reliable circuits rather than claiming unrealistic qubit counts.
+
+12.4 Cross-framework parity
+
+A parity suite runs reference circuits through Qiskit, PennyLane and Cirq and compares normalized probabilities/state outputs within numeric tolerance. Framework discrepancies block release for the affected operation set.
+
+13. Quantum State and Result Visualization
+
+Single qubit: Bloch sphere, amplitudes/probabilities and phase.
+
+Multi-qubit: explicit statevector table/visualization, probability histogram, amplitude/phase view and correlation view.
+
+Reduced Bloch spheres are allowed only when clearly labeled as reduced single-qubit states.
+
+Entangled states must not be represented as independent pure Bloch vectors.
+
+Measurement results display counts and probabilities with consistent scales.
+
+Every chart includes title, units/definition where relevant, tooltip and beginner explanation.
+
+Every result shows source badge: LOCAL PREVIEW, QISKIT AER SIMULATOR, PENNYLANE SIMULATOR, CIRQ SIMULATOR, QBRAID CLOUD, or QPU if ever configured.
+
+13.1 Gate-by-gate timeline
+
+The learner can scrub operation/layer steps. Selecting a step highlights the circuit operation and updates the verified state/result view. For an H→CX Bell circuit, the timeline must show the true global two-qubit state after CX, not a heuristic shrink animation.
+
+14. Circuit Insights — Optimize, Compare, Verify
+
+This subsystem satisfies the PS requirement for optimization suggestions while adopting the verification discipline seen in engineering-oriented platforms such as QForge.
+
+Compute real metrics: gate count, depth, two-qubit gate count/depth, parameter count and selected backend constraints.
+
+Provide deterministic safe rewrite suggestions first: inverse/canceling pairs, adjacent rotation merges and supported decompositions.
+
+AI may propose an optimization, but it cannot be applied until a deterministic verifier accepts it.
+
+For small unitary circuits, verify equivalence via unitary/state equivalence within tolerance.
+
+For non-unitary/noisy/measurement circuits, use appropriate behavioral tests and label them as behavioral equivalence, not mathematical proof.
+
+Never claim global circuit optimality unless it is actually proven.
+
+14.1 What Changed? integration
+
+Before/after comparison includes circuit diff, metric diff, state/probability diff, verification status and grounded explanation.
+
+15. Pedagogy Engine — The Product Differentiator
+
+Prediction   ↓Verified Simulation   ↓Prediction vs Result Comparator   ↓What Changed? / Error Pattern / Evidence   ↓Misconception Evidence Model   ↓Targeted Cognitive Conflict Experiment   ↓Grounded Explanation   ↓Re-test   ↓Mastery Evidence + Recommendation
+
+15.1 Predict → Run → Explain
+
+Ask for prediction only where it teaches something; never turn every action into a quiz.
+
+Allow 'I'm not sure' and store confidence separately.
+
+Do not reveal actual result before a locked prediction in designated activities.
+
+Keep prediction and actual result side by side after execution.
+
+The explanation must reference verified result facts.
+
+15.2 Initial misconception catalog
+
+Priority
+
+Misconception
+
+Corrective experiment
+
+S
+
+Superposition = classical mixture / ordinary randomness
+
+|+⟩ versus classical mixture in Z and X bases
+
+S
+
+Phase does not matter
+
+H→H versus H→Z→H interference
+
+S
+
+Entanglement allows faster-than-light signalling
+
+Bell correlations with unchanged local marginal
+
+A
+
+Measurement is passive
+
+Pre/post-measurement state comparison
+
+A
+
+CNOT always entangles
+
+Basis input versus superposition input
+
+A
+
+Noise is only a software bug
+
+Fragility lab connected to hardware sources
+
+B
+
+More qubits automatically means faster
+
+Resource/algorithm comparison
+
+15.3 Evidence / resolution policy
+
+Never label a misconception from one wrong answer.
+
+Accumulate evidence from predictions, assessments, circuit actions, debugging and re-tests.
+
+LLM semantic classification may add evidence but can never be the sole detector.
+
+Student-facing language is neutral and exploratory.
+
+A misconception is resolved only by new correct behavior on a relevant re-test, not by clicking 'I understand'.
+
+16. Grounded AI Quantum Mentor
+
+16.1 Context builder
+
+Current lesson/concept and approved curriculum text
+
+Current Circuit IR and selected operation
+
+Actual normalized simulator result
+
+Prediction and confidence
+
+Relevant previous attempts/evidence
+
+Skill level / beginner-advanced mode
+
+Selected visualization/hardware component when applicable
+
+16.2 Required actions
+
+Action
+
+Contract
+
+Explain
+
+Explain the verified result in concise beginner/advanced language.
+
+Hint
+
+Give the next useful clue without revealing assessed answer.
+
+Debug
+
+Identify compile/validation/simulation issues from real diagnostics.
+
+Generate
+
+Generate circuit IR or OpenQASM/Qiskit-safe-subset code; must pass validator before preview/apply.
+
+Optimize
+
+Suggest a change; deterministic Circuit Insights verifier decides whether it is valid.
+
+Compare
+
+Explain computed differences between circuit versions/results.
+
+Next step
+
+Recommend from real mastery/prerequisite evidence.
+
+16.3 AI safety / truth rules
+
+AI never fabricates counts, statevectors, fidelities, grades or mastery values.
+
+Generated code is untrusted until parsed and validated.
+
+Numerical claims about the current circuit must originate from structured backend facts.
+
+If the AI provider is unavailable, show a real degraded-state error; do not generate canned fake replies.
+
+Release gate requires one configured AI provider in production and a passing health test.
+
+17. Assessment, Coding Challenges and Automated Grading
+
+17.1 Assessment types
+
+Concept MCQ / multiple-select
+
+Prediction question
+
+Interpret-result question
+
+Circuit construction task
+
+Circuit debugging task
+
+OpenQASM/Qiskit-safe-subset coding challenge
+
+Target-state / target-distribution challenge
+
+Optimization challenge with correctness constraints
+
+17.2 Grading engine
+
+Submission   ↓Parser / Validator   ↓Authoritative Simulation   ↓Deterministic checks   ├── required/forbidden operations   ├── target state fidelity   ├── probability / TVD tolerance   ├── circuit depth/gate constraints   ├── compilation validity   └── hidden test circuits/parameters   ↓Score + feedback   ↓Mastery evidence
+
+The LLM may explain feedback, but it does not assign the numeric grade. Hidden tests and grading parameters are versioned and stored server-side.
+
+18. Algorithm / Protocol Experiences
+
+Experience
+
+Required interactive proof
+
+Deutsch-Jozsa
+
+Oracle type, circuit, execution and why one query distinguishes the promised cases.
+
+Grover
+
+Uniform state → oracle → diffusion → amplitude amplification; scrub iterations and target probability.
+
+Teleportation
+
+Unknown state, entanglement, measurement/classical bits and receiver correction; verify final state fidelity.
+
+QFT
+
+Conceptual phase structure and small verified circuits; do not overbuild if schedule is tight.
+
+QAOA
+
+Graph + parameterized circuit + objective history; PennyLane-driven optimization.
+
+VQE
+
+Small Hamiltonian + ansatz + expectation value + classical optimizer loop; PennyLane-driven.
+
+BB84
+
+Alice/Eve/Bob trace, basis sifting, QBER; stochastic behavior from defined protocol model/simulator with seed metadata.
+
+19. Quantum Fragility Lab — Preserve and Rebuild Correctly
+
+The previous project’s strongest asset becomes a first-class Lab, but the final version is grounded in established simulator noise models and clear ideal-vs-noisy comparison.
+
+Ideal vs noisy circuit/state side-by-side.
+
+Noise channels: bit flip, phase flip/dephasing, depolarizing, amplitude damping; T1/T2/readout where backend model supports them.
+
+Metrics: fidelity, purity, probabilities/counts and reduced-state trajectory where valid.
+
+Noise toggle and parameter controls update real simulated outputs.
+
+Local smooth animation may interpolate visualization, but reported metrics come from the quantum engine.
+
+Hardware Lens links temperature/control/readout concepts to corresponding noise effects.
+
+20. Three-Lens View and 3D Hardware Explorer
+
+Lens
+
+Question
+
+Algorithm Lens
+
+What is the computation trying to do?
+
+State Lens
+
+What happens mathematically?
+
+Hardware Lens
+
+What physically happens in a representative quantum-control system?
+
+20.1 Hardware Explorer scope
+
+Explore mode: rotate, zoom, focus, explode/isolate and inspect.
+
+Signal Journey: program/circuit → compilation/control → room-temperature electronics → control line → QPU/qubit → state effect.
+
+Measurement Journey: qubit/readout resonator → cryogenic amplification → room-temperature electronics → processing → classical result.
+
+Representative components are educational and architecture-specific labels must say that implementations differ across hardware platforms.
+
+No claim that this is a manufacturing-grade digital twin.
+
+PRIORITY RULE
+
+Hardware Explorer is a finale differentiator. It must not delay multi-framework execution, assessment/grading, instructor analytics or the pedagogy core.
+
+21. Progress, Mastery and Recommendations
+
+Progress is evidence-based. The platform must show what evidence exists rather than inventing a precise learning probability.
+
+Skill graph with prerequisites and statuses: not started, learning, developing, proficient, needs review.
+
+Evidence sources: assessments, predictions, labs, challenges, debugging and re-tests.
+
+Any numeric mastery score uses a versioned documented formula and is computed from stored evidence only.
+
+Recommendations use prerequisite gaps, unresolved evidence and recent performance; show 'Why this is recommended'.
+
+No streaks/leaderboards unless later proven useful.
+
+22. Instructor / Classroom Workspace
+
+Create/manage class and enroll students.
+
+Assign lesson, lab, challenge or assessment with due date.
+
+See real completion/attempt state.
+
+Concept mastery heatmap.
+
+Misconception heatmap based on evidence thresholds.
+
+Student drill-down with attempts and evidence.
+
+Assign targeted remediation activity.
+
+Export class results CSV where appropriate.
+
+No fabricated class roster or sample analytics in production.
+
+23. Lightweight Collaboration
+
+Share a circuit/experiment as private, class-only or link-viewable.
+
+Fork creates a new owned circuit version with provenance.
+
+Compare fork with original through What Changed?.
+
+Instructor can assign a shared circuit/lab/challenge.
+
+Comments are optional; realtime multiplayer is out of scope for the SIH core.
+
+24. No-Fake-Data / No-Mocked-Critical-Flow Contract
+
+RELEASE BLOCKER
+
+A visually complete feature that returns hardcoded or fabricated success data is NOT considered implemented.
+
+Area
+
+Allowed
+
+Forbidden
+
+Quantum results
+
+Counts/probabilities/state from configured simulator/backend; reproducible seed in tests.
+
+Hardcoded 50/50 Bell/GHZ counts presented as backend execution; hand-written random result generators used as authoritative simulation.
+
+Progress
+
+Computed from persisted attempts/evidence.
+
+Random percentages or pre-filled progress for new users.
+
+Instructor analytics
+
+Aggregations over real enrolled-user activity.
+
+Static heatmaps/numbers disguised as live class analytics.
+
+AI
+
+Grounded explanation using actual result payload.
+
+Invented fidelity, counts, grade or backend status.
+
+Backend health
+
+Live health/capability probe.
+
+Dropdown saying 'online' without a real check.
+
+Examples
+
+Clearly labeled example circuits/lesson content.
+
+Example data mixed into user history as if generated by the user.
+
+Demo
+
+Real team/judge interactions or explicitly labeled demo fixture.
+
+Hidden fabricated activity to make dashboards look populated.
+
+Quantum measurement is inherently probabilistic, so simulator-generated sampling is legitimate. The prohibition is against arbitrary UI/business-data randomness and hand-authored physics outputs masquerading as simulator results.
+
+25. Persistence and Database Model
+
+Domain
+
+Core tables
+
+Identity
+
+users, profiles, roles, refresh_sessions/password_reset_tokens as applicable
+
+Learning
+
+courses, modules, lessons, concepts, skills, skill_dependencies, content_versions
+
+Circuits
+
+circuits, circuit_versions, circuit_operations/import_metadata, circuit_shares, forks
+
+Simulation
+
+simulation_jobs, simulation_results, backend_runs, result_artifacts
+
+Labs
+
+labs, lab_steps, lab_attempts, predictions
+
+Assessment
+
+assessments, questions, test_cases, submissions, grading_results
+
+Pedagogy
+
+misconceptions, misconception_evidence, interventions, resolution_attempts
+
+Mastery
+
+skill_evidence, skill_mastery, recommendations
+
+AI
+
+ai_sessions, ai_messages, ai_actions, grounded_context_refs
+
+Classroom
+
+classes, enrollments, assignments, assignment_submissions
+
+Hardware
+
+hardware_components, hardware_journeys
+
+System
+
+audit_events, feature_flags, backend_health_snapshots
+
+25.1 Data integrity rules
+
+Circuit versions and grading submissions are immutable after creation; new changes create new versions.
+
+Simulation results store backend/framework/version and circuit hash.
+
+Predictions are timestamped before the linked result is revealed.
+
+Instructor analytics are query-derived from source records.
+
+AI conversations reference the run/circuit/lesson context used to ground them.
+
+All schema changes use migrations.
+
+26. API Contract
+
+Area
+
+Representative endpoints
+
+Auth
+
+POST /api/v1/auth/register, /login, /refresh, /logout, /forgot-password, /reset-password
+
+Profile
+
+GET/PATCH /api/v1/me
+
+Learning
+
+GET /api/v1/learning/modules, /lessons/:id, POST /activities/:id/attempt
+
+Circuits
+
+CRUD /api/v1/circuits, POST /:id/versions, /:id/share, /:id/fork
+
+Code
+
+POST /api/v1/code/validate, /compile, /convert
+
+Backends
+
+GET /api/v1/backends, /backends/:id/health
+
+Simulation
+
+POST /api/v1/simulations, GET /simulations/:id, GET /:id/result
+
+Compare/Insights
+
+POST /api/v1/circuits/compare, /optimize, /verify-equivalence
+
+Predictions
+
+POST /api/v1/predictions, POST /:id/compare
+
+Labs
+
+GET /api/v1/labs, POST /:id/start, /attempts/:id/submit
+
+Assessment
+
+GET /api/v1/assessments/:id, POST /:id/submit, GET /submissions/:id/result
+
+Pedagogy
+
+POST /api/v1/evidence, /interventions/select, /resolution/submit
+
+Mentor
+
+POST /api/v1/mentor/explain, /hint, /generate, /debug, /optimize, /compare
+
+Progress
+
+GET /api/v1/progress/skills, /evidence, /recommendations
+
+Instructor
+
+CRUD /api/v1/instructor/classes, assignments; GET /analytics/mastery, /analytics/misconceptions
+
+Hardware
+
+GET /api/v1/hardware/components, /journeys
+
+System
+
+GET /health, /ready, /version
+
+27. Final Technical Architecture
+
+Browser  React + TypeScript + Vite  ├─ Design System / App Shell  ├─ Learn + Labs + Challenges  ├─ Circuit Studio + Monaco  ├─ Three.js / Scientific Visualizations  └─ Instructor / Progress          │          │ HTTPS + WebSocket/SSE for job status          ▼FastAPI Modular Monolith  ├─ Auth / Users  ├─ Learning / Assessment  ├─ Circuit / Code Compiler  ├─ Quantum Engine  │   ├─ Qiskit Aer  │   ├─ PennyLane  │   ├─ Cirq  │   └─ qBraid interoperability/runtime  ├─ Pedagogy / Mastery  ├─ AI Mentor  ├─ Instructor / Collaboration  └─ Hardware metadata          │   ┌──────┴─────────┐   ▼                ▼PostgreSQL        Redis                    │                    ▼               Job Worker                    │               Quantum runs
+
+27.1 Frontend stack
+
+React + TypeScript + Vite, React Router, TanStack Query, Zustand (or equivalent small state store), Tailwind/custom CSS tokens, Radix-style accessible primitives, DnD Kit where useful, Three.js/React Three Fiber, Monaco Editor, KaTeX/MathJax and an accessible chart library. Keep the existing framework unless the Phase-0 audit proves a concrete blocker.
+
+27.2 Backend stack
+
+Python 3.12+ reference target, FastAPI, Pydantic, SQLAlchemy 2, Alembic, PostgreSQL, Redis and a Redis-backed job worker. Pin Qiskit/qiskit-aer, PennyLane, Cirq, qBraid/PyQASM versions in a lockfile/container image.
+
+28. Security, Privacy and Trust
+
+Server-side authorization on every protected resource.
+
+Argon2/bcrypt-class password hashing; secure refresh/session rotation if self-managed auth is used.
+
+Secrets never shipped to the frontend.
+
+CORS allowlist, CSRF strategy where relevant, secure cookies/token storage.
+
+Rate limits for auth, AI and simulation.
+
+Strict circuit/code payload size and AST validation.
+
+No arbitrary server-side user-code execution.
+
+Sanitize user/AI-generated rendered content.
+
+Minimize personal data and define retention for AI conversations/telemetry.
+
+Audit instructor/admin/security-sensitive actions.
+
+Label simulator vs cloud simulator vs QPU vs AI explanation distinctly.
+
+29. Non-Functional Requirements
+
+Category
+
+Acceptance target
+
+Usability
+
+First-time user identifies primary action on each major screen without presenter help.
+
+Performance
+
+Target LCP ≈2.5s on production-like network; simple local circuit edits feel immediate; small simulations generally return in a few seconds on target deployment.
+
+Responsiveness
+
+Full desktop workspace ≥1280px; collapsible layout around 1024px; learning/progress usable on tablet/mobile.
+
+Accessibility
+
+Practical WCAG 2.1 AA: keyboard, focus, contrast, reduced motion, labels and text alternatives.
+
+Reliability
+
+Job failures preserve circuit/input and show actionable diagnostics; retry only when safe.
+
+Scalability
+
+Resource estimator + queue for expensive runs; concurrency/rate limits.
+
+Observability
+
+Structured logs, request/run IDs, exception tracking, backend latency/error metrics.
+
+Reproducibility
+
+Record versions, circuit hash, parameters, seed where applicable and backend metadata.
+
+30. Scientific QA and Test Strategy
+
+30.1 Golden correctness suite
+
+|0⟩ identity
+
+X|0⟩ = |1⟩
+
+H|0⟩ = |+⟩
+
+H→H|0⟩ = |0⟩
+
+H→Z→H|0⟩ = |1⟩
+
+Bell preparation gives only 00/11 ideal support and correct global state
+
+GHZ small-state reference
+
+Basis-input CNOT and superposition-input CNOT
+
+Known relative-phase/interference circuits
+
+Amplitude damping / dephasing sanity cases
+
+Cross-framework parity across supported operation set
+
+30.2 Test layers
+
+Unit: Circuit IR, validators, compiler, grading, evidence/mastery rules.
+
+Adapter: IR→Qiskit/PennyLane/Cirq conversion and normalized results.
+
+Integration: API→job→simulator→result→pedagogy.
+
+Frontend component: circuit interactions, prediction lock, code sync, result rendering.
+
+E2E: guest/login, lesson, lab, circuit run, challenge grading, mentor, progress and instructor assignment.
+
+AI grounding: current result facts must be present; generated code must be rejected if validator fails.
+
+Security: authorization/resource ownership and malicious code/input cases.
+
+Accessibility: keyboard and automated checks plus manual critical-flow review.
+
+3D: model load, selection, reduced-motion/fallback.
+
+31. Deployment, CI/CD and Runtime Operations
+
+31.1 Reference deployment
+
+Frontend: Vercel or equivalent CDN deployment.
+
+API + job worker: Docker deployment on Railway/Render/Fly-equivalent with persistent service semantics.
+
+PostgreSQL: managed production database.
+
+Redis: managed cache/job queue.
+
+Object storage: only when needed for exported artifacts/3D assets.
+
+Custom domain + HTTPS.
+
+Production environment has at least one functioning AI provider and all core local simulator frameworks installed.
+
+31.2 CI/CD gate
+
+Pull request  → lint  → typecheck  → unit tests  → golden quantum tests  → adapter parity tests  → backend tests  → frontend tests  → build  → preview deployment  → smoke E2E  → manual scientific/UX approval  → production
+
+32. SIH Requirement Traceability Matrix
+
+SIH requirement
+
+Quantum Lens implementation
+
+Demo proof
+
+Structured learning
+
+Learn modules + interactive lessons
+
+Open module; complete prediction/experiment lesson
+
+Drag/drop circuit design
+
+Circuit Studio
+
+Build Bell circuit visually
+
+Code-based design
+
+OpenQASM 3 + safe Qiskit subset + synchronized IR
+
+Edit code and see circuit update
+
+Multiple frameworks
+
+Qiskit, PennyLane, Cirq + qBraid interop/runtime connector
+
+Run equivalent circuit on ≥2 frameworks; show backend metadata
+
+State visualization
+
+Bloch, Statevector, Probability, Correlation, timeline
+
+Inspect Bell global state and single-qubit reduced state
+
+AI explanations
+
+Grounded Mentor
+
+Explain current verified result
+
+AI code generation
+
+Mentor Generate → validator → IR
+
+Generate Bell circuit and apply only after validation
+
+Debugging
+
+Compiler diagnostics + Mentor Debug + Break the Circuit
+
+Fix invalid/broken circuit
+
+Optimization
+
+Circuit Insights + verified before/after
+
+Cancel redundant gates and show equivalence status
+
+Personalized learning
+
+Evidence/mastery + misconception remediation
+
+Wrong prediction → targeted lab → re-test → updated recommendation
+
+Assessments
+
+Question/circuit/code grading engine
+
+Submit a challenge and receive deterministic result
+
+Progress tracking
+
+Evidence-based skill graph
+
+Show attempt-backed progress
+
+Instructor dashboard
+
+Class, assignments, mastery/misconception analytics
+
+Assign lab and view actual student result
+
+Collaboration
+
+Share/fork/assign
+
+Fork shared circuit and compare
+
+Deployable web app
+
+Auth + APIs + DB + cloud deployment + monitoring
+
+Use live URL and backend health screen
+
+33. Final Priority Model
+
+Layer
+
+Must be complete
+
+Layer 1 — SIH Compliance Core
+
+Auth/persistence; Learn; Circuit Studio; visual+code; Qiskit/PennyLane/Cirq/qBraid interop; state/result views; AI explain/generate/debug/optimize; assessment/grading; progress; instructor; API/deployment; lightweight collaboration.
+
+Layer 2 — Quantum Lens Differentiation
+
+Predict→Run→Explain; What Changed?; three misconception/cognitive-conflict flows; Fragility; evidence-based mastery/recommendations.
+
+Layer 3 — Showcase
+
+Three-Lens + 3D Hardware Explorer + signal/measurement journeys + additional algorithm polish.
+
+33.1 Scope cuts if schedule becomes constrained
+
+Cut GHZ/Stern-Gerlach/Cavity-QED polish before cutting any SIH core deliverable.
+
+Cut QFT deep visualization before Grover/QAOA/VQE.
+
+Cut realtime comments/multiplayer before share/fork/assign.
+
+Cut extra hardware components before the basic Signal Journey.
+
+Reduce misconception catalog to the three S-tier cases, never remove the entire pedagogy differentiator.
+
+34. Controlled Build Plan
+
+Phase
+
+Focus
+
+Exit condition
+
+0
+
+Repository audit
+
+Inventory old features; classify keep/refactor/replace; create V3 branch/worktree. No feature coding before this map.
+
+1
+
+Design system + shell
+
+Premium app shell, navigation, responsive layout, auth screens, component primitives.
+
+2
+
+Persistence + auth
+
+PostgreSQL schema/migrations, auth, roles, real empty states.
+
+3
+
+Circuit IR + compiler
+
+Canonical IR, validation, OpenQASM3 import/export, safe Qiskit subset.
+
+4
+
+Quantum engine
+
+Qiskit/PennyLane/Cirq adapters, qBraid interop, normalized results, backend health.
+
+5
+
+Circuit Studio
+
+Drag/drop multi-qubit editor, code sync, run/job/result, statevector/probability/timeline.
+
+6
+
+Learn + VLab framework
+
+Curriculum, lesson template, guided experiment state machine.
+
+7
+
+Assessment + challenges
+
+Automated grading, coding/circuit/debug/target-state challenges.
+
+8
+
+Pedagogy differentiator
+
+Predict→Run→Explain, What Changed?, evidence engine, first cognitive-conflict flow.
+
+9
+
+AI Mentor
+
+Grounded explain/hint/generate/debug/optimize/compare.
+
+10
+
+Fragility
+
+Rebuild old strength on verified noise results.
+
+11
+
+Algorithms
+
+Deutsch-Jozsa, Grover, Teleportation, QAOA, VQE, BB84 as scheduled.
+
+12
+
+Progress + Instructor + collaboration
+
+Mastery, recommendations, class/assignment analytics, share/fork.
+
+13
+
+Three-Lens + Hardware
+
+3D explorer and signal/measurement journeys.
+
+14
+
+Hardening
+
+Security, a11y, performance, observability, deployment, demo rehearsals.
+
+35. Phase Acceptance Gates
+
+No next phase if current phase's critical E2E path is broken.
+
+No UI claims a backend is working unless the backend health test passes.
+
+No algorithm/lab is 'done' until the circuit/result is verified against a reference implementation/test.
+
+No assessment is 'done' until grading is server-side and persisted.
+
+No progress dashboard is 'done' until it changes from actual learner attempts.
+
+No instructor dashboard is 'done' until it aggregates actual enrolled learner records.
+
+No AI feature is 'done' until it is grounded in structured context and fails honestly when the provider is unavailable.
+
+No hardware/3D work may block Layer 1 or Layer 2 completion.
+
+36. SIH Demonstration Release — Required Complete Feature Set
+
+Real auth + role model + persistent database.
+
+Home/Learn/Labs/Explore/Progress shell with real empty states.
+
+Structured curriculum and at least four polished interactive lessons.
+
+Circuit Studio with true multi-qubit IR and core gates.
+
+OpenQASM3 editing and visual/code synchronization.
+
+Qiskit Aer, PennyLane and Cirq functioning; qBraid interoperability functioning and configured runtime if available.
+
+Statevector, probabilities/counts, Bloch/reduced state and gate-by-gate timeline.
+
+Predict → Run → Explain.
+
+What Changed? with computed diffs.
+
+Circuit Insights with at least safe deterministic optimizations + verification.
+
+Grounded AI Mentor with Explain, Generate, Debug and Optimize.
+
+Guided VLab framework + Superposition, Phase/Interference, Bell/Entanglement and Fragility labs.
+
+At least three working cognitive-conflict/misconception correction flows.
+
+Automated grading + one MCQ assessment + circuit challenge + code challenge + debugging challenge.
+
+Grover plus QAOA or VQE polished; final target includes both QAOA and VQE.
+
+Real progress/mastery evidence and recommendations.
+
+Instructor class + assignment + mastery/misconception analytics based on actual activity.
+
+Share/fork/assign workflow.
+
+Cloud deployment with health/readiness endpoints and no mocked critical step.
+
+36.1 Finale / showcase target
+
+Grover, Teleportation, QAOA and VQE polished.
+
+BB84 polished protocol lab.
+
+3D Hardware Explorer with Signal and Measurement Journeys.
+
+Three-Lens context preservation.
+
+Experiment replay/versioning and export.
+
+Accessibility/performance/observability hardening.
+
+37. Final Demo Contract
+
+Open the production URL; guest or login works.
+
+Home shows real next activity / true empty state.
+
+Enter a lesson on phase or entanglement and make a prediction.
+
+Open linked guided Lab with the same context.
+
+Build/edit the circuit visually; switch to OpenQASM and back.
+
+Run on Qiskit Aer; show statevector/probability and state timeline.
+
+Switch to a second framework and show normalized equivalent behavior.
+
+Compare prediction vs actual; explain using grounded Mentor.
+
+Modify one gate; open What Changed? and show computed differences.
+
+Use Circuit Insights to remove a redundant pattern and show verification status.
+
+Trigger one cognitive-conflict experiment, re-test, and show the evidence update.
+
+Submit a real challenge and receive deterministic automated grading.
+
+Open Fragility and compare ideal/noisy outputs.
+
+Open Progress and show evidence-backed mastery/recommendation.
+
+Open Instructor and show real team/student attempts and misconception/mastery view.
+
+If Layer 3 is ready, switch to Hardware Lens and show the signal journey.
+
+38. Definition of Done
+
+Requirement implemented against this SRS.
+
+No mocked/hardcoded critical success response.
+
+Scientific result covered by reference/golden test.
+
+Data is persisted and ownership/authorization enforced where applicable.
+
+Loading, empty, error, disabled, hover, focus and selected states implemented.
+
+Responsive behavior tested at target breakpoints.
+
+Keyboard/focus/accessibility checked.
+
+Backend/API validation implemented.
+
+AI grounding rules satisfied.
+
+Logs/error tracking available for critical failures.
+
+Unit/integration/E2E tests appropriate to feature pass.
+
+No duplicate old/new implementation left active without migration reason.
+
+Performance/resource limit handling tested.
+
+A first-time learner can identify the next action without presenter guidance.
+
+Documentation and environment variables are updated.
+
+Feature is demonstrable from the deployed production URL.
+
+39. Final Build Contract — Non-Negotiables
+
+• No feature exists only to impress judges.
+
+• Quantum correctness beats visual beauty.
+
+• Verified simulator/backend truth beats AI output.
+
+• Pedagogical depth beats feature count.
+
+• Working end-to-end depth beats architecture theatre.
+
+• Production UX beats hackathon decoration.
+
+• No fake data, no fake backend status, no fake analytics and no mocked critical flows.
+
+• A learner must understand the primary action within seconds.
+
+• Labs remain first-class because experimentation is the learning mechanism.
+
+• Circuit Studio is the free sandbox; V-Labs are guided pedagogical experiences.
+
+• Multi-framework support is real, tested and visible.
+
+• AI-generated code is never trusted before parsing/validation.
+
+• Optimization is never accepted before deterministic verification.
+
+• Hardware Explorer is integrated learning, not a gimmick.
+
+• Never claim planned/partial work as implemented.
+
+• Preserve valid previous-project assets; replace simplified scientific logic.
+
+• Do not redesign the frozen IA without evidence.
+
+• Do not restart because a new coding tool/model looks attractive.
+
+• Build → test → inspect → improve → deploy.
+
+40. Research Sources and Reference Notes
+
+Reference
+
+Source
+
+Primary requirement
+
+SIH26140 official two-page problem-statement document provided by the team.
+
+Existing project
+
+Quantum Fragility Playground repository: https://github.com/NVNAGATHARUN/quantum-fragility-playground
+
+Existing deployment
+
+https://qfp.vercel.app/
+
+QInsight Visual Quantum Lab
+
+https://qilabs.in/vqc
+
+QInsight / product ecosystem
+
+https://qilabs.in/
+
+QForge
+
+https://qilabs.in/qforge and https://qilabs.in/qforge16
+
+IBM Quantum Composer
+
+https://quantum.cloud.ibm.com/docs/en/guides/composer
+
+qBraid platform / qBook / Lab
+
+https://qbraid.com/ ; https://qbraid.com/qbook ; https://qbraid.com/lab
+
+qBraid transpiler / PyQASM
+
+https://docs.qbraid.com/sdk/user-guide/transpiler ; https://docs.qbraid.com/v2/pyqasm/user-guide/overview
+
+Qiskit Aer
+
+https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
+
+PennyLane devices
+
+https://pennylane.ai/devices/default-qubit ; https://pennylane.ai/devices/default-mixed
+
+Cirq simulation
+
+https://quantumai.google/cirq/simulate/simulation
+
+Quirk
+
+https://github.com/Strilanc/Quirk
+
+Quantum Inspire
+
+https://www.quantum-inspire.com/
+
+External platforms are reference points for capabilities, interaction patterns and market baseline. Quantum Lens must not copy branding, proprietary content or visual identity.
+
+41. Final Product Statement
+
+BUILD THIS — AND STOP REDESIGNING
+
+Quantum Lens AI must ship as one coherent, persistent, deployed learning platform: structured learning + real circuit/code authoring + real multi-framework simulation + scientifically correct visualization + grounded AI + automated assessment + real progress/instructor analytics, differentiated by prediction, misconception correction, What Changed?, Fragility and the Three-Lens connection from algorithm to state to hardware.

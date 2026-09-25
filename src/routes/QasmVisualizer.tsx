@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BlochSphere3D from '../components/BlochSphere3D';
 import { CircuitDiagram } from '../components/CircuitDiagram';
@@ -46,7 +46,6 @@ function applyGate(v: BlochVector, g: CircuitGate): BlochVector {
       const ca = Math.cos(Math.PI / 4), sa = Math.sin(Math.PI / 4);
       return { x: x * ca - y * sa, y: x * sa + y * ca, z };
     }
-    case 'Z': return { x: -x, y: -y, z };
     default: return v;
   }
 }
@@ -55,6 +54,18 @@ export default function QasmVisualizer() {
   const [src, setSrc] = useState(EXAMPLES.bell);
   const [stepIdx, setStepIdx] = useState(0);
   const [errMsg, setErrMsg] = useState('');
+  const [fromStudio, setFromStudio] = useState(false);
+
+  // Pre-load QASM exported from Circuit Studio
+  useEffect(() => {
+    const stored = localStorage.getItem('qasm_from_studio');
+    if (stored) {
+      setSrc(stored);
+      setStepIdx(0);
+      setFromStudio(true);
+      localStorage.removeItem('qasm_from_studio');
+    }
+  }, []);
 
   const gates = useMemo(() => {
     try {
@@ -98,20 +109,32 @@ export default function QasmVisualizer() {
         subtitle="Write OpenQASM 2.0 code and watch it transform qubits in real-time."
       />
 
+      {fromStudio && (
+        <div className="p-12 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center gap-8">
+          <span>✓</span>
+          <span>Circuit loaded from <strong>Circuit Studio</strong>. QASM code is ready to step through below.</span>
+          <button onClick={() => setFromStudio(false)} className="ml-auto text-emerald-500 hover:text-emerald-300 transition-colors text-lg leading-none">×</button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-32">
         <div className="flex flex-col gap-32">
           <Card className="p-0 overflow-hidden flex flex-col min-h-[500px]">
-            <div className="p-16 border-b border-brand-border bg-surface flex justify-between items-center">
-              <SectionHeader title="QASM Editor" />
+            <div className="px-20 py-14 border-b border-brand-border bg-surface flex justify-between items-center">
+              <div className="flex items-center gap-8">
+                <span className="text-brand-cyan text-base">⚛</span>
+                <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">QASM Editor</h3>
+              </div>
 
-              <div className="flex gap-8">
+              <div className="flex items-center gap-8">
+                <span className="text-[10px] text-text-muted font-mono uppercase mr-4">Presets:</span>
                 {Object.keys(EXAMPLES).map(k => (
-                  <button key={k} onClick={() => handleExample(k)} className="px-12 py-4 rounded-lg border border-brand-border text-[9px] font-orbitron hover:border-brand-primary transition-all uppercase">{k}</button>
+                  <button key={k} onClick={() => handleExample(k)} className="px-12 py-4 rounded-lg border border-brand-border text-[10px] font-orbitron hover:border-brand-primary text-text-secondary hover:text-white transition-all uppercase">{k}</button>
                 ))}
               </div>
             </div>
             <textarea
-              className="flex-1 w-full bg-background/50 p-24 font-mono text-sm text-brand-cyan outline-none resize-none"
+              className="flex-1 w-full bg-[#050814] p-24 font-mono text-sm text-[#38bdf8] leading-relaxed outline-none resize-none border-none selection:bg-brand-primary/30"
               spellCheck={false}
               value={src}
               onChange={e => { setSrc(e.target.value); setStepIdx(0); }}
@@ -121,10 +144,10 @@ export default function QasmVisualizer() {
 
           <Card className="p-24 flex flex-col gap-16">
             <div className="flex justify-between items-center">
-              <SectionHeader title="Circuit Preview" />
+              <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">Circuit Preview</h3>
               <Badge color="primary">{gates.length} Gates Parsed</Badge>
             </div>
-            <div className="min-h-[120px] rounded-xl border border-brand-border bg-background/50 overflow-x-auto p-24">
+            <div className="min-h-[120px] rounded-xl border border-brand-border bg-[#050814] overflow-x-auto p-24">
               <CircuitDiagram gates={gates.slice(0, stepIdx)} nqubits={nq} />
             </div>
           </Card>
@@ -132,9 +155,9 @@ export default function QasmVisualizer() {
 
         <div className="flex flex-col gap-32">
           <Card className="p-24 flex flex-col gap-24 h-full">
-            <SectionHeader title="State Analysis" />
+            <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">State Analysis</h3>
 
-            <div className="h-[240px] glass-card bg-background/30 rounded-2xl overflow-hidden mb-24">
+            <div className="h-[240px] glass-card bg-[#050814] rounded-2xl overflow-hidden mb-24 relative">
               <BlochSphere3D state={vec} health={100} history={[]} />
               <div className="absolute top-12 left-12">
                 <Badge color="gold">Qubit 0</Badge>

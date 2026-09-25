@@ -65,6 +65,37 @@ const allowedOrigins = [
 app.use(cors({ origin: allowedOrigins }))
 app.use(express.json())
 
+// ─── FastAPI Reverse Proxy (/api/v1) ─────────────────────────────────────────
+
+const FASTAPI_URL = process.env.FASTAPI_URL ?? 'http://127.0.0.1:8000'
+
+app.use('/api/v1', async (req: Request, res: Response) => {
+  try {
+    const targetUrl = `${FASTAPI_URL}/api/v1${req.url}`
+    const options: RequestInit = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body && Object.keys(req.body).length > 0) {
+      options.body = JSON.stringify(req.body)
+    }
+    const response = await fetch(targetUrl, options)
+    const text = await response.text()
+    try {
+      const data = JSON.parse(text)
+      res.status(response.status).json(data)
+    } catch {
+      res.status(response.status).send(text)
+    }
+  } catch (err: any) {
+    res.status(502).json({
+      error: 'FastAPI Qiskit kernel unavailable',
+      details: err?.message ?? String(err),
+    })
+  }
+})
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 

@@ -6,44 +6,46 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 
 export interface BlochSphere3DHandle {
-    capture: () => string | null; // returns dataURL PNG
+    capture: () => string | null;
 }
 
 interface BlochSphere3DProps {
-    state: { x: number; y: number; z: number };
-    health: number;
-    history: { x: number; y: number; z: number }[];
+    state?: { x: number; y: number; z: number };
+    vector?: { x: number; y: number; z: number };
+    health?: number;
+    history?: { x: number; y: number; z: number }[];
+    noiseParams?: {
+        depolarizing?: number;
+        phaseFlip?: number;
+        bitFlip?: number;
+        amplitudeDamping?: number;
+        speed?: number;
+    };
+    isAnimating?: boolean;
     className?: string;
 }
 
 const SPHERE_R = 2;
 
-// Soft pastel axis palette — easy on the eyes, still distinct
-const AXIS_COLORS = {
-    z: { hex: 0x7dd3fc, css: '#7dd3fc' }, // sky-300 — soft light blue for Z (|0⟩/|1⟩)
-    x: { hex: 0xfda4af, css: '#fda4af' }, // rose-300 — soft pink for X
-    y: { hex: 0x86efac, css: '#86efac' }, // green-300 — soft mint for Y
-};
-
-function makeLabel(text: string, cssColor: string): HTMLDivElement {
+function makeLabel(text: string, isDark: boolean): HTMLDivElement {
     const div = document.createElement('div');
+    const color = isDark ? '#e2e8f0' : '#1e293b';
     div.style.cssText = [
-        'font-family: Orbitron, monospace',
+        'font-family: Inter, system-ui, -apple-system, sans-serif',
         'font-size: 11px',
-        'font-weight: 700',
-        `color: ${cssColor}`,
-        `text-shadow: 0 0 8px ${cssColor}88`,
+        'font-weight: 600',
+        `color: ${color}`,
         'pointer-events: none',
         'user-select: none',
         'white-space: nowrap',
-        'opacity: 0.85',
+        'opacity: 0.9',
     ].join(';');
     div.textContent = text;
     return div;
 }
 
 const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
-    ({ state, health, history, className = '' }, ref) => {
+    ({ state, vector, health = 100, history = [], className = '' }, ref) => {
         const containerRef = useRef<HTMLDivElement>(null);
         const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
         const labelRendererRef = useRef<CSS2DRenderer | null>(null);
@@ -54,20 +56,16 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
         const arrowRef = useRef<THREE.ArrowHelper | null>(null);
         const trailRef = useRef<THREE.Line | null>(null);
         const sphereMatRef = useRef<THREE.MeshPhongMaterial | null>(null);
-        const glowLightRef = useRef<THREE.PointLight | null>(null);
         const lastInteractionTime = useRef(Date.now());
         const healthRef = useRef(health);
 
-        // Sync health ref for the persistent animation loop
         useEffect(() => {
             healthRef.current = health;
         }, [health]);
 
-        // Expose canvas capture to parent
         useImperativeHandle(ref, () => ({
             capture: () => {
                 if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return null;
-                // Force a render then grab the pixels
                 rendererRef.current.render(sceneRef.current, cameraRef.current);
                 return rendererRef.current.domElement.toDataURL('image/png');
             },
@@ -79,18 +77,20 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
             const scene = new THREE.Scene();
             sceneRef.current = scene;
 
-            const width = container.clientWidth || 400;
-            const height = container.clientHeight || 400;
+            const isDark = document.documentElement.classList.contains('dark');
 
-            const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
-            camera.position.set(3.5, 2.5, 5);
+            const width = container.clientWidth || 360;
+            const height = container.clientHeight || 360;
+
+            const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+            camera.position.set(3.4, 2.2, 4.6);
             cameraRef.current = camera;
 
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
             renderer.setSize(width, height);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
+            renderer.toneMappingExposure = 1.0;
             container.appendChild(renderer.domElement);
             rendererRef.current = renderer;
 
@@ -104,188 +104,129 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
 
             const controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.06;
+            controls.dampingFactor = 0.05;
             controls.minDistance = 3;
-            controls.maxDistance = 12;
+            controls.maxDistance = 10;
             controls.addEventListener('start', () => { lastInteractionTime.current = Date.now(); });
             controls.addEventListener('change', () => { lastInteractionTime.current = Date.now(); });
             controlsRef.current = controls;
 
-            // ── Lighting ────────────────────────────────────────────────────────
-            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-            const key = new THREE.DirectionalLight(0x7dd3fc, 1.2);
-            key.position.set(5, 8, 5);
-            scene.add(key);
-            const fill = new THREE.DirectionalLight(0x6366f1, 0.6);
-            fill.position.set(-5, -3, -5);
-            scene.add(fill);
+            // ── Clean Scientific Lighting ───────────────────────────────────────
+            const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.8 : 0.95);
+            scene.add(ambient);
+            const keyLight = new THREE.DirectionalLight(0xffffff, isDark ? 0.6 : 0.8);
+            keyLight.position.set(4, 6, 4);
+            scene.add(keyLight);
 
-            const glowLight = new THREE.PointLight(0x22d3ee, 2.5, 4);
-            scene.add(glowLight);
-            glowLightRef.current = glowLight;
-
-            // ── Sphere shells ───────────────────────────────────────────────────
-            const sphereGeo = new THREE.SphereGeometry(SPHERE_R, 64, 64);
+            // ── Restrained Sphere Shell ─────────────────────────────────────────
+            const sphereGeo = new THREE.SphereGeometry(SPHERE_R, 48, 48);
             const solidMat = new THREE.MeshPhongMaterial({
-                color: 0x0d1b3e,
+                color: isDark ? 0x1e293b : 0xf1f5f9,
                 transparent: true,
-                opacity: 0.18,
+                opacity: isDark ? 0.22 : 0.16,
                 side: THREE.FrontSide,
-                shininess: 60,
-                specular: new THREE.Color(0x7dd3fc),
-                depthWrite: false,  // axes visible through sphere shell
+                shininess: 30,
+                specular: isDark ? new THREE.Color(0x334155) : new THREE.Color(0xffffff),
+                depthWrite: false,
             });
             sphereMatRef.current = solidMat;
             scene.add(new THREE.Mesh(sphereGeo, solidMat));
+
+            // Subtle sphere wireframe grid
             const wireMat = new THREE.MeshBasicMaterial({
-                color: 0x6366f1, transparent: true, opacity: 0.12, wireframe: true, depthWrite: false,
+                color: isDark ? 0x334155 : 0xcbd5e1,
+                transparent: true,
+                opacity: isDark ? 0.25 : 0.22,
+                wireframe: true,
+                depthWrite: false,
             });
             scene.add(new THREE.Mesh(sphereGeo, wireMat));
 
-            // ── Equator + meridian rings ────────────────────────────────────────
-            const ringColor = 0x7dd3fc;
-            const ringMat = new THREE.MeshBasicMaterial({ color: ringColor, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+            // ── Equator + Meridian Rings ────────────────────────────────────────
+            const ringColor = isDark ? 0x64748b : 0x94a3b8;
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: ringColor,
+                transparent: true,
+                opacity: isDark ? 0.45 : 0.40,
+                side: THREE.DoubleSide
+            });
             [[Math.PI / 2, 0, 0], [0, 0, 0], [0, Math.PI / 2, 0]].forEach(([rx, ry, rz]) => {
-                const ring = new THREE.Mesh(new THREE.TorusGeometry(SPHERE_R, 0.007, 16, 128), ringMat);
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(SPHERE_R, 0.006, 12, 96), ringMat);
                 ring.rotation.set(rx, ry, rz);
                 scene.add(ring);
             });
 
-            // ── Axes ────────────────────────────────────────────────────────────
+            // ── Precise Axes ────────────────────────────────────────────────────
+            const axisHex = isDark ? 0x475569 : 0x94a3b8;
             const axDefs = [
-                { dir: new THREE.Vector3(0, 1, 0), col: AXIS_COLORS.z, posL: '|0⟩', negL: '|1⟩' },
-                { dir: new THREE.Vector3(1, 0, 0), col: AXIS_COLORS.x, posL: '+X', negL: '−X' },
-                { dir: new THREE.Vector3(0, 0, 1), col: AXIS_COLORS.y, posL: '+Y', negL: '−Y' },
+                { dir: new THREE.Vector3(0, 1, 0), posL: '|0⟩', negL: '|1⟩' },
+                { dir: new THREE.Vector3(1, 0, 0), posL: '+X', negL: '−X' },
+                { dir: new THREE.Vector3(0, 0, 1), posL: '+Y', negL: '−Y' },
             ];
-            const L = SPHERE_R * 1.22;
-            axDefs.forEach(({ dir, col, posL, negL }) => {
-                // Cylinder
+            const L = SPHERE_R * 1.2;
+            axDefs.forEach(({ dir, posL, negL }) => {
                 const cyl = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.010, 0.010, L * 2, 8),
-                    new THREE.MeshBasicMaterial({ color: col.hex, transparent: true, opacity: 0.45 })
+                    new THREE.CylinderGeometry(0.008, 0.008, L * 2, 8),
+                    new THREE.MeshBasicMaterial({ color: axisHex, transparent: true, opacity: 0.5 })
                 );
                 if (dir.x) cyl.rotation.z = Math.PI / 2;
                 if (dir.z) cyl.rotation.x = Math.PI / 2;
                 scene.add(cyl);
 
-                // Tip cone
                 const cone = new THREE.Mesh(
-                    new THREE.ConeGeometry(0.055, 0.18, 12),
-                    new THREE.MeshBasicMaterial({ color: col.hex, transparent: true, opacity: 0.7 })
+                    new THREE.ConeGeometry(0.045, 0.14, 10),
+                    new THREE.MeshBasicMaterial({ color: axisHex, transparent: true, opacity: 0.7 })
                 );
                 cone.position.copy(dir.clone().multiplyScalar(L));
                 if (dir.x) cone.rotation.z = -Math.PI / 2;
                 if (dir.z) cone.rotation.x = Math.PI / 2;
                 scene.add(cone);
 
-                // CSS2D labels
                 const addLabel = (pos: THREE.Vector3, text: string) => {
-                    const obj = new CSS2DObject(makeLabel(text, col.css));
+                    const obj = new CSS2DObject(makeLabel(text, isDark));
                     obj.position.copy(pos);
                     scene.add(obj);
                 };
-                addLabel(dir.clone().multiplyScalar(L + 0.38), posL);
-                addLabel(dir.clone().multiplyScalar(-(L + 0.38)), negL);
+                addLabel(dir.clone().multiplyScalar(L + 0.32), posL);
+                addLabel(dir.clone().multiplyScalar(-(L + 0.32)), negL);
             });
 
-            // ── Bloch vector ArrowHelper ────────────────────────────────────────
+            // ── Restrained State Vector (Cobalt Primary) ─────────────────────────
+            const vectorColor = isDark ? 0x60a5fa : 0x2563eb;
             const arrow = new THREE.ArrowHelper(
                 new THREE.Vector3(0, 1, 0),
                 new THREE.Vector3(0, 0, 0),
-                SPHERE_R, 0x22d3ee, 0.32, 0.14
+                SPHERE_R,
+                vectorColor,
+                0.28,
+                0.12
             );
             scene.add(arrow);
             arrowRef.current = arrow;
 
-            // ── Trail ───────────────────────────────────────────────────────────
+            // ── Clean History Trail ─────────────────────────────────────────────
             const trail = new THREE.Line(
                 new THREE.BufferGeometry(),
-                new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.75 })
+                new THREE.LineBasicMaterial({
+                    color: isDark ? 0x93c5fd : 0x3b82f6,
+                    transparent: true,
+                    opacity: 0.6,
+                    linewidth: 1.5
+                })
             );
             scene.add(trail);
             trailRef.current = trail;
 
-            // ── Subtle floor grid ───────────────────────────────────────────────
-            const grid = new THREE.GridHelper(4, 8, 0x6366f1, 0x6366f1);
-            (grid.material as THREE.Material).transparent = true;
-            (grid.material as THREE.Material).opacity = 0.07;
-            scene.add(grid);
-
-            // ─── Decoherence Storm Particles ──────────────────────────────────────
-            const particleCount = 2000;
-            const particleGeo = new THREE.BufferGeometry();
-            const posArray = new Float32Array(particleCount * 3);
-            const velArray = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount; i++) {
-                // Randomly distributed around sphere surface
-                const r = SPHERE_R * (1 + Math.random() * 0.5);
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-
-                posArray[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-                posArray[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-                posArray[i * 3 + 2] = r * Math.cos(phi);
-
-                velArray[i * 3] = (Math.random() - 0.5) * 0.01;
-                velArray[i * 3 + 1] = (Math.random() - 0.5) * 0.01;
-                velArray[i * 3 + 2] = (Math.random() - 0.5) * 0.01;
-            }
-
-            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const particleMat = new THREE.PointsMaterial({
-                color: 0x22d3ee,
-                size: 0.015,
-                transparent: true,
-                opacity: 0,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-            });
-            const particles = new THREE.Points(particleGeo, particleMat);
-            scene.add(particles);
-
-            // ── Animation loop ──────────────────────────────────────────────────
+            // ── Animation Loop ──────────────────────────────────────────────────
             const animate = () => {
                 rafIdRef.current = requestAnimationFrame(animate);
                 controls.update();
 
-                const h01 = (healthRef.current ?? 100) / 100;
-                const noiseLevel = 1 - h01;
-
-                // Animate particles based on noise
-                particleMat.opacity = noiseLevel * 0.4;
-                const positions = particleGeo.attributes.position.array as Float32Array;
-
-                for (let i = 0; i < particleCount; i++) {
-                    const idx = i * 3;
-                    // Swirl effect increases with noise
-                    const swirl = noiseLevel * 0.02;
-                    const x = positions[idx];
-                    const z = positions[idx + 2];
-
-                    positions[idx] += -z * swirl + velArray[idx];
-                    positions[idx + 2] += x * swirl + velArray[idx + 2];
-                    positions[idx + 1] += velArray[idx + 1] * (1 + noiseLevel * 5);
-
-                    // Keep particles in range
-                    const dist = Math.sqrt(positions[idx] ** 2 + positions[idx + 1] ** 2 + positions[idx + 2] ** 2);
-                    if (dist > SPHERE_R * 2.5 || dist < SPHERE_R * 0.8) {
-                        const theta = Math.random() * Math.PI * 2;
-                        const phi = Math.acos(2 * Math.random() - 1);
-                        const r = SPHERE_R * (0.9 + Math.random() * 0.4);
-                        positions[idx] = r * Math.sin(phi) * Math.cos(theta);
-                        positions[idx + 1] = r * Math.sin(phi) * Math.sin(theta);
-                        positions[idx + 2] = r * Math.cos(phi);
-                    }
-                }
-                particleGeo.attributes.position.needsUpdate = true;
-
+                // Gentle slow idle drift only when untouched for 3s
                 if (Date.now() - lastInteractionTime.current > 3000) {
-                    scene.rotation.y += 0.004;
+                    scene.rotation.y += 0.002;
                 }
-                if (glowLightRef.current) {
-                    glowLightRef.current.intensity = 2 + Math.sin(Date.now() * 0.004) * 1;
-                }
+
                 renderer.render(scene, camera);
                 labelRenderer.render(scene, camera);
             };
@@ -309,57 +250,58 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
             };
         }, []);
 
-        // ── Update on state/health/history change ───────────────────────────────
+        // ── Update State Vector and Trajectory on Prop Change ───────────────────
         useEffect(() => {
             const arrow = arrowRef.current;
             const trail = trailRef.current;
             if (!arrow || !trail) return;
 
-            const bx = state.x, by = state.z, bz = state.y;
+            const isDark = document.documentElement.classList.contains('dark');
+            const activeVector = state || vector || { x: 0, y: 0, z: 1 };
+            const bx = activeVector.x ?? 0;
+            const by = activeVector.z ?? 1;
+            const bz = activeVector.y ?? 0;
             const len = Math.sqrt(bx * bx + by * by + bz * bz);
-            const visualLen = Math.max(0.05, len) * SPHERE_R;
+
+            // Physical mixed state length contraction under decoherence
+            const isExplicitState = Boolean(state || vector);
+            const safeHealth = typeof health === 'number' && !isNaN(health) ? health : 100;
+            const hFactor = safeHealth / 100;
+            const contraction = isExplicitState ? Math.min(1.0, len) : Math.min(1.0, len) * hFactor;
+            const visualLen = Math.max(0.08, contraction) * SPHERE_R;
             const dir = len > 0.001 ? new THREE.Vector3(bx, by, bz).normalize() : new THREE.Vector3(0, 1, 0);
 
             arrow.setDirection(dir);
-            arrow.setLength(visualLen, Math.min(0.32, visualLen * 0.22), 0.14);
+            arrow.setLength(visualLen, Math.min(0.28, visualLen * 0.22), 0.12);
 
-            const h01 = health / 100;
-            const arrowColor = new THREE.Color().setHSL(h01 * 0.33, 0.9, 0.58);
-            (arrow.line.material as THREE.LineBasicMaterial).color.copy(arrowColor);
-            (arrow.cone.material as THREE.MeshBasicMaterial).color.copy(arrowColor);
+            const vectorColor = isDark ? new THREE.Color(0x60a5fa) : new THREE.Color(0x2563eb);
+            (arrow.line.material as THREE.LineBasicMaterial).color.copy(vectorColor);
+            (arrow.cone.material as THREE.MeshBasicMaterial).color.copy(vectorColor);
 
-            if (glowLightRef.current) {
-                glowLightRef.current.position.copy(dir.clone().multiplyScalar(visualLen));
-                glowLightRef.current.color.copy(arrowColor);
-            }
-            if (sphereMatRef.current) {
-                sphereMatRef.current.opacity = 0.08 + h01 * 0.18;
-            }
-
-            if (history.length > 1) {
-                const pts = history.map(p => new THREE.Vector3(p.x, p.z, p.y).multiplyScalar(SPHERE_R));
-                const positions = new Float32Array(pts.length * 3);
-                const colors = new Float32Array(pts.length * 3);
-                pts.forEach((p, i) => {
-                    positions[i * 3] = p.x; positions[i * 3 + 1] = p.y; positions[i * 3 + 2] = p.z;
-                    const alpha = i / pts.length;
-                    const c = new THREE.Color(0x22d3ee).lerp(new THREE.Color(0x6366f1), 1 - alpha);
-                    colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-                });
-                trail.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                trail.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-                trail.geometry.attributes.position.needsUpdate = true;
-                trail.geometry.attributes.color.needsUpdate = true;
-                trail.visible = true;
-                (trail.material as THREE.LineBasicMaterial).opacity = 0.25 + h01 * 0.55;
+            if (Array.isArray(history) && history.length > 1) {
+                const validPoints = history.filter(p => p && typeof p.x === 'number' && !isNaN(p.x));
+                if (validPoints.length > 1) {
+                    const pts = validPoints.map(p => new THREE.Vector3(p.x, p.z ?? 0, p.y ?? 0).multiplyScalar(SPHERE_R));
+                    const positions = new Float32Array(pts.length * 3);
+                    pts.forEach((p, i) => {
+                        positions[i * 3] = p.x;
+                        positions[i * 3 + 1] = p.y;
+                        positions[i * 3 + 2] = p.z;
+                    });
+                    trail.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    trail.geometry.attributes.position.needsUpdate = true;
+                    trail.visible = true;
+                } else {
+                    trail.visible = false;
+                }
             } else {
                 trail.visible = false;
             }
-        }, [state, health, history]);
+        }, [state, vector, health, history]);
 
         const handleDoubleClick = () => {
             if (cameraRef.current && controlsRef.current && sceneRef.current) {
-                cameraRef.current.position.set(3.5, 2.5, 5);
+                cameraRef.current.position.set(3.4, 2.2, 4.6);
                 controlsRef.current.target.set(0, 0, 0);
                 controlsRef.current.update();
                 sceneRef.current.rotation.set(0, 0, 0);
@@ -371,7 +313,7 @@ const BlochSphere3D = forwardRef<BlochSphere3DHandle, BlochSphere3DProps>(
                 className={`relative w-full h-full ${className}`}
                 ref={containerRef}
                 onDoubleClick={handleDoubleClick}
-                title="Double-click to reset camera"
+                title="Double-click to reset view"
             />
         );
     }

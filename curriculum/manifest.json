@@ -1,0 +1,88 @@
+{
+  "version": "3.0",
+  "generated": "2026-09-24",
+  "modules": [
+    {
+      "id": "m01-math-primer",
+      "title": "Math for Quantum",
+      "status": "available",
+      "lessons": [
+        { "id": "dirac-notation",     "content_version": "1.0.0", "status": "available" },
+        { "id": "complex-amplitudes", "content_version": "1.0.0", "status": "available" },
+        { "id": "matrix-operations",  "content_version": "1.0.0", "status": "available" }
+      ]
+    },
+    {
+      "id": "m02-qubits-measurement",
+      "title": "Qubits & Measurement",
+      "status": "available",
+      "lessons": [
+        { "id": "qubit-states",            "content_version": "1.0.0", "status": "available" },
+        { "id": "statevector-bloch",       "content_version": "1.0.0", "status": "available" },
+        { "id": "born-rule",               "content_version": "1.0.0", "status": "available" },
+        { "id": "measurement-challenge",   "content_version": "1.0.0", "status": "available" }
+      ]
+    },
+    {
+      "id": "m03-quantum-gates",
+      "title": "Quantum Gates & Operations",
+      "status": "available",
+      "lessons": [
+        { "id": "pauli-gates",        "content_version": "1.0.0", "status": "available" },
+        { "id": "hadamard-gate",      "content_version": "1.0.0", "status": "available" },
+        { "id": "rotations-axes",     "content_version": "1.0.0", "status": "available" },
+        { "id": "reversibility",      "content_version": "1.0.0", "status": "available" }
+      ]
+    },
+    {
+      "id": "m04-superposition-interference",
+      "title": "Superposition, Phase & Interference",
+      "status": "planned",
+      "lessons": [
+        { "id": "global-vs-relative-phase", "content_version": null, "status": "planned" },
+        { "id": "mach-zehnder",             "content_version": null, "status": "planned" },
+        { "id": "interference-experiment",  "content_version": null, "status": "planned" },
+        { "id": "phase-challenge",          "content_version": null, "status": "planned" }
+      ]
+    },
+    {
+      "id": "m05-entanglement-correlation",
+      "title": "Entanglement & Correlation",
+      "status": "planned",
+      "lessons": [
+        { "id": "cnot-entangler",        "content_version": null, "status": "planned" },
+        { "id": "bell-states",           "content_version": null, "status": "planned" },
+        { "id": "correlation-inspector", "content_version": null, "status": "planned" },
+        { "id": "teleportation-challenge", "content_version": null, "status": "planned" }
+      ]
+    },
+    {
+      "id": "m06-standard-algorithms",
+      "title": "Standard Quantum Algorithms",
+      "status": "planned",
+      "lessons": [
+        { "id": "deutsch-jozsa", "content_version": null, "status": "planned" },
+        { "id": "grover-search", "content_version": null, "status": "planned" },
+        { "id": "qft",           "content_version": null, "status": "planned" }
+      ]
+    },
+    {
+      "id": "m07-variational-hybrid",
+      "title": "Variational & Hybrid Algorithms",
+      "status": "planned",
+      "lessons": [
+        { "id": "vqe",  "content_version": null, "status": "planned" },
+        { "id": "qaoa", "content_version": null, "status": "planned" }
+      ]
+    },
+    {
+      "id": "m08-real-systems",
+      "title": "Real Quantum Systems",
+      "status": "planned",
+      "lessons": [
+        { "id": "decoherence-relaxation", "content_version": null, "status": "planned" },
+        { "id": "cryostat-hardware",      "content_version": null, "status": "planned" }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,117 @@ export type Gate = {
   angle?: number // radians, for Rx/Ry/Rz
 }
 
+// ─── Canonical Circuit IR v1.0 (SRS Section 22) ─────────────────────────────
+
+export type SupportedGate =
+  | 'H' | 'X' | 'Y' | 'Z' | 'S' | 'T' | 'SDG' | 'TDG'
+  | 'RX' | 'RY' | 'RZ' | 'CX' | 'CZ' | 'SWAP'
+  | 'MEASURE' | 'RESET' | 'BARRIER'
+
+export interface GateParams {
+  theta?: number
+  phi?: number
+  lam?: number
+}
+
+export interface GateOperation {
+  id: string
+  gate: SupportedGate
+  targets: number[]
+  controls?: number[]
+  params?: GateParams
+  step: number
+}
+
+export interface CircuitIR {
+  version: '1.0'
+  qubits: number
+  classicalBits: number
+  operations: GateOperation[]
+}
+
+// ─── Normalized Simulation Result (SRS Section 32) ──────────────────────────
+
+export interface StateAmplitude {
+  basis: string
+  real: number
+  imag: number
+  magnitude: number
+  phase: number
+  probability: number
+}
+
+export interface ReducedSubsystemState {
+  qubit: number
+  blochVector: BlochVector
+  purity: number
+  isEntangled: boolean
+  entropy: number
+}
+
+export interface TimelineStep {
+  step: number
+  gate: string
+  targets: number[]
+  controls?: number[]
+  stateSummary: string
+  probabilities: Record<string, number>
+}
+
+export interface SimulationMetrics {
+  depth: number
+  gateCount: number
+  entanglementEntropy: number
+  purity: number
+  executionTimeMs: number
+}
+
+export interface NormalizedSimulationResult {
+  circuitId?: string
+  backend: string
+  shots: number
+  qubitCount: number
+  statevector: StateAmplitude[]
+  counts: Record<string, number>
+  probabilities: Record<string, number>
+  reducedStates: ReducedSubsystemState[]
+  timeline: TimelineStep[]
+  metrics: SimulationMetrics
+}
+
+export interface FragilityRequest {
+  circuit: CircuitIR
+  t1_us?: number
+  t2_us?: number
+  gate_time_ns?: number
+  channel?: 'amplitude_damping' | 'phase_damping' | 'depolarizing' | 'combined'
+}
+
+// ─── Pedagogy & Cognitive Delta Types (SRS Section 35–39) ───────────────────
+
+export interface UserPrediction {
+  conceptKey: string
+  predictionType: 'probability' | 'state' | 'chsh'
+  predictedProbabilities: Record<string, number>
+  confidence?: number
+}
+
+export interface CognitiveDeltaResult {
+  cognitiveDelta: number
+  matchesSimulation: boolean
+  detectedMisconceptions: string[]
+  interventionRecommended: boolean
+  conflictLabId?: string | null
+}
+
+export interface WhatChangedDiff {
+  modifiedGates: Array<{ step: number; target: number; from: string; to: string }>
+  statevectorA: string
+  statevectorB: string
+  fidelity: number
+  conceptualExplanation: string
+}
+
 // ─── Experiment result types ─────────────────────────────────────────────────
 
 export type BellOutcomeCounts = {

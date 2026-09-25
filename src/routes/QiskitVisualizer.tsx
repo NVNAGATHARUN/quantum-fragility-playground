@@ -95,16 +95,20 @@ export default function QiskitVisualizer() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-32">
         <div className="flex flex-col gap-32">
           <Card className="p-0 overflow-hidden flex flex-col min-h-[500px]">
-            <div className="p-16 border-b border-brand-border bg-surface flex justify-between items-center">
-              <SectionHeader title="Circuit Source (JSON)" />
-              <div className="flex gap-8">
+            <div className="px-20 py-14 border-b border-brand-border bg-surface flex justify-between items-center">
+              <div className="flex items-center gap-8">
+                <span className="text-brand-purple text-base">⚛</span>
+                <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">Circuit Source (JSON)</h3>
+              </div>
+              <div className="flex items-center gap-8">
+                <span className="text-[10px] text-text-muted font-mono uppercase mr-4">Presets:</span>
                 {Object.keys(EXAMPLES).map(k => (
-                  <button key={k} onClick={() => handleExample(k)} className="px-12 py-4 rounded-lg border border-brand-border text-[9px] font-orbitron hover:border-brand-primary transition-all uppercase">{k}</button>
+                  <button key={k} onClick={() => handleExample(k)} className="px-12 py-4 rounded-lg border border-brand-border text-[10px] font-orbitron hover:border-brand-primary text-text-secondary hover:text-white transition-all uppercase">{k}</button>
                 ))}
               </div>
             </div>
             <textarea
-              className="flex-1 w-full bg-background/50 p-24 font-mono text-sm text-brand-purple outline-none resize-none"
+              className="flex-1 w-full bg-[#050814] p-24 font-mono text-sm text-[#a78bfa] leading-relaxed outline-none resize-none border-none selection:bg-brand-purple/30"
               spellCheck={false}
               value={src}
               onChange={e => { setSrc(e.target.value); setStepIdx(0); }}
@@ -114,10 +118,10 @@ export default function QiskitVisualizer() {
 
           <Card className="p-24 flex flex-col gap-16">
             <div className="flex justify-between items-center">
-              <SectionHeader title="Circuit Diagram" />
+              <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">Circuit Diagram</h3>
               <Badge color="purple">{gates.length} Gates</Badge>
             </div>
-            <div className="min-h-[120px] rounded-xl border border-brand-border bg-background/50 overflow-x-auto p-24">
+            <div className="min-h-[120px] rounded-xl border border-brand-border bg-[#050814] overflow-x-auto p-24">
               <CircuitDiagram gates={gates.slice(0, stepIdx)} nqubits={nq} />
             </div>
           </Card>
@@ -125,9 +129,9 @@ export default function QiskitVisualizer() {
 
         <div className="flex flex-col gap-32">
           <Card className="p-24 flex flex-col gap-24 h-full">
-            <SectionHeader title="State Analysis" />
+            <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">State Analysis</h3>
 
-            <div className="h-[240px] glass-card bg-background/30 rounded-2xl overflow-hidden mb-24 relative">
+            <div className="h-[240px] glass-card bg-[#050814] rounded-2xl overflow-hidden mb-24 relative">
               <BlochSphere3D state={vec} health={hl * 100} history={[]} />
               <div className="absolute top-12 left-12">
                 <Badge color="gold">Qubit 0</Badge>

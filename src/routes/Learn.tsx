@@ -1,260 +1,228 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, PageHeader, SectionHeader, Badge, InfoBox } from '../components/UI';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  BookOpen,
+  ChevronDown,
+  FlaskConical,
+  ArrowRight,
+  Brain,
+  Activity,
+  CheckCircle2,
+  Lock,
+} from 'lucide-react';
 
-const SECTIONS = [
-  {
-    id: 'bloch-sphere',
-    title: 'The Bloch Sphere',
-    icon: '🌐',
-    content: 'The Bloch sphere is a geometric representation of the state space of a single-qubit quantum mechanical system. It is named after the physicist Felix Bloch.',
-    details: [
-      'North pole: |0⟩ ground state',
-      'South pole: |1⟩ excited state',
-      'Surface: Pure states (coherent superpositions)',
-      'Interior: Mixed states (decohered states)'
-    ],
-    formula: '|ψ⟩ = cos(θ/2)|0⟩ + e^{iφ}sin(θ/2)|1⟩',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Bloch_sphere.svg/1024px-Bloch_sphere.svg.png' // For demonstration
-  },
-  {
-    id: 'decoherence',
-    title: 'Quantum Decoherence',
-    icon: '📉',
-    content: 'Decoherence is the process where a quantum system loses its quantum properties, such as superposition or entanglement, by interacting with its environment.',
-    details: [
-      'Amplitude Damping (T₁): Energy relaxation toward ground state.',
-      'Phase Damping (T₂): Random phase shifts destroy interference.',
-      'Depolarizing: Random errors in any direction.'
-    ]
-  },
-  {
-    id: 'entanglement',
-    title: 'Entanglement',
-    icon: '🔗',
-    content: 'Entanglement is a phenomenon where two or more particles become connected in such a way that the state of one is instantly determined by the state of the other.',
-    details: [
-      'Bell States: Maximally entangled 2-qubit states.',
-      'Quantum Teleportation: Using entanglement to transmit states.',
-      'Correlation: Measuring one qubit collapses the entire system.'
-    ]
-  },
-  {
-    id: 'algorithms',
-    title: 'Quantum Algorithms',
-    icon: '🔮',
-    content: 'Quantum computers use interference and entanglement to perform certain calculations exponentially faster than classical computers.',
-    details: [
-      'Grover: Searching unsorted databases in √N steps.',
-      'Shor: Factoring large integers for cryptography.'
-    ]
-  }
-];
+import { V3_CURRICULUM } from '../content/curriculum';
+import type { LessonType } from '../content/types';
+import { useLessonProgress } from '../hooks/useLessonProgress';
 
-const QUIZ = [
-  { q: 'A qubit on the Bloch sphere surface (|r| = 1) has what purity?', opts: ['0.5 (maximally mixed)', '1.0 (pure state)', '0.0 (classical)', '0.75 (partial)'], ans: 1 },
-  { q: 'Which noise channel leaves the z-component unchanged, shrinking only x and y?', opts: ['Depolarizing', 'Amplitude damping (T₁)', 'Dephasing (T₂)', 'Phase flip'], ans: 2 },
-  { q: "In BB84, Eve's presence causes an error rate of approximately:", opts: ['0% (Eve is undetectable)', '~12.5%', '~25%', '~50%'], ans: 2 },
-];
+const TYPE_ICONS: Record<LessonType, React.ComponentType<{ className?: string }>> = {
+  learn: BookOpen,
+  visualize: Activity,
+  experiment: FlaskConical,
+  challenge: Brain,
+};
 
-const Learn = () => {
-  const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+const TYPE_STYLES: Record<LessonType, { bg: string; text: string; border: string }> = {
+  learn: { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-900' },
+  visualize: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-900' },
+  experiment: { bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-900' },
+  challenge: { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-900' },
+};
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
+export default function Learn() {
+  const [expandedModule, setExpandedModule] = useState<string>('m02-qubits-measurement');
+  const { isCompleted } = useLessonProgress();
 
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      window.scrollTo({
-        top: el.offsetTop - 100,
-        behavior: 'smooth'
-      });
-    }
+  const toggleModule = (id: string) => {
+    setExpandedModule((prev) => (prev === id ? '' : id));
   };
-
-  const answer = (qi: number, oi: number) => {
-    if (qi in answers) return;
-    setAnswers(prev => ({ ...prev, [qi]: oi }));
-  };
-
-  const score = QUIZ.filter((q, i) => answers[i] === q.ans).length;
 
   return (
-    <div className="flex flex-col gap-32">
-      <PageHeader
-        title="Quantum Education"
-        subtitle="Master the fundamentals of quantum mechanics, decoherence, and algorithms through visual learning."
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-48 items-start">
-        {/* Sticky Sidebar */}
-        <aside className="hidden lg:block sticky top-80">
-          <div className="flex flex-col gap-8 pb-32 border-b border-brand-border mb-32">
-            <SectionHeader title="Contents" />
-            <nav className="flex flex-col gap-4">
-              {SECTIONS.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => scrollToSection(s.id)}
-                  className={`text-left px-12 py-8 rounded-lg text-sm transition-all border ${activeSection === s.id ? 'bg-brand-primary/10 border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-                >
-                  {s.title}
-                </button>
-              ))}
-              <button
-                onClick={() => scrollToSection('quiz')}
-                className={`text-left px-12 py-8 rounded-lg text-sm transition-all border ${activeSection === 'quiz' ? 'bg-brand-gold/10 border-brand-gold text-brand-gold font-bold' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
-              >
-                Quick Quiz
-              </button>
-            </nav>
-          </div>
-
-          <InfoBox label="Academy Tip" className="mt-8 opacity-60">
-            Try the <strong>Fragility Lab</strong> alongside these sections to see the physics in action.
-          </InfoBox>
-        </aside>
-
-        {/* Main Content */}
-        <div className="flex flex-col gap-64">
-          {SECTIONS.map((s) => (
-            <section key={s.id} id={s.id} className="scroll-mt-80">
-              <Card className="p-32 overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-32 text-6xl opacity-[0.03] select-none pointer-events-none">{s.icon}</div>
-
-                <div className="flex items-center gap-16 mb-24">
-                  <div className="w-48 h-48 rounded-xl bg-brand-primary/10 flex items-center justify-center text-2xl">{s.icon}</div>
-                  <h2 className="text-2xl font-orbitron gradient-text">{s.title}</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-32">
-                  <div className="flex flex-col gap-24">
-                    <p className="text-text-secondary leading-relaxed text-lg">
-                      {s.content}
-                    </p>
-
-                    <div className="flex flex-col gap-12">
-                      <h4 className="text-[10px] font-orbitron text-text-muted uppercase tracking-widest">Key Principles</h4>
-                      <ul className="flex flex-col gap-8">
-                        {s.details.map((d, i) => (
-                          <li key={i} className="flex items-start gap-12 text-sm text-text-secondary">
-                            <span className="text-brand-primary mt-4">•</span>
-                            {d}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {s.formula && (
-                      <div className="mt-16 p-16 rounded-xl bg-background border border-brand-border font-mono text-sm text-brand-cyan overflow-x-auto">
-                        {s.formula}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-16">
-                    <div className="aspect-square rounded-xl bg-brand-border/20 border border-brand-border flex items-center justify-center text-4xl opacity-50 relative pointer-events-none overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-transparent" />
-                      {s.icon}
-                    </div>
-                    <Link to="/fragility-lab" className="btn btn-secondary !py-8 text-[10px] w-full">Open Lab Demo →</Link>
-                  </div>
-                </div>
-              </Card>
-            </section>
-          ))}
-
-          {/* Quiz Section */}
-          <section id="quiz" className="scroll-mt-80">
-            <Card className="p-32 border-brand-gold/30">
-              <div className="flex justify-between items-start mb-32">
-                <div>
-                  <Badge color="gold">Test Knowledge</Badge>
-                  <h2 className="text-2xl font-orbitron mt-8">Quick Quiz</h2>
-                </div>
-                {Object.keys(answers).length === QUIZ.length && (
-                  <div className="text-2xl font-orbitron text-brand-gold">{score} / {QUIZ.length}</div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-24">
-                {QUIZ.map((q, qi) => (
-                  <div key={qi} className="flex flex-col gap-12">
-                    <div className="text-sm font-semibold">{qi + 1}. {q.q}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {q.opts.map((opt, oi) => {
-                        const picked = answers[qi] === oi;
-                        const answered = qi in answers;
-                        const isCorrect = oi === q.ans;
-
-                        let stateClass = 'border-brand-border hover:border-brand-primary/40 text-text-secondary';
-                        if (answered) {
-                          if (isCorrect) stateClass = 'border-brand-green bg-brand-green/10 text-brand-green';
-                          else if (picked) stateClass = 'border-brand-red bg-brand-red/10 text-brand-red';
-                          else stateClass = 'border-brand-border text-text-muted opacity-50';
-                        }
-
-                        return (
-                          <button
-                            key={oi}
-                            onClick={() => answer(qi, oi)}
-                            className={`p-12 text-left text-xs rounded-xl border transition-all ${stateClass}`}
-                          >
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <AnimatePresence>
-                {Object.keys(answers).length === QUIZ.length && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-32 p-24 rounded-2xl bg-brand-gold/5 border border-brand-gold/20 text-center"
-                  >
-                    <h3 className="text-xl mb-8 font-orbitron text-brand-gold">
-                      {score === QUIZ.length ? 'Perfect Score! 🌟' : score >= 2 ? 'Great Job!' : 'Keep Learning!'}
-                    </h3>
-                    <p className="text-text-secondary text-sm mb-16">
-                      {score === QUIZ.length
-                        ? 'You have a solid grasp of quantum fragility fundamentals.'
-                        : 'Review the sections above to master the concepts you missed.'}
-                    </p>
-                    <button onClick={() => setAnswers({})} className="btn btn-secondary !py-8 text-[10px]">Retry Quiz</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Card>
-          </section>
+    <div className="max-w-4xl mx-auto py-6 sm:py-8 space-y-8">
+      {/* Header */}
+      <div className="space-y-1.5 border-b border-border pb-5">
+        <div className="text-[11px] font-mono uppercase tracking-wider text-primary font-semibold">
+          Curriculum Syllabus
         </div>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight">
+          Learn Quantum Computing
+        </h1>
+        <p className="text-xs sm:text-sm text-text-secondary max-w-2xl font-normal leading-relaxed">
+          An interactive, experiment-driven curriculum covering mathematical foundations, multi-qubit entanglement, standard algorithms, and real physical hardware.
+        </p>
+      </div>
+
+      {/* Modules List */}
+      <div className="space-y-4">
+        {V3_CURRICULUM.map((mod) => {
+          const isExpanded = expandedModule === mod.id;
+          const isAvailable = mod.status === 'available' && mod.lessons.length > 0;
+          const firstLesson = mod.lessons[0];
+
+          const lessonCounts = mod.lessons.reduce((acc, l) => {
+            acc[l.type] = (acc[l.type] || 0) + 1;
+            return acc;
+          }, {} as Record<LessonType, number>);
+
+          const countString = isAvailable
+            ? [
+                lessonCounts.learn ? `${lessonCounts.learn} concept${lessonCounts.learn > 1 ? 's' : ''}` : null,
+                lessonCounts.visualize ? `${lessonCounts.visualize} visual` : null,
+                lessonCounts.experiment ? `${lessonCounts.experiment} lab${lessonCounts.experiment > 1 ? 's' : ''}` : null,
+                lessonCounts.challenge ? `${lessonCounts.challenge} challenge` : null,
+              ]
+                .filter(Boolean)
+                .join(' • ')
+            : 'Curriculum in development';
+
+          const completedCount = mod.lessons.filter((l) => isCompleted(mod.id, l.id)).length;
+          const isAllCompleted = isAvailable && completedCount === mod.lessons.length;
+
+          return (
+            <div
+              key={mod.id}
+              className="rounded-xl border border-border bg-surface-primary shadow-sm overflow-hidden transition-all duration-150"
+            >
+              {/* Module Header Bar */}
+              <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1">
+                  <span className={`w-8 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-semibold shrink-0 mt-0.5 sm:mt-0 ${
+                    isAllCompleted
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-surface-secondary border-border text-text-muted'
+                  }`}>
+                    {isAllCompleted ? <CheckCircle2 className="w-4 h-4" /> : mod.number}
+                  </span>
+                  <div className="space-y-1 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-base font-semibold text-text-primary tracking-tight">
+                        {mod.title}
+                      </h2>
+                      {mod.badge && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-secondary border border-border text-text-muted">
+                          {mod.badge}
+                        </span>
+                      )}
+                      {!isAvailable && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5" />
+                          <span>Planned</span>
+                        </span>
+                      )}
+                      {completedCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                          {completedCount}/{mod.lessons.length} completed
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary">
+                      {mod.subtitle}
+                    </p>
+                    <div className="text-[11px] font-mono text-text-muted pt-0.5">
+                      {countString}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
+                  {isAvailable && (
+                    <button
+                      onClick={() => toggleModule(mod.id)}
+                      className="px-3 py-1.5 rounded-lg border border-border hover:bg-surface-secondary text-xs text-text-secondary flex items-center gap-1.5 transition-colors"
+                      aria-expanded={isExpanded}
+                    >
+                      <span>{isExpanded ? 'Hide Lessons' : 'View Lessons'}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  )}
+
+                  {isAvailable && firstLesson ? (
+                    <Link
+                      to={`/learn/${mod.id}/${firstLesson.id}`}
+                      className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <span>{completedCount > 0 ? 'Continue' : 'Start Module'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className="px-3.5 py-1.5 rounded-lg bg-border/60 text-text-muted text-xs cursor-not-allowed flex items-center gap-1"
+                    >
+                      <span>Coming Soon</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Module Expanded Details & Lesson Types */}
+              {isExpanded && isAvailable && (
+                <div className="px-5 sm:px-6 pb-6 pt-1 border-t border-border/60 space-y-4">
+                  <p className="text-xs text-text-secondary leading-relaxed pt-2">
+                    {mod.description}
+                  </p>
+
+                  {/* Visualized Lesson Journey List */}
+                  <div className="divide-y divide-border/60 rounded-xl border border-border bg-surface-secondary/40 overflow-hidden">
+                    {mod.lessons.map((lesson) => {
+                      const Icon = TYPE_ICONS[lesson.type];
+                      const style = TYPE_STYLES[lesson.type];
+                      const completed = isCompleted(mod.id, lesson.id);
+
+                      return (
+                        <Link
+                          key={lesson.id}
+                          to={`/learn/${mod.id}/${lesson.id}`}
+                          className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-surface-secondary transition-colors group block"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold border flex items-center gap-1 shrink-0 mt-0.5 ${style.bg} ${style.text} ${style.border}`}
+                            >
+                              <Icon className="w-2.5 h-2.5" />
+                              <span>{lesson.typeLabel}</span>
+                            </span>
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-text-primary group-hover:text-primary transition-colors">
+                                  {lesson.title}
+                                </span>
+                                <span className="text-[10px] font-mono text-text-muted">
+                                  &bull; {lesson.duration}
+                                </span>
+                                {completed && (
+                                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px]">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    <span>Done</span>
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-text-secondary">
+                                {lesson.summary}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <span className="text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                              <span>Open Lesson</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-};
-
-export default Learn;
+}

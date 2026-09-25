@@ -1,9 +1,39 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
 dist-server/
+
+# Environment secrets
 .env
 .env.local
+
+# Logs
 *.log
+
+# OS artifacts
 .DS_Store
 Thumbs.db
+
+# Vercel / deployment artifacts
 .vercel
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Python virtual environments
+backend/.venv/
+
+# Local SQLite database (runtime data, not source)
+quantum_lens.db
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Scratch / internal agent notes
+tasklist.md
+NOTES.md
