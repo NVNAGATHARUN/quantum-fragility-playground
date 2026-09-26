@@ -26,6 +26,12 @@ __pycache__/
 
 # Python virtual environments
 backend/.venv/
+.venv/
+.review-venv/
+
+# Local package-manager cache
+.npm-cache/
+.pip-tools-cache/
 
 # Local SQLite database (runtime data, not source)
 quantum_lens.db
@@ -35,5 +41,4 @@ quantum_lens.db
 .idea/
 
 # Scratch / internal agent notes
-tasklist.md
 NOTES.md

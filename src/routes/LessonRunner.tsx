@@ -181,7 +181,7 @@ export default function LessonRunner() {
   const TypeIcon = getLessonTypeIcon(lessonDef.type);
 
   return (
-    <div className="min-h-screen bg-surface-primary text-text-primary flex flex-col">
+    <div className="ql-lesson-reader min-h-screen bg-surface-primary text-text-primary flex flex-col">
       {/* Top Header / Breadcrumb */}
       <header className="sticky top-0 z-30 bg-surface-primary/90 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">

@@ -1,12 +1,9 @@
 import type { ModuleDef } from '../../types';
-
-export const m06StandardAlgorithms: ModuleDef = {
-  id: 'm06-standard-algorithms',
-  number: '06',
-  title: 'Standard Quantum Algorithms',
-  subtitle: 'Deutsch-Jozsa, Grover search, and the Quantum Fourier Transform',
-  description:
-    'Study the textbook algorithms that demonstrated provable quantum advantage over classical computation. Understand the oracle model, amplitude amplification, and period finding.',
-  status: 'planned',
-  lessons: [],
-};
+import { coreLesson } from '../coreLessonFactory';
+const moduleId = 'm06-standard-algorithms';
+const lessons = [
+  coreLesson({ id:'deutsch-jozsa', moduleId, title:'Deutsch–Jozsa and Phase Kickback', summary:'Reveal a promised global property with one coherent query.', concept:'Phase kickback records f(x) as signs on amplitudes. Final interference separates constant and balanced functions in the promise setting.', equation:'Uf|x⟩|−⟩ = (−1)^f(x) |x⟩|−⟩', equationLabel:'Phase kickback', misconception:'This is a promise-query result, not universal exponential acceleration.', prediction:'Which result identifies a constant oracle?', question:'What input-register result is expected?', options:[{key:'a',text:'All zeros'},{key:'b',text:'All ones'},{key:'c',text:'Uniform'},{key:'d',text:'No measurement'}], correctKey:'a', correctExplanation:'Constant signs recombine at all zeros.', labLink:'/explore/deutsch-jozsa', labLabel:'Deutsch–Jozsa walkthrough', reflection:'State the promise and resource comparison.' }),
+  coreLesson({ id:'grover-search', moduleId, title:'Grover Amplitude Amplification', summary:'Understand oracle and diffusion as repeated reflections.', concept:'Two reflections rotate amplitude toward marked states. Too many iterations rotate past the optimum.', equation:'kopt ≈ floor((π/4)√(N/M))', equationLabel:'Optimal iteration count', misconception:'Grover does not read every item from superposition.', prediction:'For N=4 and one target, how many iterations?', question:'Why can more iterations reduce success?', options:[{key:'a',text:'Rotation overshoots'},{key:'b',text:'Oracle stops'},{key:'c',text:'Qubits become classical'},{key:'d',text:'Database changes'}], correctKey:'a', correctExplanation:'Amplitude amplification is periodic rotation.', labLink:'/experiments/grover', labLabel:'Grover amplitude lab', reflection:'Explain the quadratic advantage precisely.' }),
+  coreLesson({ id:'qft', moduleId, title:'Quantum Fourier Transform', summary:'Read basis information as relative phase.', concept:'QFT maps basis amplitudes into a phase-encoded Fourier basis. Later interference reveals periodic structure.', equation:'QFT|x⟩ = (1/√N) Σk exp(2πixk/N)|k⟩', equationLabel:'Quantum Fourier transform', misconception:'A uniform histogram does not mean the input was lost.', prediction:'How do QFT outputs for |1⟩ and |2⟩ differ?', question:'Where is input information stored?', options:[{key:'a',text:'Only probabilities'},{key:'b',text:'Relative phases'},{key:'c',text:'Hidden classical register'},{key:'d',text:'Destroyed'}], correctKey:'b', correctExplanation:'The phase ramp carries x.', labLink:'/explore/qft', labLabel:'QFT phase-spectrum lab', reflection:'Why must period finding use interference?' }),
+];
+export const m06StandardAlgorithms: ModuleDef = { id:moduleId, number:'06', title:'Standard Quantum Algorithms', subtitle:'Deutsch–Jozsa, Grover and QFT', description:'Apply phase and interference reasoning to canonical algorithms without overstating their advantage.', status:'available', lessons };

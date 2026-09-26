@@ -209,12 +209,13 @@ export default function VQELab() {
                       </div>
                     </div>
                     <div className="p-3 rounded-lg bg-surface border border-brand-border/40">
-                      <div className="text-[10px] font-mono text-text-muted uppercase">Exact FCI Energy</div>
+                      <div className="text-[10px] font-mono text-text-muted uppercase">Fitted reference energy</div>
                       <div className="text-lg font-bold font-mono text-cyan-400 mt-1">
-                        {result.exact_fci_energy.toFixed(4)} <span className="text-xs text-text-muted">Ha</span>
+                        {result.exact_fci_energy.toFixed(4)} <span className="text-xs text-text-muted">Ha fitted reference</span>
                       </div>
                     </div>
                   </div>
+                  {result.model_provenance && <p className="mt-3 text-[10px] leading-relaxed text-text-muted">Model scope: {result.model_provenance}</p>}
 
                   <div className="mt-3 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs">
                     <span className="text-text-secondary">Error vs FCI:</span>
@@ -275,7 +276,7 @@ export default function VQELab() {
                         <div className="flex items-center gap-3">
                           <span className="text-emerald-300 font-bold">{pt.energy.toFixed(4)} Ha</span>
                           <span className="text-[10px] text-text-muted">
-                            ΔE = {(pt.energy - result.exact_fci_energy).toFixed(4)}
+                            ΔE(model) = {(pt.energy - result.exact_fci_energy).toFixed(4)}
                           </span>
                         </div>
                       </div>
@@ -296,7 +297,7 @@ export default function VQELab() {
                   Potential Energy Surface: E(R) Dissociation Profile
                 </h3>
                 <p className="text-xs text-text-secondary mt-1">
-                  Comparison between Exact FCI (Green), VQE (Teal dots), and Hartree-Fock (Red dashed). Notice how Hartree-Fock fails at large R.
+                  Comparison between the fitted teaching reference (green), independently optimized VQE model points (teal), and model Hartree-Fock baseline (red dashed).
                 </p>
               </div>
             </div>
@@ -306,7 +307,7 @@ export default function VQELab() {
                 <thead>
                   <tr className="border-b border-brand-border text-text-muted uppercase">
                     <th className="p-2.5">Bond R (Å)</th>
-                    <th className="p-2.5 text-emerald-400">Exact FCI (Ha)</th>
+                    <th className="p-2.5 text-emerald-400">Fitted reference (Ha)</th>
                     <th className="p-2.5 text-teal-300">VQE Simulation (Ha)</th>
                     <th className="p-2.5 text-rose-400">Hartree-Fock (Ha)</th>
                     <th className="p-2.5 text-amber-300">Correlation Energy</th>
@@ -409,8 +410,8 @@ export default function VQELab() {
 
               <h4 className="text-base font-orbitron font-bold text-cyan-400 pt-2">Fermionic to Qubit Mapping</h4>
               <p className="text-sm text-text-secondary leading-relaxed">
-                Using parity mapping with two Z₂ particle symmetries tapered out, the 4-spin-orbital H₂ Hamiltonian in the STO-3G basis
-                is reduced to an exact 2-qubit operator:
+                This lab uses a compact two-qubit Hamiltonian whose coefficients are fitted to an educational H₂ reference curve.
+                It preserves the VQE optimization structure without claiming an ab-initio parity mapping:
                 <code className="block my-2 p-3 rounded bg-black/40 border border-brand-border font-mono text-cyan-300">
                   H(R) = g₀ I + g₁ Z₀ + g₂ Z₁ + g₃ Z₀Z₁ + g₄ X₀X₁ + g₅ Y₀Y₁
                 </code>
@@ -420,7 +421,7 @@ export default function VQELab() {
               <p className="text-sm text-text-secondary leading-relaxed">
                 A single Slater determinant (|01⟩) forces both electrons into the same bonding spatial orbital σ_g².
                 At large bond distance R, this erroneously predicts a 50% probability of finding H⁺ + H⁻ ions rather than two neutral H· radicals!
-                VQE includes the double excitation |10⟩ (σ_u²), perfectly capturing dynamic electron correlation and reaching the correct dissociation limit.
+                The two-state ansatz adds the |10⟩ component and illustrates why a variational correlated model can improve on a single-determinant baseline. The plotted limit belongs to this fitted teaching model.
               </p>
             </Card>
           </div>

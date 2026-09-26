@@ -88,6 +88,21 @@ class Enrollment(Base):
     classroom = relationship("Classroom", back_populates="enrollments")
 
 
+class Assignment(Base):
+    """Instructor-issued learning activity with evidence derived from existing records."""
+    __tablename__ = "assignments"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    classroom_id = Column(String(36), ForeignKey("classrooms.id", ondelete="CASCADE"), nullable=False)
+    instructor_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    activity_type = Column(String(30), nullable=False)  # lesson | guided | challenge
+    activity_id = Column(String(200), nullable=False)
+    route = Column(String(300), nullable=False)
+    due_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+
+
 class SavedCircuit(Base):
     __tablename__ = "saved_circuits"
 

@@ -1,6 +1,8 @@
 """FastAPI Authentication Router and Dependency Inversion for Quantum Lens AI."""
 
 from datetime import datetime
+import os
+import secrets
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field
@@ -21,6 +23,7 @@ class UserSignup(BaseModel):
     password: str = Field(..., min_length=6, max_length=72, description="Password")
     full_name: str = Field(..., min_length=1, max_length=255, description="Full Name")
     role: str = Field(default="student", description="'student' or 'instructor'")
+    instructor_invite_code: Optional[str] = Field(default=None, max_length=128)
 
 
 class UserLogin(BaseModel):
@@ -103,6 +106,15 @@ async def signup(body: UserSignup, db: AsyncSession = Depends(get_db)):
     role = body.role.lower().strip()
     if role not in ["student", "instructor"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role must be 'student' or 'instructor'")
+    if role == "instructor":
+        configured_code = os.getenv("INSTRUCTOR_INVITE_CODE")
+        if not configured_code or not body.instructor_invite_code or not secrets.compare_digest(
+            body.instructor_invite_code, configured_code
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Instructor accounts require a valid administrator invite code",
+            )
 
     # Check for existing user
     normalized_email = body.email.lower().strip()

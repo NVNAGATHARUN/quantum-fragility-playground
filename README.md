@@ -3,13 +3,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/SIH_2026-Problem_Statement_26140-6366F1?style=for-the-badge&logo=target&logoColor=white" alt="SIH 26140 Badge" />
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge" />
-  <img src="https://img.shields.io/badge/Qiskit_Aer-0.17.2-6929C4?style=for-the-badge&logo=ibm&logoColor=white" alt="Qiskit Aer Badge" />
+  <img src="https://img.shields.io/badge/Qiskit_Aer-Simulation-6929C4?style=for-the-badge&logo=ibm&logoColor=white" alt="Qiskit Aer Badge" />
   <img src="https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI Badge" />
   <img src="https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React Badge" />
   <img src="https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Badge" />
   <img src="https://img.shields.io/badge/Three.js-WebGL_3D-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js Badge" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind Badge" />
-  <img src="https://img.shields.io/badge/Tests-76%2F76_Passing-10B981?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest Badge" />
+  <img src="https://img.shields.io/badge/CI-Backend_%2B_Frontend-10B981?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Badge" />
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Badge" />
 </p>
 
@@ -21,11 +21,11 @@ Developed specifically for **Smart India Hackathon (SIH 2026) — Problem Statem
 
 Standard quantum educational tools suffer from three fundamental deficiencies:
 1. **The Static Math Trap:** Textbooks present quantum mechanics as static state vectors and closed unitary operators ($U^\dagger U = I$), failing to convey how environmental thermal noise degrades coherence in NISQ-era quantum hardware.
-2. **The "Synthetic Data" Mirage:** Most web toys display pre-rendered SVG animations rather than solving density matrix master equations or executing real hardware-accurate simulators.
+2. **Evidence without ambiguity:** Learners need to distinguish circuit-derived results from simplified educational models instead of seeing unexplained numbers.
 3. **Absence of Grounded Pedagogy:** Platforms lack cognitive conflict intervention, student misconception diagnostics, and pedagogical tracking grounded in physics.
 
 **Quantum Lens AI** solves this through a **Three-Lens Grounded Learning Architecture**:
-- 📐 **Computation Lens:** Drag-and-drop circuit synthesis, bidirectional OpenQASM 2.0/3.0 sync, and live Qiskit code docking.
+- 📐 **Computation Lens:** Visual circuit synthesis, synchronized OpenQASM 3 editing for the documented supported subset, and Qiskit code export.
 - 🧮 **Mathematics Lens:** Exact statevector tracking, density matrix evolution ($\rho$), 3D Bloch sphere vector contraction, and Kraus operator decomposition.
 - ❄️ **Hardware / Physics Lens:** Interactive 3D Cryostat (Dilution Refrigerator) thermal stages ($300\text{ K} \to 15\text{ mK}$), transmon QPU coupling, and 60 FPS microwave DRAG pulse synthesis.
 
@@ -67,30 +67,30 @@ Standard quantum educational tools suffer from three fundamental deficiencies:
 ### 3. 🎛️ Universal Circuit Studio & Tri-Directional Code Dock (`/labs/studio`)
 - **Drag-and-Drop Quantum Workbench:** Flexible circuit canvas supporting universal gate sets:
   - Single-qubit unitaries: $H, X, Y, Z, S, T, R_x(\theta), R_y(\theta), R_z(\theta)$
-  - Multi-qubit entangling gates: $\text{CNOT}, \text{CZ}, \text{SWAP}, \text{Toffoli}$
-- **Tri-Directional Synchronization:** Changes in the visual diagram instantaneously update and cross-compile to:
-  1. **OpenQASM 2.0 / 3.0** representation.
-  2. **IBM Qiskit (Python)** executable scripts.
+  - Multi-qubit entangling gates: $\text{CNOT}, \text{CZ}, \text{SWAP}$
+- **Code Synchronization:** Visual edits update generated code; valid edits to the supported OpenQASM 3 unitary subset can be applied back to the canvas:
+  1. **OpenQASM 3.0** representation.
+  2. **IBM Qiskit (Python)** export.
   3. Canonical AST Intermediate Representation (IR).
 
 ### 4. 🚀 Comprehensive Quantum Algorithm Suite (`/explore`)
 - **Grover's Search Algorithm (`/explore/grover`):** Step-by-step geometric state vector reflection, oracle phase inversion, and amplitude amplification iterations.
-- **Variational Quantum Eigensolver - VQE (`/explore/vqe`):** Molecular Hydrogen ($H_2$) potential energy surface dissociation curve calculation with classical parameter optimization.
+- **Variational Quantum Eigensolver - VQE (`/explore/vqe`):** A clearly labelled fitted two-qubit $H_2$ teaching Hamiltonian with Aer Pauli sampling and classical parameter optimization; it is not an ab-initio chemistry result.
 - **Quantum Approximate Optimization Algorithm - QAOA (`/explore/qaoa`):** Max-Cut graph bipartition with interactive 2D $(\gamma, \beta)$ energy landscape contour heatmaps.
 - **Quantum Fourier Transform - QFT (`/explore/qft`):** Frequency-domain phase rotation decomposition and period finding.
 - **Quantum Teleportation (`/explore/teleportation`):** 3-qubit teleportation protocol demonstrating Bell-state measurement and classical feed-forward Pauli correction.
-- **Visual QKD Protocol (`/explore/qkd`):** BB84 and E91 quantum key exchange simulation with eavesdropper (Eve) interception slider and 11% Quantum Bit Error Rate (QBER) security threshold.
+- **Visual QKD Protocol (`/explore/qkd`):** BB84 intercept-resend simulation with eavesdropper (Eve) controls and an explicitly presented 11% teaching threshold.
 - **Deutsch-Jozsa Algorithm (`/explore/deutsch-jozsa`):** Phase kickback oracle verification distinguishing constant from balanced functions in a single evaluation.
 
-### 5. ☀️ / 🌙 Human-Centric Dual Theme System
-- Complete tokenized CSS variable architecture supporting both high-contrast Dark Mode and fully optimized **Bright / Light Mode**.
-- Zero washed-out text: dynamically tailored typography, contrast ratios exceeding WCAG AAA standards, high-legibility cards, and responsive ambient gradients.
+### 5. 🌙 Consistent Dark Learning Workspace
+- Tokenized navy/blue interface shared across lessons, labs, Studio, challenges and analytics.
+- Responsive layouts and semantic controls are implemented; a formal WCAG audit remains on the release checklist.
 
 ---
 
 ## 🔬 Mathematical Physics & Open Quantum Systems Engine
 
-Unlike superficial educational tools that display hardcoded animations, **Quantum Lens AI** executes rigorous analytical density matrix linear algebra and Qiskit Aer simulation kernels.
+Core circuit results execute through Qiskit Aer. Cirq and PennyLane use independent native adapters for the supported unitary CircuitIR subset. Analytical noise and network/chemistry teaching models are explicitly labelled with provenance in their results.
 
 ### Density Matrix Dynamics & Kraus Representation
 An initial density operator $\rho(0)$ evolves under non-unitary environmental channels via the Kraus representation:
@@ -120,7 +120,7 @@ The engine continuously verifies compliance, preventing impossible unphysical tr
 ```mermaid
 flowchart TB
     subgraph Client ["Client Tier (React 18 + Vite + Three.js)"]
-        UI["High-Contrast UI (Bright/Dark Theme)"]
+        UI["High-Contrast Dark Learning Workspace"]
         Three["Three.js 3D Canvas (Bloch Sphere & Cryostat)"]
         Dock["Circuit Code Dock (QASM / Qiskit Sync)"]
         Audio["Web Audio Sonification Engine"]
@@ -129,13 +129,13 @@ flowchart TB
 
     subgraph State ["Client State & Engine Layer"]
         SimHook["useTimeEvolution (Analytical Density Matrix)"]
-        Mastery["useLessonProgress (BKT Mastery Model)"]
+        Mastery["Server-Graded Attempts & Recommendations"]
         StudioState["Circuit AST & Canvas State"]
     end
 
     subgraph Backend ["Server Tier (FastAPI + Python 3.11)"]
-        API["FastAPI REST & WebSocket Gateway"]
-        QiskitSim["Qiskit Aer 0.17.2 Simulation Kernel"]
+        API["FastAPI REST Gateway"]
+        QiskitSim["Qiskit Aer + Native Cirq/PennyLane Adapters"]
         IRValidator["Circuit Semantic IR & Gate Registry"]
         Pedagogy["Misconception Engine & Heatmap Aggregator"]
         DB[(SQLite / SQLAlchemy Models)]
@@ -169,7 +169,7 @@ flowchart TB
 | `/explore/vqe` | `VQE.tsx` | Variational Quantum Eigensolver for $H_2$ molecular ground state energy curve. |
 | `/explore/qaoa` | `QAOA.tsx` | Quantum Approximate Optimization Algorithm with 2D Max-Cut energy landscape. |
 | `/explore/qft` | `QFT.tsx` | Quantum Fourier Transform phase-kickback and frequency state representations. |
-| `/explore/qkd` | `VisualQKD.tsx` | BB84 & E91 Quantum Key Distribution with interactive eavesdropping detection. |
+| `/explore/qkd` | `VisualQKD.tsx` | BB84 Quantum Key Distribution with interactive eavesdropping detection. |
 | `/explore/teleportation`| `Teleportation.tsx` | Quantum teleportation protocol with Bell measurement and feed-forward corrections. |
 | `/explore/deutsch-jozsa`| `DeutschJozsa.tsx` | Oracle evaluation demonstrating exponential query complexity separation. |
 | `/learn` | `Learn.tsx` | Modular curriculum with Dirac notation, unitary matrices, and measurement primers. |
@@ -179,7 +179,7 @@ flowchart TB
 
 ## 🧠 Cognitive Mastery & Instructor Analytics
 
-Quantum Lens AI incorporates a complete **Bayesian Knowledge Tracing (BKT)** educational engine:
+Quantum Lens AI includes a BKT research module, while the learner-facing authoritative mastery score is deliberately simpler and auditable: it is recomputed from persisted, server-graded guided checkpoints and challenges.
 
 ### 1. The 8 Canonical Misconceptions (M01–M08)
 - **M01: Superposition as Classical Ignorance** (Assuming qubit is simply in state 0 or 1 with unknown probability).
@@ -192,7 +192,7 @@ Quantum Lens AI incorporates a complete **Bayesian Knowledge Tracing (BKT)** edu
 - **M08: Decoherence as Gate Faults** (Confusing coherent unitary errors with non-unitary environmental entangling decay).
 
 ### 2. Instructor Heatmap & Remediation Dispatch
-Instructors receive a live, color-coded $8 \times N$ cohort matrix showing exactly where students hold misconceptions. Clicking any cell automatically dispatches a targeted **Cognitive Conflict Lab** that challenges the student's incorrect intuition through guided prediction experiments.
+Instructors receive a color-coded cohort misconception view derived from persisted evidence. They can inspect remediation context and assign lessons, guided checkpoints, or challenges with due dates; completion is inferred from each learner's server record.
 
 ---
 
@@ -232,7 +232,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 # Install high-performance quantum simulation dependencies
-pip install -r requirements.txt
+pip install -r requirements.lock
 ```
 
 ### 4. Run the Full Stack Locally
@@ -255,63 +255,62 @@ Access the interactive FastAPI Swagger API documentation at **`http://127.0.0.1:
 
 ---
 
-## 🐳 Production Containerization (Docker)
+## 🐳 Containerized Deployment Baseline
 
-Quantum Lens AI is fully containerized with production-grade multi-stage Docker builds and an Nginx reverse proxy:
+Quantum Lens AI includes local full-stack Docker Compose configuration with persistent SQLite storage and required production secrets:
 
 ```bash
 # Build and run the entire platform with one command
 docker-compose up --build -d
 ```
 
-- **Frontend Application:** `http://localhost`
+- **Frontend Application:** `http://localhost:3000`
 - **Backend API & Swagger:** `http://localhost:8000`
 
 ---
 
 ## 🧪 Automated Test Verification
 
-The platform maintains a strict zero-regression policy with **76 comprehensive automated backend tests** covering the Qiskit simulation kernel, Lindblad bound enforcement, circuit IR validation, and pedagogical misconception detection:
+CI installs from clean dependency manifests, runs the backend suite, runs Circuit Studio regression tests, and compiles the production frontend. To reproduce the backend checks locally:
 
 ```powershell
 # Run the automated backend test suite
 backend\.venv\Scripts\python.exe -m pytest backend/tests -v -o pythonpath=backend
 ```
 
-```
-============================== test session starts ==============================
-collected 76 items
-
-backend/tests/test_ai_mentor.py ..........                               [ 13%]
-backend/tests/test_api_endpoints.py ............                         [ 28%]
-backend/tests/test_auth_and_db.py ........                               [ 39%]
-backend/tests/test_challenges_api.py ......                              [ 47%]
-backend/tests/test_circuit_ir_api.py ........                            [ 57%]
-backend/tests/test_fragility_numerical.py .........                      [ 69%]
-backend/tests/test_misconceptions.py .......                             [ 78%]
-backend/tests/test_pedagogy_engine.py ........                           [ 89%]
-backend/tests/test_qaoa_vqe.py ......                                    [ 97%]
-backend/tests/test_quantum_engine.py ..                                  [100%]
-
-============================== 76 passed in 11.84s ==============================
-```
+The exact count is intentionally not hard-coded here; the latest CI run is the source of truth.
 
 ---
 
-## 📊 Competitive Benchmark Matrix (SIH PS 26140)
+## 📊 PS 26140 Capability Checklist
 
-| Feature / Dimension | IBM Quantum Composer | Quirk | Typical EdTech | ⚛️ **Quantum Lens AI (Ours)** |
-| :--- | :---: | :---: | :---: | :---: |
-| **Real Open Quantum System Simulation** | ❌ (Ideal Unitary only) | ❌ (Ideal Unitary only) | ❌ (Pre-rendered video) | ✅ **Full Kraus Density Matrix ($\rho$) Engine** |
-| **Lindblad Bound ($T_2 \le 2T_1$) Enforcement**| ❌ | ❌ | ❌ | ✅ **Live Constraint Compliance Checking** |
-| **Interactive 3D Hardware Cryostat ($15\text{ mK}$)**| ❌ | ❌ | ❌ | ✅ **6-Stage Thermal Attenuation & Transmon QPU**|
-| **DRAG Microwave Pulse Synthesizer** | ❌ | ❌ | ❌ | ✅ **60 FPS Interactive Pulse Canvas** |
-| **Cognitive Conflict & Misconception Matrix**| ❌ | ❌ | ❌ | ✅ **Predict-Observe-Remediate (M01–M08)** |
-| **State Sonification (Auditory Feedback)** | ❌ | ❌ | ❌ | ✅ **Real-Time Entropy Distortion Synthesis** |
-| **Tri-Directional Code Dock** | ⚠️ (Read-only QASM) | ❌ | ❌ | ✅ **Interactive Sync (Canvas ↔ QASM ↔ Qiskit)** |
-| **Instructor Cohort Heatmap & Diagnostics** | ❌ | ❌ | ⚠️ (Generic quiz scores) | ✅ **Live 8×N Misconception Matrix + Remediation**|
-| **Human-Centric High-Contrast Dual Theme** | ⚠️ (Dark only) | ❌ (Basic white) | ⚠️ (Basic) | ✅ **Custom Dual Palette (Dark & Bright Mode)** |
-| **Local Offline & Docker Deployment** | ❌ (Cloud-dependent) | ✅ | ❌ | ✅ **100% Offline Resilience + Docker Compose** |
+The table below records this repository's implemented capabilities. Competitor claims were removed because they require a dated, reproducible external evaluation.
+
+| Feature / Dimension | Status |
+| :--- | :---: |
+| Kraus density-matrix fragility simulation | Implemented and numerically tested |
+| Lindblad constraint guidance | Implemented in the fragility workflow |
+| Visual circuit + supported OpenQASM editing | Implemented |
+| Qiskit Aer execution | Implemented |
+| Independent native Cirq and PennyLane execution | Implemented for the supported unitary CircuitIR subset with phase-sensitive conformance tests |
+| Guided labs and phase-sensitive challenges | Server-verified and persisted for signed-in learners |
+| AI tutoring | Deterministic grounded fallback plus optional Gemini; response provenance exposed |
+| Instructor analytics | Derived from persisted verified attempts and misconception evidence |
+| Docker deployment | Local Compose configuration provided; production load testing remains pending |
+
+### Delivery Table (Expected Deliverables)
+
+| PS 26140 deliverable | Repository evidence | Current status |
+| :--- | :--- | :---: |
+| Structured quantum curriculum | M01–M06 lessons with prediction, misconception, lab and checkpoint blocks | Implemented core path |
+| Graphical and code circuit design | Circuit Studio with visual gates, history, parameter editing and supported OpenQASM import | Implemented subset |
+| Multiple simulator backends | Qiskit Aer plus native Cirq and PennyLane parity adapters | Implemented simulator path |
+| State and result visualization | Bloch sphere, amplitudes, probabilities, counts, density/noise views | Implemented |
+| AI tutoring | Circuit-aware deterministic tutor plus optional Gemini, with provenance | Implemented; eval expansion pending |
+| Assessment and coding challenges | Server-graded guided checkpoints and adversarial phase-sensitive challenges | Implemented core path |
+| Progress and personalization | Verified evidence summary and reasoned next-activity recommendation | Implemented |
+| Instructor workflow | Classrooms, roster evidence and due-date assignments | Implemented core path |
+| Real quantum hardware | No production hardware connector is claimed | Future integration |
 
 ---
 

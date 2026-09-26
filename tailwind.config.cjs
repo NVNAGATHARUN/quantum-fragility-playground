@@ -5,6 +5,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        primary: 'var(--ql-accent, #28715a)',
+        border: 'var(--ql-line, #e1e6df)',
+        foreground: 'var(--ql-ink, #21312c)',
+        'muted-foreground': 'var(--ql-muted, #6b7771)',
+        'surface-primary': 'var(--ql-panel, #ffffff)',
+        'surface-secondary': 'var(--ql-soft, #f0f3ed)',
+        'primary-foreground': '#ffffff',
         background: 'var(--color-background, #020209)',
         surface: 'var(--color-surface, #080818)',
         'surface-raised': 'var(--color-surface-raised, #0d0d24)',
@@ -13,10 +20,10 @@ module.exports = {
           border: 'var(--color-brand-border, rgba(99, 102, 241, 0.15))',
           'border-hover': 'var(--color-brand-border-hover, rgba(99, 102, 241, 0.40))',
           primary: '#6366f1',
-          cyan: '#22d3ee',
-          purple: '#a78bfa',
-          green: '#10b981',
-          gold: '#f59e0b',
+          cyan: '#93c5fd',
+          purple: '#a5b4fc',
+          green: '#818cf8',
+          gold: '#a5b4fc',
           red: '#ef4444',
           hover: '#4f46e5',
           soft: 'rgba(99, 102, 241, 0.15)',

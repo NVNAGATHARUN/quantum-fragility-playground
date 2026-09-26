@@ -57,6 +57,8 @@ class MentorResponse(BaseModel):
     debugFindings: Optional[List[str]] = None
     optimizationDeltas: Optional[Dict[str, Any]] = None
     isValidated: bool = True
+    source: Literal["deterministic", "gemini"] = "deterministic"
+    validationScope: str = "Circuit syntax and supported-gate semantics validated; prose is instructional guidance."
 
 
 # ── Canonical Validated Circuit Presets ────────────────────────────────────────
@@ -580,10 +582,10 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
             suggested_action = "Review the optimized gate schedule and apply changes to your workspace."
         else:
             reply = (
-                "**ARIA Quantum Circuit Optimizer:** Your circuit is already in canonical irreducible form. "
-                "No redundant self-inverses, adjacent cancellations, or commuting rotations detected."
+                "**ARIA Quantum Circuit Optimizer:** No supported local rewrite was found. "
+                "The current pass checks adjacent self-inverse cancellations and a limited set of rotation rewrites; it does not prove global optimality."
             )
-            suggested_action = "Your circuit is optimal for depth and gate count."
+            suggested_action = "Keep this circuit, or compare it with a hardware-aware transpiler before claiming optimality."
 
         return MentorResponse(
             reply=reply,
@@ -820,8 +822,8 @@ def ask_mentor(req: MentorRequest) -> MentorResponse:
                     if val.valid:
                         suggested_circuit_obj = c_obj
                     else:
-                        # Fallback if LLM made a semantic error
-                        suggested_circuit_obj = CANONICAL_CIRCUITS["bell"]["circuit"]
+                        # Never silently replace a bad answer with an unrelated circuit.
+                        suggested_circuit_obj = None
                 except Exception:
                     suggested_circuit_obj = None
 
@@ -836,6 +838,12 @@ def ask_mentor(req: MentorRequest) -> MentorResponse:
                 debugFindings=parsed.get("debugFindings"),
                 optimizationDeltas=None,
                 isValidated=True,
+                source="gemini",
+                validationScope=(
+                    "Suggested circuit passed the canonical IR validator."
+                    if suggested_circuit_obj else
+                    "No circuit artifact was accepted; prose was grounded with server simulation context."
+                ),
             )
 
     except Exception:

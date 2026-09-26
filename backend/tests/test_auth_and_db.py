@@ -46,17 +46,30 @@ def test_auth_signup_student(client):
     assert data["user"]["role"] == "student"
 
 
-def test_auth_signup_instructor(client):
+def test_auth_signup_instructor(client, monkeypatch):
     """Test instructor signup with valid instructor role."""
+    monkeypatch.setenv("INSTRUCTOR_INVITE_CODE", "test-instructor-invite")
     res = client.post("/api/v1/auth/signup", json={
         "email": "dr_physicist@example.edu",
         "password": "instructor_pass_456",
         "full_name": "Dr. Maya Raman",
-        "role": "instructor"
+        "role": "instructor",
+        "instructor_invite_code": "test-instructor-invite",
     })
     assert res.status_code == 201
     data = res.json()
     assert data["user"]["role"] == "instructor"
+
+
+def test_public_signup_cannot_self_assign_instructor(client, monkeypatch):
+    monkeypatch.setenv("INSTRUCTOR_INVITE_CODE", "test-instructor-invite")
+    res = client.post("/api/v1/auth/signup", json={
+        "email": "unauthorized_instructor@example.edu",
+        "password": "instructor_pass_456",
+        "full_name": "Unauthorized Instructor",
+        "role": "instructor",
+    })
+    assert res.status_code == 403
 
 
 def test_auth_duplicate_email_rejected(client):
@@ -109,6 +122,40 @@ def test_auth_me_protected_route(client):
     me_res = client.get("/api/v1/auth/me", headers=headers)
     assert me_res.status_code == 200
     assert me_res.json()["email"] == "student_alpha@example.edu"
+
+
+def test_challenge_grade_is_persisted_from_server_assessment(client):
+    token = client.post("/api/v1/auth/login", json={
+        "email": "student_alpha@example.edu",
+        "password": "quantum_password_123",
+    }).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    circuit = {
+        "schemaVersion": "1.0",
+        "qubits": 3,
+        "classicalBits": 3,
+        "operations": [
+            {"gate": "H", "targets": [0], "step": 0},
+            {"gate": "CX", "controls": [0], "targets": [1], "step": 1},
+            {"gate": "CX", "controls": [1], "targets": [2], "step": 2},
+        ],
+    }
+    graded = client.post(
+        "/api/v1/challenges/ghz-3qubit/evaluate",
+        json={"circuit": circuit},
+        headers=headers,
+    )
+    assert graded.status_code == 200
+    assert graded.json()["passed"] is True
+
+    progress = client.get("/api/v1/progress/summary", headers=headers)
+    assert progress.status_code == 200
+    attempt = progress.json()["recent_attempts"][0]
+    assert attempt["source"] == "server_assessment"
+    assert attempt["challenge_id"] == "ghz-3qubit"
+    assert attempt["score"] == 100.0
+    assert attempt["was_correct"] is True
+    assert progress.json()["overall_mastery"] == 1.0
 
 
 def test_rbac_classroom_creation_and_enrollment(client):

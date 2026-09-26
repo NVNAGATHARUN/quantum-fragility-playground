@@ -31,6 +31,10 @@ export interface StudentProgressSummary {
   }>;
   detected_misconceptions: MisconceptionSummaryItem[];
   enrolled_classrooms_count: number;
+  verified_attempts: number;
+  passed_attempts: number;
+  competency_evidence: Array<{ domain: string; score: number; attempts: number; passed: number; evidence: string }>;
+  recommendation: { title: string; reason: string; route: string; evidence: string };
 }
 
 export async function fetchProgressSummary(token?: string | null): Promise<StudentProgressSummary | null> {

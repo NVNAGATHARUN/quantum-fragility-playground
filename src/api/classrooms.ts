@@ -19,6 +19,16 @@ export interface EnrolledStudent {
   enrolled_at: string;
   overall_mastery: number;
   circuits_count: number;
+  verified_attempts: number;
+  passed_attempts: number;
+  average_verified_score: number;
+  latest_verified_at?: string | null;
+}
+
+export interface ClassroomAssignment {
+  id: string; title: string; activity_type: 'lesson' | 'guided' | 'challenge'; activity_id: string;
+  route: string; due_at?: string | null; created_at: string; completed_count: number; student_count: number;
+  current_user_completed?: boolean;
 }
 
 export interface MisconceptionPrevalenceItem {
@@ -126,5 +136,17 @@ export async function enrollInClassroom(
     const err = await res.json().catch(() => ({ detail: 'Enrollment failed' }));
     throw new Error(err.detail || 'Enrollment failed');
   }
+  return res.json();
+}
+
+export async function fetchAssignments(token: string, classId: string): Promise<ClassroomAssignment[]> {
+  const res = await fetch(`/api/v1/classrooms/${classId}/assignments`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error('Failed to load assignments');
+  return res.json();
+}
+
+export async function createAssignment(token: string, classId: string, body: Omit<ClassroomAssignment, 'id'|'created_at'|'completed_count'|'student_count'|'current_user_completed'>): Promise<ClassroomAssignment> {
+  const res = await fetch(`/api/v1/classrooms/${classId}/assignments`, { method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`}, body:JSON.stringify(body) });
+  if (!res.ok) throw new Error('Failed to create assignment');
   return res.json();
 }

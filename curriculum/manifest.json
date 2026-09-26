@@ -37,33 +37,33 @@
     {
       "id": "m04-superposition-interference",
       "title": "Superposition, Phase & Interference",
-      "status": "planned",
+      "status": "available",
       "lessons": [
-        { "id": "global-vs-relative-phase", "content_version": null, "status": "planned" },
-        { "id": "mach-zehnder",             "content_version": null, "status": "planned" },
-        { "id": "interference-experiment",  "content_version": null, "status": "planned" },
-        { "id": "phase-challenge",          "content_version": null, "status": "planned" }
+        { "id": "global-vs-relative-phase", "content_version": "1.0.0", "status": "available" },
+        { "id": "mach-zehnder",             "content_version": "1.0.0", "status": "available" },
+        { "id": "interference-experiment",  "content_version": "1.0.0", "status": "available" },
+        { "id": "phase-challenge",          "content_version": "1.0.0", "status": "available" }
       ]
     },
     {
       "id": "m05-entanglement-correlation",
       "title": "Entanglement & Correlation",
-      "status": "planned",
+      "status": "available",
       "lessons": [
-        { "id": "cnot-entangler",        "content_version": null, "status": "planned" },
-        { "id": "bell-states",           "content_version": null, "status": "planned" },
-        { "id": "correlation-inspector", "content_version": null, "status": "planned" },
-        { "id": "teleportation-challenge", "content_version": null, "status": "planned" }
+        { "id": "cnot-entangler",        "content_version": "1.0.0", "status": "available" },
+        { "id": "bell-states",           "content_version": "1.0.0", "status": "available" },
+        { "id": "correlation-inspector", "content_version": "1.0.0", "status": "available" },
+        { "id": "teleportation-challenge", "content_version": "1.0.0", "status": "available" }
       ]
     },
     {
       "id": "m06-standard-algorithms",
       "title": "Standard Quantum Algorithms",
-      "status": "planned",
+      "status": "available",
       "lessons": [
-        { "id": "deutsch-jozsa", "content_version": null, "status": "planned" },
-        { "id": "grover-search", "content_version": null, "status": "planned" },
-        { "id": "qft",           "content_version": null, "status": "planned" }
+        { "id": "deutsch-jozsa", "content_version": "1.0.0", "status": "available" },
+        { "id": "grover-search", "content_version": "1.0.0", "status": "available" },
+        { "id": "qft",           "content_version": "1.0.0", "status": "available" }
       ]
     },
     {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, PageHeader, SectionHeader, Badge, Divider } from '../components/UI';
 import {
@@ -85,17 +86,20 @@ export default function StudentProgress() {
   const {
     simulatedCircuitsCount,
     resolvedMisconceptions,
-    competencyData,
     cognitiveDeltaTrend,
-    overallMastery,
     meanTVD,
-    isLoading: isSessionLoading,
-    refreshSession,
   } = useQuantumSession();
 
   const { user, token } = useAuth();
   const [dbProgress, setDbProgress] = useState<StudentProgressSummary | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const verifiedMastery = (dbProgress?.overall_mastery ?? 0) * 100;
+  const verifiedCompetencyData = dbProgress?.competency_evidence.map(item => ({
+    domain: item.domain,
+    score: item.score,
+    fullMark: 100,
+    derivation: `${item.evidence} · ${item.passed}/${item.attempts} passed`,
+  })) ?? [];
 
   const loadDbProgress = async () => {
     if (token) {
@@ -110,18 +114,16 @@ export default function StudentProgress() {
 
   const handleReevaluate = async () => {
     setIsRefreshing(true);
-    await refreshSession();
     await loadDbProgress();
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // Determine concept mastery from verified sessions or db misconceptions
+  // Authoritative concept status comes only from persisted server evidence.
   const getConceptStatus = (miscId: string) => {
-    const isResolvedInSession = resolvedMisconceptions.some(m => m.id === miscId);
     const isResolvedInDb = dbProgress?.detected_misconceptions.some(
       m => m.misconception_id === miscId && m.status === 'resolved'
     );
-    if (isResolvedInSession || isResolvedInDb) {
+    if (isResolvedInDb) {
       return { status: 'Mastered', color: 'green' as const, badge: 'Verified Mastered' };
     }
     const isDetectedInDb = dbProgress?.detected_misconceptions.some(
@@ -140,7 +142,7 @@ export default function StudentProgress() {
         <div>
           <PageHeader
             title="Student Quantum Competency Profile"
-            subtitle="Database-backed learner progress, 6-domain skill radar, and live misconception resolution ledger."
+            subtitle="Server-verified mastery evidence with clearly separated browser-session diagnostics."
             icon="🎓"
           />
           <div className="flex items-center gap-8 mt-6 flex-wrap">
@@ -148,10 +150,10 @@ export default function StudentProgress() {
               PS 26140 • Learner Progress Tracking
             </span>
             <span className="text-[11px] font-mono px-8 py-3 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 font-bold">
-              Database-Backed Empirical Progress
+              Server-Verified Mastery
             </span>
             <span className="text-[11px] font-mono text-text-muted">
-              Zero synthetic placeholders — all metrics stem from verified database attempts
+              Mastery and recommendations use graded server evidence; session diagnostics are labelled separately
             </span>
           </div>
         </div>
@@ -159,22 +161,34 @@ export default function StudentProgress() {
         <div className="flex items-center gap-12 self-end">
           <button
             onClick={handleReevaluate}
-            disabled={isRefreshing || isSessionLoading}
+            disabled={isRefreshing}
             className="btn btn-ghost !px-14 !py-8 border border-brand-primary/30 hover:bg-brand-primary/10 flex items-center gap-8 rounded-xl text-xs font-orbitron font-bold transition-all"
           >
             <RefreshCw className={`w-14 h-14 text-brand-primary ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{isRefreshing ? 'Re-Evaluating Ledger...' : 'Sync Database Progress'}</span>
           </button>
-          <Badge color="green">Overall Mastery: {overallMastery.toFixed(1)}%</Badge>
-          <Badge color="purple">Cognitive Delta: {meanTVD.toFixed(3)} TVD</Badge>
+          <Badge color="green">Verified mastery: {verifiedMastery.toFixed(1)}%</Badge>
+          <Badge color="purple">Verified attempts: {dbProgress?.verified_attempts ?? 0}</Badge>
         </div>
       </div>
 
-      {/* Top Stat Cards (All Real Metrics) */}
+      {dbProgress?.recommendation && (
+        <Card className="p-20 border-brand-primary/40 bg-brand-primary/5 flex flex-col md:flex-row md:items-center gap-16 justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-brand-primary font-bold">Evidence-based next activity</div>
+            <h2 className="text-xl font-bold text-text-primary mt-2">{dbProgress.recommendation.title}</h2>
+            <p className="text-sm text-text-secondary mt-2">{dbProgress.recommendation.reason}</p>
+            <p className="text-[10px] font-mono text-text-muted mt-2">Evidence: {dbProgress.recommendation.evidence}</p>
+          </div>
+          <Link to={dbProgress.recommendation.route} className="btn btn-primary whitespace-nowrap">Start recommended activity <ArrowUpRight className="w-4 h-4" /></Link>
+        </Card>
+      )}
+
+      {/* Top Stat Cards — authoritative and session-only evidence are labelled separately. */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-16">
         <Card className="p-20 flex flex-col gap-8 bg-surface/50 border-brand-border">
           <div className="flex justify-between items-center text-text-muted text-xs font-orbitron uppercase">
-            <span>Resolved Misconceptions</span>
+            <span>Session Resolutions</span>
             <CheckCircle2 className="w-16 h-16 text-emerald-400" />
           </div>
           <div className="text-3xl font-mono font-bold text-text-primary">
@@ -183,21 +197,21 @@ export default function StudentProgress() {
           <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-4">
             <TrendingUp className="w-12 h-12" />
             <span>
-              {resolvedMisconceptions.map(m => m.id).join(', ') || 'None yet (complete Cognitive Conflict Labs)'}
+              {resolvedMisconceptions.map(m => m.id).join(', ') || 'Browser session only · none yet'}
             </span>
           </div>
         </Card>
 
         <Card className="p-20 flex flex-col gap-8 bg-surface/50 border-brand-border">
           <div className="flex justify-between items-center text-text-muted text-xs font-orbitron uppercase">
-            <span>Average Cognitive Delta</span>
+            <span>Session Cognitive Delta</span>
             <Target className="w-16 h-16 text-brand-cyan" />
           </div>
           <div className="text-3xl font-mono font-bold text-brand-cyan font-mono">
             {meanTVD.toFixed(3)} TVD
           </div>
           <div className="text-[11px] text-text-secondary font-mono">
-            <span>Target ≤ 0.100 (Total Variation Distance)</span>
+            <span>Browser session · target ≤ 0.100 TVD</span>
           </div>
         </Card>
 
@@ -210,7 +224,7 @@ export default function StudentProgress() {
             {dbProgress?.circuits_count ?? simulatedCircuitsCount}
           </div>
           <div className="text-[11px] text-text-secondary font-mono">
-            <span>{dbProgress ? 'Database verified saved circuits' : 'Live session simulation runs'}</span>
+            <span>{dbProgress ? 'Saved in the server database' : 'Browser-session simulation runs'}</span>
           </div>
         </Card>
 
@@ -220,18 +234,18 @@ export default function StudentProgress() {
             <Award className="w-16 h-16 text-brand-gold" />
           </div>
           <div className="text-xl font-orbitron font-bold text-brand-gold">
-            {overallMastery === 0
+            {verifiedMastery === 0
               ? 'Diagnostic Pending'
-              : overallMastery > 90
+              : verifiedMastery > 90
               ? 'Level 4 Master'
-              : overallMastery > 75
+              : verifiedMastery > 75
               ? 'Level 3 Scholar'
-              : overallMastery > 50
+              : verifiedMastery > 50
               ? 'Level 2 Practitioner'
               : 'Level 1 Novice'}
           </div>
           <div className="text-[11px] text-text-secondary font-mono">
-            <span>{overallMastery === 0 ? 'Awaiting first laboratory experiment' : 'QRACE Empirical Standard'}</span>
+            <span>{verifiedMastery === 0 ? 'Awaiting first verified assessment' : 'Derived from server-graded evidence'}</span>
           </div>
         </Card>
       </div>
@@ -241,12 +255,12 @@ export default function StudentProgress() {
         {/* Competency Radar */}
         <Card className="p-24 flex flex-col gap-16">
           <div className="flex justify-between items-center">
-            <SectionHeader title="6-Domain Quantum Competency Radar" />
-            <span className="text-[10px] font-mono text-brand-primary">Physics-Derived Mastery</span>
+            <SectionHeader title="Server Evidence by Domain" />
+            <span className="text-[10px] font-mono text-brand-primary">Graded Attempt Evidence</span>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={competencyData}>
+              <RadarChart data={verifiedCompetencyData}>
                 <PolarGrid stroke="rgba(255,255,255,0.1)" />
                 <PolarAngleAxis dataKey="domain" stroke="var(--color-text-secondary)" fontSize={11} />
                 <PolarRadiusAxis domain={[0, 100]} stroke="rgba(255,255,255,0.2)" fontSize={9} />
@@ -263,7 +277,7 @@ export default function StudentProgress() {
 
           {/* Derivations breakdown */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 pt-12 border-t border-brand-border/40">
-            {competencyData.map(c => (
+            {verifiedCompetencyData.map(c => (
               <div key={c.domain} className="p-8 rounded-lg bg-surface border border-brand-border text-[10px]">
                 <div className="font-orbitron font-bold text-text-primary flex justify-between">
                   <span>{c.domain}</span>
@@ -281,7 +295,7 @@ export default function StudentProgress() {
         <Card className="p-24 flex flex-col gap-16">
           <div className="flex justify-between items-center">
             <SectionHeader title="Cognitive Delta Convergence (TVD)" />
-            <Badge color="cyan">Hypothesis Precision</Badge>
+            <Badge color="cyan">Browser Session</Badge>
           </div>
           {cognitiveDeltaTrend.length === 0 ? (
             <div className="h-[300px] w-full flex flex-col items-center justify-center p-20 text-center border border-dashed border-brand-border/40 rounded-xl bg-surface/30">
@@ -320,7 +334,7 @@ export default function StudentProgress() {
             </div>
           )}
           <div className="text-[11px] text-text-secondary text-center">
-            Decreasing Total Variation Distance (TVD) proves intuition is converging with mathematical reality.
+            A decreasing Total Variation Distance (TVD) indicates that session predictions are approaching observed outcomes.
           </div>
         </Card>
       </div>
@@ -331,7 +345,7 @@ export default function StudentProgress() {
           <div>
             <SectionHeader title="Quantum Concept Mastery Matrix" />
             <p className="text-xs text-text-muted mt-1">
-              Rigorous breakdown of core quantum physics principles verified across virtual laboratories.
+              Status is derived from persisted misconception records; browser-session activity cannot award mastery here.
             </p>
           </div>
           <span className="text-xs font-mono text-text-muted">
@@ -384,7 +398,7 @@ export default function StudentProgress() {
             <History className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
             <div className="text-sm font-semibold text-text-primary">No Database Attempts Logged Yet</div>
             <div className="text-xs text-text-secondary max-w-sm mx-auto mt-1">
-              Your submission history is preserved in PostgreSQL. Run circuits in the Circuit Studio or complete coding challenges to build your empirical audit trail.
+              Your submission history is preserved in the configured server database. Complete graded challenges or guided checkpoints to build an evidence trail.
             </div>
           </div>
         ) : (
@@ -403,7 +417,7 @@ export default function StudentProgress() {
                   <tr key={att.id} className="hover:bg-surface/40">
                     <td className="p-3 text-text-primary font-bold">{att.id.slice(0, 8)}…</td>
                     <td className="p-3 text-text-secondary">{new Date(att.timestamp).toLocaleString()}</td>
-                    <td className="p-3 text-cyan-300">{att.cognitive_delta ? `${att.cognitive_delta.toFixed(3)} TVD` : 'N/A'}</td>
+                    <td className="p-3 text-cyan-300">{att.cognitive_delta != null ? `${att.cognitive_delta.toFixed(3)} TVD` : 'N/A'}</td>
                     <td className="p-3">
                       <Badge color={att.was_correct ? 'green' : 'cyan'}>
                         {att.was_correct ? 'Passed' : 'Evaluated'}
@@ -420,9 +434,9 @@ export default function StudentProgress() {
       {/* Misconception Resolution Logs Table */}
       <Card className="p-24 flex flex-col gap-16">
         <div className="flex justify-between items-center">
-          <SectionHeader title="Misconception Refutation & Mastery Audit" />
+          <SectionHeader title="Browser-Session Misconception Log" />
           <span className="text-xs font-mono text-text-muted">
-            {resolvedMisconceptions.length} of 8 verified resolved
+            {resolvedMisconceptions.length} of 8 resolved in this session
           </span>
         </div>
 

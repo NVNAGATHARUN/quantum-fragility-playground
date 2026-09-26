@@ -1,64 +1,260 @@
-import React, { useState } from 'react';
-import Navbar from './Navbar';
-import CommandPalette from './CommandPalette';
+import React, { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+  ArrowUpRight,
+  Atom,
+  BookOpen,
+  ChartNoAxesCombined,
+  ChevronRight,
+  Code2,
+  Compass,
+  FlaskConical,
+  GraduationCap,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Search,
+  Sparkles,
+  Trophy,
+  X,
+} from "lucide-react";
+import CommandPalette from "./CommandPalette";
+import { useAuth } from "../providers/AuthProvider";
+import { useRole } from "../providers/RoleProvider";
+import { useDialogFocus } from "../hooks/useDialogFocus";
 
-interface AppShellProps {
-  children: React.ReactNode;
-}
+const navigation = [
+  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/learn", label: "Learning path", icon: BookOpen },
+  { to: "/labs", label: "Quantum labs", icon: FlaskConical, end: true },
+  { to: "/labs/studio", label: "Circuit studio", icon: Code2 },
+  { to: "/explore", label: "Algorithm library", icon: Compass },
+  { to: "/challenges", label: "Challenges", icon: Trophy },
+  { to: "/progress", label: "My progress", icon: ChartNoAxesCombined },
+];
 
-export default function AppShell({ children }: AppShellProps) {
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [compact, setCompact] = useState(
+    () => window.matchMedia("(max-width: 760px)").matches,
+  );
+  const sidebarRef = useRef<HTMLElement>(null);
+  useDialogFocus(compact && mobileOpen, sidebarRef, () => setMobileOpen(false));
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const change = () => {
+      setCompact(media.matches);
+      if (!media.matches) setMobileOpen(false);
+    };
+    media.addEventListener("change", change);
+    return () => media.removeEventListener("change", change);
+  }, []);
+  const { user, openAuthModal, logout } = useAuth();
+  const { isInstructor } = useRole();
+  const location = useLocation();
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const current = [...navigation]
+    .reverse()
+    .find((n) =>
+      n.end ? n.to === location.pathname : location.pathname.startsWith(n.to),
+    );
+  const title =
+    (location.pathname.startsWith("/labs/guided/")
+      ? "Guided experiment"
+      : current?.label) ||
+    (location.pathname.includes("hardware")
+      ? "Hardware explorer"
+      : "Workspace");
+  useEffect(() => {
+    setMobileOpen(false);
+    window.scrollTo(0, 0);
+    document.title = `${title} · Quantum Lens`;
+  }, [location.pathname, title]);
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        menuRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+  useEffect(() => {
+    if (mobileOpen) closeRef.current?.focus();
+  }, [mobileOpen]);
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-background text-text-primary transition-colors duration-300 selection:bg-cyan-500/30 selection:text-cyan-800 dark:selection:text-cyan-200">
-      {/* Command Palette Modal */}
+    <div className="ql-app">
+      <a className="ql-skip" href="#main-content">
+        Skip to content
+      </a>
       <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
       />
-
-      {/* Full-width Fixed Top Navigation Bar */}
-      <Navbar onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
-
-      {/* Main Content Area — Expansive Full-Screen Canvas with Zero Sidebar Constraint */}
-      <div className="flex-1 flex flex-col pt-[88px] sm:pt-[96px] transition-all duration-300">
-        <main className="flex-1 w-full max-w-[1560px] mx-auto p-4 sm:p-6 lg:p-8">
+      {mobileOpen && (
+        <button
+          className="ql-sidebar-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <aside
+        ref={sidebarRef}
+        {...(compact && !mobileOpen ? { inert: "" } : {})}
+        aria-hidden={compact && !mobileOpen ? true : undefined}
+        className={`ql-sidebar ${mobileOpen ? "is-open" : ""}`}
+        aria-label="Main navigation"
+      >
+        <Link to="/" className="ql-brand">
+          <span className="ql-brand-mark">
+            <Atom size={26} strokeWidth={1.5} />
+          </span>
+          <span>
+            quantum<span className="ql-brand-light">lens</span>
+            <small>THE LEARNING LAB</small>
+          </span>
+        </Link>
+        <button
+          ref={closeRef}
+          className="ql-mobile-close ql-icon-button"
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+        >
+          <X size={20} />
+        </button>
+        <div className="ql-workspace-label">
+          <span className="ql-workspace-icon">Q</span>
+          <div>
+            Personal workspace<small>Your space to discover</small>
+          </div>
+          <ChevronRight size={14} />
+        </div>
+        <p className="ql-nav-label">WORKSPACE</p>
+        <nav className="ql-navigation">
+          {navigation.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `ql-nav-link ${isActive ? "is-active" : ""}`
+              }
+            >
+              <Icon size={19} strokeWidth={1.7} />
+              <span>{label}</span>
+              {to === "/labs/studio" && <span className="ql-nav-tag">LAB</span>}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="ql-sidebar-bottom">
+          <div className="ql-sidebar-note">
+            <span className="ql-tiny-orbit">✳</span>
+            <strong>
+              A little curiosity.
+              <br />A quantum leap.
+            </strong>
+            <p>
+              Start with a question.
+              <br />
+              Find the answer by doing.
+            </p>
+            <Link to="/labs/guided/superposition">
+              Try your first experiment <ArrowUpRight size={15} />
+            </Link>
+          </div>
+          <Link
+            className="ql-nav-link"
+            to={isInstructor ? "/instructor" : "/about"}
+          >
+            <GraduationCap size={19} />
+            <span>
+              {isInstructor ? "Instructor dashboard" : "About the platform"}
+            </span>
+            <ArrowUpRight size={14} />
+          </Link>
+          <div className="ql-account">
+            <span className="ql-avatar">
+              {user?.full_name?.charAt(0).toUpperCase() || "Q"}
+            </span>
+            <button
+              onClick={() => {
+                if (!user) {
+                  setMobileOpen(false);
+                  openAuthModal("login");
+                }
+              }}
+            >
+              <strong>{user?.full_name || "Curious explorer"}</strong>
+              <small>
+                {user ? "Personal account" : "Sign in to save progress"}
+              </small>
+            </button>
+            {user && (
+              <button
+                className="ql-icon-button"
+                aria-label="Sign out"
+                onClick={logout}
+              >
+                <LogOut size={17} />
+              </button>
+            )}
+          </div>
+        </div>
+      </aside>
+      <div className="ql-main-shell">
+        <header className="ql-topbar">
+          <div className="ql-breadcrumb">
+            <button
+              ref={menuRef}
+              className="ql-menu-toggle ql-icon-button"
+              aria-label="Open navigation"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu size={22} />
+            </button>
+            <span>Workspace</span>
+            <ChevronRight size={14} />
+            <strong>{title}</strong>
+          </div>
+          <div className="ql-topbar-actions">
+            <button
+              className="ql-search-trigger"
+              aria-label="Search lessons, labs, and algorithms"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search size={16} />
+              <span>Search anything</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <button
+              className="ql-mentor-trigger"
+              aria-label="Ask AI tutor"
+              onClick={() =>
+                window.dispatchEvent(new Event("quantum-lens:open-mentor"))
+              }
+            >
+              <Sparkles size={16} />
+              <span>Ask AI tutor</span>
+            </button>
+          </div>
+        </header>
+        <main id="main-content" tabIndex={-1} className="ql-main">
           {children}
         </main>
-
-        {/* High-Tech Quantum Lab Footer */}
-        <footer
-          className="mt-auto py-6 px-6 sm:px-8 border-t border-slate-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#020512]/80 backdrop-blur-md transition-colors duration-300 text-slate-600 dark:text-slate-400"
-        >
-          <div className="max-w-[1560px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-xs">
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 text-white"
-                style={{
-                  background: 'linear-gradient(135deg, #7C3AED, #06B6D4)',
-                  boxShadow: '0 0 10px rgba(124, 58, 237, 0.3)',
-                }}
-              >
-                Ψ
-              </div>
-              <div>
-                <span className="font-semibold text-slate-900 dark:text-slate-200">Quantum Lens AI</span>
-                <span className="mx-2 text-slate-400 dark:text-slate-600">•</span>
-                <span>SIH 2026 Problem Statement PS26140</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-              <span className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-                Qiskit Aer 0.17.2 Verified
-              </span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <span className="text-purple-600 dark:text-purple-400 font-semibold">3D WebGL Bloch Engine</span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Full Mathematical Rigor</span>
-            </div>
-          </div>
+        <footer className="ql-footer">
+          <span>Made for curious minds.</span>
+          <span>
+            Quantum Lens <span aria-hidden="true">/</span> Learn. Experiment.
+            Understand.
+          </span>
         </footer>
       </div>
     </div>

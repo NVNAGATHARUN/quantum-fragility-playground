@@ -1,7 +1,7 @@
 """Quantum Algorithm Implementations for Quantum Lens AI.
 
-All results are verified by Qiskit Aer statevector/shot simulation.
-No synthetic data. Simulator determines truth.
+Quantum circuit outputs are derived from Qiskit Aer statevector/shot simulation.
+Classical channel and hardware models are explicitly labelled educational models.
 """
 
 from __future__ import annotations
@@ -13,8 +13,9 @@ import math
 import random
 import numpy as np
 from qiskit import QuantumCircuit, transpile
-from qiskit.quantum_info import Statevector, DensityMatrix, partial_trace, entropy
+from qiskit.quantum_info import Statevector, DensityMatrix, Pauli, partial_trace, entropy, state_fidelity
 from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel, depolarizing_error
 
 
 # ─── Bell State Preparation & Analysis (AL-01) ────────────────────────────────
@@ -30,12 +31,17 @@ class BellStateResult:
     purity: float              # 0.5 for subsystem
     correlation_zz: float      # +1.0 for phi, -1.0 for psi
     correlation_xx: float      # +1.0 for phi_plus, -1.0 for phi_minus
+    correlation_yy: float
+    fidelity: float
+    measurement_basis: str
+    noise_percent: float
     circuit_depth: int
     execution_time_ms: float
     explanation: str
 
 
-def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024) -> BellStateResult:
+def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024,
+                   measurement_basis: str = 'Z', noise_percent: float = 0) -> BellStateResult:
     """Prepare and analyze maximally entangled Bell states (AL-01).
 
     Simulates the circuit with Qiskit Aer, computes subsystem purity and von Neumann
@@ -43,6 +49,12 @@ def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024) -> BellState
     """
     if bell_state not in ('phi_plus', 'phi_minus', 'psi_plus', 'psi_minus'):
         raise ValueError(f"Unknown bell_state: {bell_state}. Use phi_plus, phi_minus, psi_plus, or psi_minus.")
+    if measurement_basis not in ('Z', 'X', 'Y'):
+        raise ValueError('Measurement basis must be Z, X or Y.')
+    if not 0 <= noise_percent <= 15:
+        raise ValueError('Noise must be between 0 and 15 percent.')
+    if not 1 <= shots <= 4096:
+        raise ValueError('Shots must be between 1 and 4096.')
 
     t0 = time.perf_counter()
     qc = QuantumCircuit(2, 2)
@@ -70,17 +82,41 @@ def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024) -> BellState
 
     # Statevector and reduced density matrix calculations
     sv = Statevector(qc)
-    dm = DensityMatrix(sv)
+    ideal_dm = DensityMatrix(sv)
+    dm = ideal_dm
+    noise_model = None
+    if noise_percent:
+        p = noise_percent / 100
+        noise_model = NoiseModel()
+        one_qubit_error = depolarizing_error(p, 1)
+        two_qubit_error = depolarizing_error(p, 2)
+        noise_model.add_all_qubit_quantum_error(one_qubit_error, ['h', 'x'])
+        noise_model.add_all_qubit_quantum_error(two_qubit_error, ['cx'])
+        qc_density = qc.copy()
+        qc_density.save_density_matrix()
+        density_simulator = AerSimulator(method='density_matrix', noise_model=noise_model)
+        density_result = density_simulator.run(
+            transpile(qc_density, density_simulator, optimization_level=0)
+        ).result()
+        dm = DensityMatrix(density_result.data(0)['density_matrix'])
     dm_q0 = partial_trace(dm, [1])
     purity = float(np.real(np.trace(dm_q0.data @ dm_q0.data)))
-    ent_entropy = float(entropy(dm_q0, base=2))
+    ent_entropy = float(entropy(partial_trace(ideal_dm, [1]), base=2))
 
     # Measurement simulation
-    qc_meas = qc.copy()
+    # Read out the prepared density matrix with ideal basis rotations, so
+    # the sampled counts and reported Pauli correlations describe one state.
+    qc_meas = QuantumCircuit(2, 2)
+    qc_meas.set_density_matrix(dm.data)
+    if measurement_basis == 'X':
+        qc_meas.h([0, 1])
+    elif measurement_basis == 'Y':
+        qc_meas.sdg([0, 1])
+        qc_meas.h([0, 1])
     qc_meas.measure([0, 1], [0, 1])
 
-    simulator = AerSimulator()
-    compiled = transpile(qc_meas, simulator)
+    simulator = AerSimulator(method='density_matrix')
+    compiled = transpile(qc_meas, simulator, optimization_level=0)
     job = simulator.run(compiled, shots=shots)
     result = job.result()
     counts_raw = result.get_counts()
@@ -102,14 +138,18 @@ def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024) -> BellState
             'imag': round(float(amp.imag), 6),
         })
 
-    corr_zz = 1.0 if bell_state in ('phi_plus', 'phi_minus') else -1.0
-    corr_xx = 1.0 if bell_state in ('phi_plus', 'psi_plus') else -1.0
+    corr_zz = float(np.real(dm.expectation_value(Pauli('ZZ'))))
+    corr_xx = float(np.real(dm.expectation_value(Pauli('XX'))))
+    corr_yy = float(np.real(dm.expectation_value(Pauli('YY'))))
+    fidelity = float(state_fidelity(dm, ideal_dm))
 
     exec_ms = (time.perf_counter() - t0) * 1000
     explanation = (
-        f"{state_label} is a maximally entangled two-qubit state with entanglement entropy {ent_entropy:.2f} bit. "
-        f"Measuring either qubit yields |0⟩ or |1⟩ with 50% probability, yet the two outcomes are 100% correlated "
-        f"(correlation ⟨Z0 Z1⟩ = {corr_zz:+.1f}). Subsystem purity = {purity:.2f} proves maximal mixing upon partial trace."
+        f"The ideal {state_label} has one bit of entanglement entropy. "
+        f"This run measured both qubits in the {measurement_basis} basis with {noise_percent:g}% "
+        f"depolarizing gate noise. State fidelity to the ideal Bell state is {fidelity:.3f}. "
+        f"Expected correlations from the simulated density matrix are "
+        f"ZZ={corr_zz:+.2f}, XX={corr_xx:+.2f}, YY={corr_yy:+.2f}."
     )
 
     return BellStateResult(
@@ -122,6 +162,10 @@ def run_bell_state(bell_state: str = 'phi_plus', shots: int = 1024) -> BellState
         purity=round(purity, 4),
         correlation_zz=corr_zz,
         correlation_xx=corr_xx,
+        correlation_yy=corr_yy,
+        fidelity=round(fidelity, 6),
+        measurement_basis=measurement_basis,
+        noise_percent=noise_percent,
         circuit_depth=qc.depth(),
         execution_time_ms=round(exec_ms, 2),
         explanation=explanation,
@@ -287,7 +331,7 @@ def run_teleportation(input_state: str = 'plus', shots: int = 1024) -> Teleporta
     2. Creates Bell pair (Alice ancilla + Bob qubit)
     3. Alice entangles input with her ancilla (CNOT + H)
     4. Alice measures both qubits → 2 classical bits
-    5. Bob applies corrections (X if bit0=1, Z if bit1=1)
+    5. Bob applies corrections (Z if q0/bit0=1, X if q1/bit1=1)
     6. Bob's qubit should be in |ψ⟩
     """
     if input_state not in ('plus', 'minus', 'zero', 'one'):
@@ -357,24 +401,34 @@ def run_teleportation(input_state: str = 'plus', shots: int = 1024) -> Teleporta
     bob_total = sum(bob_counts.values())
     bob_probs = {k: v / bob_total for k, v in bob_counts.items()}
 
-    # Fidelity estimation: for |+⟩, Bob should get ~50/50; for |0⟩, 100% |0⟩
-    target_probs = {
-        'plus':  {'0': 0.5, '1': 0.5},
-        'minus': {'0': 0.5, '1': 0.5},
-        'zero':  {'0': 1.0, '1': 0.0},
-        'one':   {'0': 0.0, '1': 1.0},
-    }[input_state]
-    fidelity = sum(
-        (bob_probs.get(k, 0) * target_probs.get(k, 0)) ** 0.5
-        for k in ['0', '1']
-    ) ** 2
+    # Z-basis counts cannot distinguish |+⟩ from |−⟩. Compute state fidelity
+    # from a coherent equivalent of the measured-and-classically-corrected
+    # protocol (the deferred-measurement principle), then trace out Alice.
+    coherent = QuantumCircuit(3)
+    target = QuantumCircuit(1)
+    if input_state in ('minus', 'one'):
+        coherent.x(0)
+        target.x(0)
+    if input_state in ('plus', 'minus'):
+        coherent.h(0)
+        target.h(0)
+    coherent.h(1)
+    coherent.cx(1, 2)
+    coherent.cx(0, 1)
+    coherent.h(0)
+    coherent.cx(1, 2)  # coherent X correction controlled by Alice's q1
+    coherent.cz(0, 2)  # coherent Z correction controlled by Alice's q0
+    bob_state = partial_trace(Statevector.from_instruction(coherent), [0, 1])
+    fidelity = state_fidelity(bob_state, Statevector.from_instruction(target))
 
     # Most common Alice classical result
     most_common_alice = max(classical_tally, key=lambda k: classical_tally[k]) if classical_tally else '00'
 
-    # Statevector snapshots (no classical control — illustrative)
-    sv_before = [{'basis': '0', 'probability': bob_probs.get('0', 0)},
-                 {'basis': '1', 'probability': bob_probs.get('1', 0)}]
+    # Probability-only snapshots; phase information is represented by fidelity.
+    sv_before = [{'basis': '0', 'probability': 0.5},
+                 {'basis': '1', 'probability': 0.5}]
+    sv_after = [{'basis': '0', 'probability': float(np.real(bob_state.data[0, 0]))},
+                {'basis': '1', 'probability': float(np.real(bob_state.data[1, 1]))}]
 
     exec_ms = (time.perf_counter() - t0) * 1000
 
@@ -388,7 +442,7 @@ def run_teleportation(input_state: str = 'plus', shots: int = 1024) -> Teleporta
         f"Quantum Teleportation successfully transmitted the state {state_labels[input_state]} from Alice to Bob "
         "using an entangled Bell pair and 2 classical bits. The state is NOT copied — Alice's qubit is destroyed "
         "during measurement. No information travels faster than light: the 2 classical bits (Alice's measurement "
-        f"results) must reach Bob before he can recover the state. Fidelity = {fidelity:.3f} "
+        f"results) must reach Bob before he can recover the state. Ideal state fidelity = {fidelity:.3f} "
         f"(ideal = 1.000). Bob's qubit is now in {state_labels[input_state]}."
     )
 
@@ -398,7 +452,7 @@ def run_teleportation(input_state: str = 'plus', shots: int = 1024) -> Teleporta
         bob_counts=bob_counts,
         bob_probabilities=bob_probs,
         statevector_before_correction=sv_before,
-        statevector_after_correction=sv_before,
+        statevector_after_correction=sv_after,
         classical_bits={'alice_q0': int(most_common_alice[1]) if len(most_common_alice) >= 2 else 0,
                         'alice_q1': int(most_common_alice[0]) if len(most_common_alice) >= 1 else 0},
         circuit_depth=qc.depth(),
@@ -425,10 +479,13 @@ def _qft_circuit(n: int) -> QuantumCircuit:
     """Build the QFT sub-circuit for n qubits."""
     import math
     qc = QuantumCircuit(n)
-    for j in range(n):
+    # In Qiskit's little-endian ordering, process the most significant wire
+    # first and finish with bit-reversal swaps. This implements
+    # |j⟩ -> Σ_k exp(2πijk/2^n)|k⟩ / √(2^n).
+    for j in range(n - 1, -1, -1):
         qc.h(j)
-        for k in range(j + 1, n):
-            angle = math.pi / (2 ** (k - j))
+        for k in range(j - 1, -1, -1):
+            angle = math.pi / (2 ** (j - k))
             qc.cp(angle, k, j)
     # Swap qubits for correct bit ordering
     for i in range(n // 2):
@@ -681,6 +738,7 @@ class EntanglementSwappingResult:
     circuit_depth: int
     execution_time_ms: float
     explanation: str
+    model_provenance: str
 
 
 def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True, shots: int = 1024) -> EntanglementSwappingResult:
@@ -740,6 +798,7 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
             circuit_depth=2,
             execution_time_ms=round(exec_ms, 2),
             explanation=explanation,
+            model_provenance="Educational fiber-loss model (0.2 dB/km) with a phenomenological background-noise term.",
         )
 
     # With quantum repeater: 4-qubit circuit simulation
@@ -763,6 +822,14 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
     qc.measure(1, 1)
     qc.measure(2, 2)
 
+    # Compute the conditional, feed-forward-corrected Alice/Bob state before
+    # measurement. This makes fidelity a derived value, not a display constant.
+    state_circuit = QuantumCircuit(4)
+    state_circuit.h(0); state_circuit.cx(0, 1)
+    state_circuit.h(2); state_circuit.cx(2, 3)
+    state_circuit.cx(1, 2); state_circuit.h(1)
+    state = Statevector.from_instruction(state_circuit).data
+
     # 4. Measure Alice (0) and Bob (3)
     qc.measure(0, 0)
     qc.measure(3, 3)
@@ -784,7 +851,13 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
         bob_bit = bits[-4]
         bsm = bits[-2] + bits[-3] # R1 R2
 
-        ab_key = alice_bit + bob_bit
+        # Entanglement swapping leaves Bob in X^m2 Z^m1 |Phi+>.  Z only
+        # changes phase, while X flips Bob's measured computational-basis bit.
+        # Apply that classical feed-forward to the reported shot evidence so
+        # the histogram and the statevector fidelity describe the same state.
+        corrected_bob_bit = str(int(bob_bit) ^ int(bsm[1]))
+
+        ab_key = alice_bit + corrected_bob_bit
         ab_counts[ab_key] = ab_counts.get(ab_key, 0) + count
         bsm_tally[bsm] = bsm_tally.get(bsm, 0) + count
 
@@ -793,12 +866,25 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
 
     most_likely_bsm = max(bsm_tally, key=lambda k: bsm_tally[k]) if bsm_tally else "00"
 
+    m1, m2 = int(most_likely_bsm[0]), int(most_likely_bsm[1])
+    conditional = np.array([
+        state[q0 + 2 * m1 + 4 * m2 + 8 * q3]
+        for q3 in (0, 1) for q0 in (0, 1)
+    ], dtype=complex)
+    conditional /= np.linalg.norm(conditional)
+    if m2:
+        conditional = conditional[[2, 3, 0, 1]]
+    if m1:
+        conditional[[2, 3]] *= -1
+    target_phi_plus = np.array([1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)], dtype=complex)
+    corrected_fidelity = float(abs(np.vdot(target_phi_plus, conditional)) ** 2)
+
     exec_ms = (time.perf_counter() - t0) * 1000
 
     explanation = (
         f"Quantum Repeater SUCCESS! Entanglement Swapping occurred at the intermediate node ({distance_km/2:.0f} km mark). "
         f"The Bell State Measurement (outcome |{most_likely_bsm}⟩) projected distant qubits (Alice in Node A & Bob in Node B) "
-        f"into a maximally entangled Bell pair |Φ+⟩_AB with fidelity F = 0.999. Notice that Alice and Bob NEVER exchanged photons directly! "
+        f"into a Bell pair. After feed-forward correction, the ideal-circuit fidelity computed from the conditional state is F = {corrected_fidelity:.4f}. "
         f"Repeater segment loss was only {repeater_loss_db:.1f} dB vs {direct_loss_db:.1f} dB direct."
     )
 
@@ -809,7 +895,7 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
         alice_bob_state_label="|Φ+⟩_AB = (|00⟩+|11⟩)/√2",
         direct_transmission_prob=round(direct_prob, 6),
         repeater_transmission_prob=round(repeater_prob, 6),
-        fidelity=0.9995,
+        fidelity=round(corrected_fidelity, 6),
         entanglement_entropy=1.00,
         subsystem_purity=0.50,
         counts=ab_counts,
@@ -817,6 +903,7 @@ def run_entanglement_swapping(distance_km: int = 100, use_repeater: bool = True,
         circuit_depth=qc.depth(),
         execution_time_ms=round(exec_ms, 2),
         explanation=explanation,
+        model_provenance="Ideal four-qubit Aer circuit plus analytical fiber attenuation; excludes memory, detector and gate noise.",
     )
 
 

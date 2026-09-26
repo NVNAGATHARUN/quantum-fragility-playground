@@ -718,6 +718,7 @@ export default function QuantumNetworkLab() {
                     <Info className="w-4 h-4" /> Physics Insight
                   </h3>
                   <p className="text-sm text-text-secondary leading-relaxed">{result.explanation}</p>
+                  {result.model_provenance && <p className="text-[10px] text-text-muted leading-relaxed">Model scope: {result.model_provenance}</p>}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-12 text-xs font-mono mt-8">
                     <div className="p-10 rounded-lg bg-surface-raised border border-brand-border">
                       <div className="text-text-muted mb-4">Subsystem Purity</div>
@@ -788,10 +789,9 @@ export default function QuantumNetworkLab() {
             <Card className="p-24 flex flex-col gap-12 border-dashed">
               <div className="text-xs font-orbitron text-text-muted uppercase tracking-widest">Real-World Context</div>
               <p className="text-sm text-text-secondary leading-relaxed">
-                The world record for entanglement swapping over fiber stands at{' '}
-                <strong className="text-text-primary">605 km</strong> (Jiuquan, 2022, Nature). China's Micius satellite
-                demonstrated 1,200 km entanglement distribution. India's NQM targets 2,000 km quantum network by 2031.
-                This lab simulates the exact physics used in those experiments.
+                Real repeaters must coordinate heralding, quantum memories, detector efficiency, gate noise and classical
+                feed-forward. This educational model isolates the ideal entanglement-swapping circuit and fiber attenuation
+                so you can reason about those ingredients separately; it does not reproduce a field-deployed network.
               </p>
             </Card>
           </motion.div>

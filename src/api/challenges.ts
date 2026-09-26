@@ -19,10 +19,13 @@ async function fetchJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function postJson<T>(path: string, body: unknown, token?: string | null): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -86,10 +89,11 @@ export function getChallenge(id: string): Promise<ChallengeDefinition> {
 export function evaluateChallenge(
   id: string,
   circuit: CircuitIR,
-  prediction?: Record<string, number>
+  prediction?: Record<string, number>,
+  token?: string | null,
 ): Promise<AssessmentResult> {
   return postJson<AssessmentResult>(`/api/v1/challenges/${id}/evaluate`, {
     circuit,
     prediction,
-  });
+  }, token);
 }

@@ -30,6 +30,23 @@ def test_get_curriculum_manifest(client):
     assert "m02-qubits-measurement" in mod_ids
 
 
+def test_core_curriculum_modules_four_through_six_are_released(client):
+    """Core concepts promised by PS26140 must not remain placeholder modules."""
+    res = client.get("/api/v1/learn/curriculum")
+    assert res.status_code == 200
+    modules = {module["id"]: module for module in res.json()["modules"]}
+
+    expected_counts = {
+        "m04-superposition-interference": 4,
+        "m05-entanglement-correlation": 4,
+        "m06-standard-algorithms": 3,
+    }
+    for module_id, lesson_count in expected_counts.items():
+        assert modules[module_id]["status"] == "available"
+        assert len(modules[module_id]["lessons"]) == lesson_count
+        assert all(lesson["content_version"] == "1.0.0" for lesson in modules[module_id]["lessons"])
+
+
 def test_unauthenticated_progress_rejected(client):
     """Unauthenticated calls to /api/v1/learn/progress must return 401."""
     res = client.post("/api/v1/learn/progress", json={

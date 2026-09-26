@@ -132,7 +132,7 @@ export default function AlgorithmsIndex() {
 
       <div className="flex items-center gap-12 p-16 rounded-xl bg-brand-primary/5 border border-brand-primary/20 text-sm text-text-secondary">
         <Cpu className="w-5 h-5 text-brand-primary flex-shrink-0" />
-        <span>All simulations run on <strong className="text-text-primary">Qiskit Aer</strong> — verified quantum physics, zero synthetic data. Every amplitude, probability, and fidelity value is computed from the mathematical state vector.</span>
+        <span>Core circuit results run on <strong className="text-text-primary">Qiskit Aer</strong>. Pages that add fitted or analytical teaching models label their provenance and limitations next to the result.</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24">

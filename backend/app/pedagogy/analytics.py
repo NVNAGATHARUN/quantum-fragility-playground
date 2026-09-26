@@ -1,11 +1,8 @@
-"""Analytics Engine for Quantum Lens AI.
+"""Legacy canonical-circuit benchmark for Quantum Lens AI.
 
-Computes ALL student/instructor metrics from real Qiskit Aer simulation runs.
-NO fake data — every number comes from live circuit execution.
-
-For a SIH demo: We run all 3 canonical conflict lab circuits (M01, M02, M03) through
-Qiskit Aer, compute genuine TVD scores for the "naive student" prediction vs the
-simulated truth, and derive competency scores analytically.
+This module compares three fixed flawed-model predictions with Aer results. It
+must not be presented as evidence about a real learner or cohort. Authoritative
+progress is computed from persisted graded attempts in routes/progress.py.
 """
 
 import math
@@ -55,7 +52,7 @@ class AnalyticsSession(BaseModel):
     totalMisconceptions: int
     finalTVD: float
     overallMastery: float
-    # Instructor cohort-level (scaled simulation, not invented)
+    # Retained for API compatibility; canonical benchmarks contain no cohort.
     cohortMisconceptionPrevalence: List[Dict]
     simulatedCircuitsCount: int
     kernelVersion: str
@@ -321,28 +318,8 @@ def compute_session_analytics() -> AnalyticsSession:
     ]
 
     # -----------------------------------------------------------------------
-    # Cohort misconception prevalence — derived from TVD values
-    # (In a real system, you'd aggregate over all students' predict submissions.
-    #  Here we derive % from the physics: the severity of each misconception
-    #  is proportional to how wrong the naive model is, i.e., TVD * scale factor)
-    # -----------------------------------------------------------------------
-    # TVD of 0.5 (maximum) → 100% of naive students hold it
-    # TVD of 0.0 (trivially obvious) → 0% hold it
-    # We scale realistically: multiply TVD by a calibration constant from QE literature
-    def _prevalence(tvd: float, calibration: float = 130.0) -> int:
-        return min(100, max(5, round(tvd * calibration)))
-
-    cohort_prevalence = [
-        {
-            "id": lr.misconceptionId,
-            "name": lr.title,
-            "prevalence": _prevalence(lr.cognitiveDelta),
-            "count": round(_prevalence(lr.cognitiveDelta) * 0.33),  # 33 student cohort
-            "severity": "high" if lr.cognitiveDelta > 0.35 else ("medium" if lr.cognitiveDelta > 0.2 else "low"),
-            "tvd": lr.cognitiveDelta,
-        }
-        for lr in lab_results
-    ]
+    # A fixed benchmark cannot establish any cohort prevalence.
+    cohort_prevalence: List[Dict] = []
 
     # -----------------------------------------------------------------------
     # Aggregate metrics
@@ -358,9 +335,11 @@ def compute_session_analytics() -> AnalyticsSession:
         deltaConvergence=delta_convergence,
         competencyRadar=competency_radar,
         resolvedCount=resolved_count,
-        totalMisconceptions=8,
+        totalMisconceptions=len(lab_results),
         finalTVD=final_tvd,
-        overallMastery=overall_mastery,
+        # The field remains for compatibility, but a canonical benchmark cannot
+        # award learner mastery.
+        overallMastery=0.0,
         cohortMisconceptionPrevalence=cohort_prevalence,
         simulatedCircuitsCount=circuits_run,
         kernelVersion="Qiskit Aer 0.17.2",

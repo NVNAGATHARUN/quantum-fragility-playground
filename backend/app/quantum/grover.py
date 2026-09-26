@@ -12,8 +12,9 @@ import math
 from typing import List, Dict, Tuple
 
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Statevector
+from qiskit_aer import AerSimulator
 
 from ..models.circuit_ir import (
     CircuitIR,
@@ -265,14 +266,11 @@ def run_grover(n_qubits: int, target_state: str, shots: int = 1024) -> GroverRes
         amp.basis: amp.probability for amp in final_sv_amplitudes
     }
 
-    # Shot simulation from final probability distribution
-    basis_keys = list(final_probs.keys())
-    probs = [final_probs[k_] for k_ in basis_keys]
-    p_sum = sum(probs)
-    if p_sum > 0:
-        probs = [p / p_sum for p in probs]
-    sampled = np.random.multinomial(shots, probs)
-    counts: Dict[str, int] = {basis_keys[i]: int(sampled[i]) for i in range(len(basis_keys))}
+    # Execute the same circuit on Aer for actual measured shot counts.
+    simulator = AerSimulator()
+    circuit = build_full_grover_circuit(n_qubits, target_state, k)
+    measured = simulator.run(transpile(circuit, simulator), shots=shots).result().get_counts()
+    counts: Dict[str, int] = {basis.replace(' ', ''): int(count) for basis, count in measured.items()}
 
     # Build CircuitIR representation of Grover circuit for display
     circuit_ir = _build_grover_circuit_ir(n_qubits, target_state, k)

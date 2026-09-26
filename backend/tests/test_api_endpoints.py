@@ -40,6 +40,21 @@ def test_simulate_api_endpoint():
     assert data["reducedStates"][0]["isEntangled"] is True
 
 
+def test_simulation_rejects_unbounded_statevector_requests():
+    payload = {
+        "circuit": {
+            "schemaVersion": "1.0",
+            "qubits": 17,
+            "classicalBits": 0,
+            "operations": [],
+        },
+        "shots": 100,
+    }
+    response = client.post("/api/v1/quantum/simulate", json=payload)
+    assert response.status_code == 413
+    assert "limited to 16 qubits" in response.json()["detail"]
+
+
 def test_fragility_api_endpoint():
     payload = {
         "circuit": {

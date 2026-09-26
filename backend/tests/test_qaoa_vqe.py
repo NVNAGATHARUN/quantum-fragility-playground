@@ -53,6 +53,8 @@ def test_vqe_equilibrium_h2():
     assert len(res.state_evolution_steps) == 4
     assert 'Z0' in res.pauli_expectations
     assert 'X0X1' in res.pauli_expectations
+    assert "educational" in res.model_provenance.lower()
+    assert "not an ab-initio" in res.model_provenance.lower()
 
 
 def test_vqe_hartree_fock_vs_fci():
@@ -61,3 +63,13 @@ def test_vqe_hartree_fock_vs_fci():
         e_fci = compute_exact_fci_energy(r)
         e_hf = compute_hartree_fock_energy(r)
         assert e_fci <= e_hf + 1e-6
+
+
+def test_vqe_curve_is_independently_optimized_and_transparently_labelled():
+    """The displayed VQE curve must be computed, not copied from the reference."""
+    res = run_vqe(molecule='H2', bond_distance=0.74, optimize=True, shots=256)
+    assert all(
+        {'r', 'vqe', 'fci', 'hartree_fock', 'optimal_theta'} <= point.keys()
+        for point in res.dissociation_curve
+    )
+    assert all(0.0 <= point['optimal_theta'] <= 3.141593 for point in res.dissociation_curve)

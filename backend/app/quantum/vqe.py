@@ -1,11 +1,12 @@
 """Variational Quantum Eigensolver (VQE) for Quantum Lens AI.
 
-Calculates the molecular ground state potential energy surface of Molecular Hydrogen (H2)
+Demonstrates a reduced two-qubit educational model of Molecular Hydrogen (H2)
 using a parameterized quantum circuit (UCCSD-inspired Givens excitation ansatz) and
 classical energy minimization:
   min_θ ⟨ψ(θ)| H(R) |ψ(θ)⟩
 
-All Pauli expectation values are measured using Qiskit Aer simulation. Zero synthetic data.
+Pauli expectation values are measured using Qiskit Aer. Hamiltonian coefficients
+come from an explicitly labelled fitted teaching model, not an ab-initio chemistry driver.
 """
 
 from __future__ import annotations
@@ -22,14 +23,14 @@ from scipy.optimize import minimize_scalar
 
 
 def get_h2_hamiltonian_coeffs(r: float) -> dict[str, float]:
-    """Computes the 2-qubit STO-3G parity/Jordan-Wigner mapped Hamiltonian coefficients for H2.
+    """Returns coefficients for a fitted two-qubit H2 teaching Hamiltonian.
 
     H(R) = g0*I + g1*Z0 + g2*Z1 + g3*Z0Z1 + g4*X0X1 + g5*Y0Y1
     Calibrated to match STO-3G quantum chemistry potential energy curves across R ∈ [0.2, 2.5] Å.
     At equilibrium R ≈ 0.74 Å, ground state energy is -1.137 Hartree.
     """
     re = 0.7414
-    # Exact FCI ground state Morse curve
+    # Reference Morse curve used to construct the teaching model.
     e_fci = -1.0 + 0.137 * ((1.0 - np.exp(-1.1 * (r - re))) ** 2 - 1.0)
     # Hartree-Fock single-determinant curve (diverges at large R due to absence of correlation)
     e_hf = e_fci + 0.020 + 0.120 * ((1.0 - np.exp(-0.9 * max(0.0, r - re))) ** 2)
@@ -60,7 +61,7 @@ def get_h2_hamiltonian_coeffs(r: float) -> dict[str, float]:
 
 
 def compute_exact_fci_energy(r: float) -> float:
-    """Computes the exact Full Configuration Interaction (FCI) ground state energy for H2."""
+    """Reference Morse-fit energy (legacy field name retained for API compatibility)."""
     re = 0.7414
     return float(-1.0 + 0.137 * ((1.0 - np.exp(-1.1 * (r - re))) ** 2 - 1.0))
 
@@ -169,6 +170,7 @@ class VQEResult:
     circuit_depth: int
     execution_time_ms: float
     explanation: str
+    model_provenance: str
 
 
 def run_vqe(
@@ -246,17 +248,30 @@ def run_vqe(
     error_mhartree = abs(vqe_energy - fci_energy) * 1000.0
     corr_energy = abs(hf_energy - fci_energy)
 
-    # 3. Dissociation Curve across R ∈ [0.3, 2.5] Å
+    # 3. Dissociation curve: each VQE point is independently minimized for
+    # that distance. It is never copied from the reference curve.
     dissociation_curve = []
     r_points = [0.3, 0.5, 0.74, 0.9, 1.1, 1.3, 1.6, 2.0, 2.5]
     for r_p in r_points:
         e_fci = compute_exact_fci_energy(r_p)
         e_hf = compute_hartree_fock_energy(r_p)
+        coeff_p = get_h2_hamiltonian_coeffs(r_p)
+        def model_energy(th: float) -> float:
+            return float(
+                coeff_p['g0']
+                + coeff_p['g1'] * (-np.cos(th))
+                + coeff_p['g2'] * np.cos(th)
+                - coeff_p['g3']
+                - (coeff_p['g4'] + coeff_p['g5']) * np.sin(th)
+            )
+        curve_optimization = minimize_scalar(model_energy, bounds=(0.0, np.pi), method='bounded')
+        vqe_p = float(curve_optimization.fun)
         dissociation_curve.append({
             'r': r_p,
             'fci': round(e_fci, 4),
             'hartree_fock': round(e_hf, 4),
-            'vqe': round(e_fci, 4),
+            'vqe': round(vqe_p, 4),
+            'optimal_theta': round(float(curve_optimization.x), 6),
         })
 
     # 4. State Evolution Steps
@@ -314,8 +329,8 @@ def run_vqe(
 
     explanation = (
         f"VQE calculated ground state of H2 at bond distance R={bond_distance:.2f} Å. "
-        f"Measured energy is {vqe_energy:.4f} Ha (Exact FCI = {fci_energy:.4f} Ha, HF = {hf_energy:.4f} Ha). "
-        f"Chemical accuracy (<1.6 mHa = 1 kcal/mol) error is {error_mhartree:.2f} mHa. "
+        f"Measured energy is {vqe_energy:.4f} Ha (fitted reference = {fci_energy:.4f} Ha, model HF = {hf_energy:.4f} Ha). "
+        f"Error against this educational reference is {error_mhartree:.2f} mHa. "
         f"By mixing electron correlation through parameter θ={theta:.2f}, VQE captures the true dissociation "
         f"limit that single-determinant Hartree-Fock cannot describe."
     )
@@ -339,4 +354,5 @@ def run_vqe(
         circuit_depth=qc_ansatz.depth(),
         execution_time_ms=round(exec_ms, 2),
         explanation=explanation,
+        model_provenance="Educational two-qubit H2 Hamiltonian fitted to a Morse reference; not an ab-initio FCI calculation.",
     )

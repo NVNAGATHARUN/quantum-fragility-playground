@@ -7,11 +7,12 @@ from typing import Optional, Dict, Any
 import bcrypt
 import jwt
 
-# 64-byte default key if not provided via environment variable
-JWT_SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY",
-    "quantum-lens-ai-production-secret-key-sih2026-ps26140-super-secure-token-32b"
-)
+_configured_secret = os.getenv("JWT_SECRET_KEY")
+if os.getenv("ENVIRONMENT", "development").lower() == "production" and not _configured_secret:
+    raise RuntimeError("JWT_SECRET_KEY is required when ENVIRONMENT=production")
+# Development receives an ephemeral process-local secret; no known signing key
+# is embedded in source or shipped in the container configuration.
+JWT_SECRET_KEY = _configured_secret or secrets.token_urlsafe(64)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 7 days
 

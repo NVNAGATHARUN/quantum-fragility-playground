@@ -14,10 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements and install
-COPY backend/requirements.txt /app/requirements.txt
+# Install the reviewed lock used by CI. requirements.txt remains the human-edited input.
+COPY backend/requirements.lock /app/requirements.lock
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.lock
 
 # Copy backend source
 COPY backend/ /app/backend/

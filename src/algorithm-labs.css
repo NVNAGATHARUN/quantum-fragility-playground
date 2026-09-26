@@ -1,0 +1,521 @@
+.algorithm-lab {
+  --color-background: #090d1e;
+  --color-surface: #0e1427;
+  --color-surface-raised: #151e36;
+  --color-text-primary: #f0f5ff;
+  --color-text-secondary: #c4d1e3;
+  --color-text-muted: #9aaec8;
+  --color-brand-border: #273252;
+  --color-brand-border-hover: #71829e;
+  --al-accent: #a5b4fc;
+  --al-accent-rgb: 165, 180, 252;
+  color: var(--color-text-primary);
+  background:
+    radial-gradient(
+      circle at 85% 0%,
+      rgba(var(--al-accent-rgb), 0.14),
+      transparent 35%
+    ),
+    #090d1e;
+  border: 1px solid #273252;
+  border-radius: 22px;
+  padding: clamp(18px, 2.3vw, 32px) !important;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.algorithm-lab.al-dj {
+  --al-accent: #a5b4fc;
+  --al-accent-rgb: 165, 180, 252;
+}
+.algorithm-lab.al-grover {
+  --al-accent: #a5b4fc;
+  --al-accent-rgb: 165, 180, 252;
+}
+.algorithm-lab.al-teleport {
+  --al-accent: #a5b4fc;
+  --al-accent-rgb: 165, 180, 252;
+}
+.algorithm-lab.al-qft {
+  --al-accent: #a5b4fc;
+  --al-accent-rgb: 165, 180, 252;
+}
+.algorithm-lab h1,
+.algorithm-lab h2,
+.algorithm-lab h3,
+.algorithm-lab h4 {
+  font-family: Inter, sans-serif;
+  letter-spacing: -0.025em;
+}
+.algorithm-lab h1 {
+  font-size: clamp(25px, 2.2vw, 35px);
+  line-height: 1.13;
+}
+.algorithm-lab > div:first-child {
+  margin-bottom: 25px;
+}
+.algorithm-lab .al-header-main {
+  align-items: flex-start;
+  gap: 22px;
+  padding-bottom: 22px;
+}
+.algorithm-lab .al-title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.algorithm-lab .al-title-line h1 {
+  flex-basis: 100%;
+}
+.algorithm-lab .al-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+  margin-top: 18px;
+  scrollbar-width: thin;
+}
+.algorithm-lab .al-tabs button {
+  white-space: nowrap;
+  min-height: 36px;
+  padding: 7px 12px;
+  font:
+    650 11px Inter,
+    sans-serif;
+  letter-spacing: 0.045em;
+}
+.algorithm-lab .glass-card,
+html.light .algorithm-lab .glass-card,
+.algorithm-lab .glass-card-raised,
+html.light .algorithm-lab .glass-card-raised {
+  background: #0e1427;
+  border-color: #273252;
+  color: #f0f5ff;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 20px;
+}
+.algorithm-lab .glass-card:hover,
+html.light .algorithm-lab .glass-card:hover {
+  transform: none;
+  border-color: #51637e;
+  box-shadow: none;
+}
+.algorithm-lab .glass-card h2,
+.algorithm-lab .glass-card h3 {
+  line-height: 1.35;
+}
+.algorithm-lab .btn {
+  border-radius: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.045em;
+  box-shadow: none;
+}
+.algorithm-lab .btn-primary {
+  background: var(--al-accent);
+  color: #101624;
+}
+.algorithm-lab .al-layout {
+  gap: 22px;
+}
+.algorithm-lab .al-layout > * {
+  min-width: 0;
+}
+.algorithm-lab .al-layout > * > .glass-card + .glass-card {
+  margin-top: 18px;
+}
+.algorithm-lab .al-kicker {
+  display: block;
+  color: var(--al-accent);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.algorithm-lab .al-status {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 10px 13px;
+  margin: 0 0 18px;
+  border: 1px solid #273252;
+  border-radius: 11px;
+  background: #0e1427;
+}
+.algorithm-lab .al-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #91a4bb;
+  flex: none;
+}
+.algorithm-lab .al-status.is-complete .al-status-dot {
+  background: #93c5fd;
+}
+.algorithm-lab .al-status.is-error .al-status-dot {
+  background: #ff9a9a;
+}
+.algorithm-lab .al-status strong {
+  display: block;
+  font-size: 12px;
+  color: #f0f5ff;
+}
+.algorithm-lab .al-status small {
+  display: block;
+  color: #aebed2;
+  font-size: 11px;
+}
+.algorithm-lab .al-result-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(var(--al-accent-rgb), 0.45);
+  border-radius: 16px;
+  background: linear-gradient(
+    110deg,
+    rgba(var(--al-accent-rgb), 0.18),
+    #0e1427 75%
+  );
+}
+.algorithm-lab .al-result-banner > div > strong {
+  display: block;
+  color: #f8fbff;
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin: 7px 0 4px;
+}
+.algorithm-lab .al-result-banner p {
+  color: #c9d5e5;
+  font-size: 12px;
+}
+.algorithm-lab .al-result-banner aside {
+  flex: none;
+  text-align: right;
+  color: #b1c4d8;
+  font-size: 11px;
+}
+.algorithm-lab .al-result-banner aside strong {
+  color: #f4f8ff;
+  font-size: 20px;
+}
+.algorithm-lab .al-result-bar {
+  margin: 12px 0;
+}
+.algorithm-lab .al-result-bar-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+.algorithm-lab .al-result-bar-heading strong {
+  color: var(--al-accent);
+}
+.algorithm-lab .al-result-track {
+  height: 9px;
+  margin: 6px 0;
+  border-radius: 9px;
+  background: #243247;
+  overflow: hidden;
+}
+.algorithm-lab .al-result-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--al-accent);
+  transition: width 0.35s ease;
+}
+.algorithm-lab .al-result-bar small {
+  color: #9fb0c6;
+  font-size: 10px;
+}
+.algorithm-lab .al-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 14px 0;
+}
+.algorithm-lab .al-flow button,
+.algorithm-lab .al-flow span {
+  border: 1px solid #3b4a63;
+  background: #172239;
+  color: #cbd7e8;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.algorithm-lab .al-flow .is-active {
+  border-color: var(--al-accent);
+  color: #fff;
+  background: rgba(var(--al-accent-rgb), 0.25);
+}
+.algorithm-lab .al-flow button:focus-visible {
+  outline: 2px solid var(--al-accent);
+}
+.algorithm-lab .al-oracle-preview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 14px;
+}
+.algorithm-lab .al-oracle-preview span {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: #1c2940;
+  border: 1px solid #354661;
+  font-size: 11px;
+}
+.algorithm-lab .al-oracle-preview b {
+  color: var(--al-accent);
+}
+.algorithm-lab .al-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+.algorithm-lab .al-step-actions button {
+  border: 1px solid #54637e;
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: #e5eeff;
+  font-size: 11px;
+}
+.algorithm-lab .al-step-actions button:hover:not(:disabled) {
+  background: #22334b;
+}
+.algorithm-lab .al-transfer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.algorithm-lab .al-transfer span {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  padding: 13px 10px;
+  border: 1px solid #273252;
+  border-radius: 9px;
+  background: #0e1427;
+  color: #aebdd1;
+  font-size: 11px;
+}
+.algorithm-lab .al-transfer span.is-active {
+  border-color: var(--al-accent);
+  background: rgba(var(--al-accent-rgb), 0.16);
+  color: #fff;
+}
+.algorithm-lab .al-transfer span:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -9px;
+  top: 14px;
+  z-index: 1;
+  color: var(--al-accent);
+}
+.algorithm-lab .al-transfer strong {
+  font-size: 16px;
+  color: #f5f9ff;
+}
+.algorithm-lab .al-transfer small {
+  font-size: 9px;
+}
+.algorithm-lab .al-protocol-diagram [class*="stage-"] {
+  transition:
+    outline-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.algorithm-lab
+  .al-protocol-diagram.stage-0
+  > div:first-child
+  > span:first-child,
+.algorithm-lab
+  .al-protocol-diagram.stage-1
+  > div:nth-child(2)
+  > span:nth-child(2),
+.algorithm-lab
+  .al-protocol-diagram.stage-1
+  > div:nth-child(3)
+  > span:nth-child(3),
+.algorithm-lab
+  .al-protocol-diagram.stage-2
+  > div:first-child
+  > span:nth-child(5),
+.algorithm-lab
+  .al-protocol-diagram.stage-2
+  > div:nth-child(2)
+  > span:nth-child(5),
+.algorithm-lab
+  .al-protocol-diagram.stage-3
+  > div:first-child
+  > span:nth-child(6),
+.algorithm-lab
+  .al-protocol-diagram.stage-3
+  > div:nth-child(2)
+  > span:nth-child(6),
+.algorithm-lab
+  .al-protocol-diagram.stage-4
+  > div:nth-child(3)
+  > span:nth-child(5),
+.algorithm-lab
+  .al-protocol-diagram.stage-4
+  > div:nth-child(3)
+  > span:nth-child(7),
+.algorithm-lab
+  .al-protocol-diagram.stage-5
+  > div:nth-child(3)
+  > span:last-child {
+  outline: 2px solid var(--al-accent);
+  outline-offset: 3px;
+  background: rgba(var(--al-accent-rgb), 0.22);
+  border-radius: 4px;
+}
+.algorithm-lab .al-advanced {
+  margin-top: 18px;
+}
+.algorithm-lab .al-advanced summary {
+  cursor: pointer;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: #152137;
+  border: 1px solid #273252;
+  color: #cbd8e8;
+  font-size: 12px;
+}
+.algorithm-lab .al-advanced[open] > div {
+  margin-top: 14px;
+}
+.algorithm-lab .al-amplitude-scroll {
+  overflow-x: auto;
+}
+.algorithm-lab .al-amplitude-chart {
+  min-width: 0;
+}
+.algorithm-lab .al-header-main .btn {
+  min-width: 155px;
+  white-space: nowrap;
+}
+.algorithm-lab .al-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.algorithm-lab.al-grover .al-amplitude-chart {
+  height: 220px !important;
+}
+.algorithm-lab.al-grover .al-amplitude-chart .text-\[9px\] {
+  font-size: 11px;
+}
+.algorithm-lab .text-\[10px\] {
+  font-size: 11px;
+}
+.algorithm-lab .text-\[11px\] {
+  font-size: 12px;
+}
+.algorithm-lab :is(.text-\[10px\], .text-\[11px\]) {
+  line-height: 1.45;
+}
+.algorithm-lab pre {
+  white-space: pre;
+  max-width: 100%;
+}
+@media (min-width: 1110px) {
+  .algorithm-lab .al-layout {
+    display: grid;
+    grid-template-columns: minmax(250px, 32%) minmax(0, 1fr);
+  }
+  .algorithm-lab.al-grover .al-layout {
+    grid-template-columns: minmax(220px, 26%) minmax(0, 1fr);
+  }
+  .algorithm-lab .al-layout > * {
+    grid-column: auto;
+  }
+}
+@media (max-width: 760px) {
+  .algorithm-lab {
+    border-radius: 14px;
+    padding: 16px !important;
+  }
+  .algorithm-lab .al-header-main {
+    flex-direction: column;
+  }
+  .algorithm-lab .al-header-main > button {
+    width: 100%;
+  }
+  .algorithm-lab .al-header-actions,
+  .algorithm-lab .al-header-actions .btn {
+    width: 100%;
+  }
+  .algorithm-lab .al-result-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .algorithm-lab .al-result-banner aside {
+    text-align: left;
+  }
+  .algorithm-lab .glass-card,
+  html.light .algorithm-lab .glass-card {
+    padding: 16px;
+  }
+  .algorithm-lab .al-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .algorithm-lab .al-layout > * {
+    width: 100%;
+  }
+  .algorithm-lab .al-oracle-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .algorithm-lab .al-transfer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .algorithm-lab .al-transfer span:nth-child(2)::after {
+    display: none;
+  }
+  .algorithm-lab .al-amplitude-chart {
+    min-width: 600px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .algorithm-lab *,
+  .algorithm-lab *::before,
+  .algorithm-lab *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Keep lab chrome aligned with the workspace's blue brand. */
+.algorithm-lab h1 {
+  color: #eef2ff;
+  background: none;
+  -webkit-text-fill-color: #eef2ff;
+}
+.algorithm-lab [class*="text-emerald-"],
+.algorithm-lab [class*="text-purple-"],
+.algorithm-lab [class*="text-amber-"],
+.algorithm-lab [class*="text-cyan-"],
+.algorithm-lab [class*="text-violet-"] {
+  color: #a5b4fc;
+}
+.algorithm-lab .btn-primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #818cf8;
+}

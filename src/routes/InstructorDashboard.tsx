@@ -34,12 +34,15 @@ import {
   fetchClassroomRoster,
   fetchClassroomMisconceptions,
   createClassroom,
+  fetchAssignments,
+  createAssignment,
   ClassroomItem,
   EnrolledStudent,
   ClassroomMisconceptionsResponse,
   MisconceptionPrevalenceItem,
   StudentMatrixRow,
   StudentMisconceptionStatus,
+  ClassroomAssignment,
 } from '../api/classrooms';
 
 type ActiveTab = 'heatmap' | 'roster' | 'catalog';
@@ -54,6 +57,13 @@ export default function InstructorDashboard() {
   const [roster, setRoster] = useState<EnrolledStudent[]>([]);
   const [misconceptionsData, setMisconceptionsData] = useState<ClassroomMisconceptionsResponse | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('heatmap');
+  const [assignments, setAssignments] = useState<ClassroomAssignment[]>([]);
+  const [assignmentChoice, setAssignmentChoice] = useState('bell-phase');
+  const [assignmentDueDate, setAssignmentDueDate] = useState(() => {
+    const date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    return date.toISOString().slice(0, 10);
+  });
+  const [assignmentError, setAssignmentError] = useState('');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -97,12 +107,14 @@ export default function InstructorDashboard() {
     async (classId: string) => {
       if (!token) return;
       try {
-        const [rosterData, miscData] = await Promise.all([
+        const [rosterData, miscData, assignmentData] = await Promise.all([
           fetchClassroomRoster(token, classId),
           fetchClassroomMisconceptions(token, classId),
+          fetchAssignments(token, classId),
         ]);
         setRoster(rosterData);
         setMisconceptionsData(miscData);
+        setAssignments(assignmentData);
       } catch (e) {
         console.error('Failed to load cohort telemetry', e);
       }
@@ -120,6 +132,7 @@ export default function InstructorDashboard() {
     } else {
       setRoster([]);
       setMisconceptionsData(null);
+      setAssignments([]);
     }
   }, [selectedClassId, loadCohortData]);
 
@@ -130,6 +143,26 @@ export default function InstructorDashboard() {
       await loadCohortData(selectedClassId);
     }
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleCreateAssignment = async () => {
+    if (!token || !selectedClassId) return;
+    const choices = {
+      'phase-lesson': { title:'Global vs relative phase', activity_type:'lesson' as const, activity_id:'m04-superposition-interference/global-vs-relative-phase', route:'/learn/m04-superposition-interference/global-vs-relative-phase' },
+      'bell-lab': { title:'Complete the Bell guided lab', activity_type:'guided' as const, activity_id:'bell-state:2', route:'/labs/guided/bell-state' },
+      'bell-phase': { title:"Verify the Bell pair's hidden phase", activity_type:'challenge' as const, activity_id:'bell-phase-verification', route:'/challenges/bell-phase-verification' },
+    };
+    try {
+      setAssignmentError('');
+      const due_at = assignmentDueDate
+        ? new Date(`${assignmentDueDate}T23:59:00`).toISOString()
+        : null;
+      const created = await createAssignment(token, selectedClassId, {
+        ...choices[assignmentChoice as keyof typeof choices],
+        due_at,
+      });
+      setAssignments(items => [created, ...items]);
+    } catch (error) { setAssignmentError(error instanceof Error ? error.message : 'Could not create assignment'); }
   };
 
   const handleCreateCohort = async (e: React.FormEvent) => {
@@ -772,6 +805,39 @@ export default function InstructorDashboard() {
                 {/* TAB 2: STUDENT ROSTER & DIAGNOSTICS */}
                 {activeTab === 'roster' && (
                   <div className="space-y-4">
+                    <div className="rounded-xl border border-primary/25 bg-primary/5 p-4 space-y-3">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-bold text-text-primary">Assign verified learning activity</div>
+                          <div className="text-[11px] text-muted-foreground">Completion is calculated from server-graded evidence, not a learner checkbox.</div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <label className="sr-only" htmlFor="assignment-activity">Learning activity</label>
+                          <select id="assignment-activity" value={assignmentChoice} onChange={e => setAssignmentChoice(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-xs">
+                            <option value="phase-lesson">Phase lesson</option>
+                            <option value="bell-lab">Bell guided lab</option>
+                            <option value="bell-phase">Bell phase challenge</option>
+                          </select>
+                          <label className="sr-only" htmlFor="assignment-due-date">Due date</label>
+                          <input
+                            id="assignment-due-date"
+                            type="date"
+                            value={assignmentDueDate}
+                            min={new Date().toISOString().slice(0, 10)}
+                            onChange={e => setAssignmentDueDate(e.target.value)}
+                            className="rounded-lg border border-border bg-surface px-3 py-2 text-xs"
+                          />
+                          <button onClick={handleCreateAssignment} className="btn btn-primary text-xs"><Plus className="w-4 h-4" /> Assign</button>
+                        </div>
+                      </div>
+                      {assignmentError && <p className="text-xs text-red-400">{assignmentError}</p>}
+                      {assignments.length > 0 && <div className="grid md:grid-cols-2 gap-2">
+                        {assignments.slice(0, 4).map(item => <div key={item.id} className="rounded-lg border border-border bg-surface/70 p-3 flex items-center justify-between gap-3">
+                          <div><div className="text-xs font-semibold text-text-primary">{item.title}</div><div className="text-[10px] text-muted-foreground uppercase">{item.activity_type}{item.due_at ? ` · due ${new Date(item.due_at).toLocaleDateString()}` : ''}</div></div>
+                          <Badge color={item.completed_count === item.student_count && item.student_count > 0 ? 'green' : 'cyan'}>{item.completed_count}/{item.student_count}</Badge>
+                        </div>)}
+                      </div>}
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">
                         Verified Learner Roster
@@ -799,8 +865,8 @@ export default function InstructorDashboard() {
                               <th className="py-3 px-4">Student Name</th>
                               <th className="py-3 px-4">Email</th>
                               <th className="py-3 px-4">Enrolled Date</th>
-                              <th className="py-3 px-4 text-center">Circuits Tested</th>
-                              <th className="py-3 px-4 text-right">Mastery Progress</th>
+                              <th className="py-3 px-4 text-center">Verified evidence</th>
+                              <th className="py-3 px-4 text-right">Verified score</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
@@ -812,18 +878,18 @@ export default function InstructorDashboard() {
                                   {new Date(s.enrolled_at).toLocaleDateString()}
                                 </td>
                                 <td className="py-3 px-4 text-center font-mono font-medium">
-                                  {s.circuits_count}
+                                  {s.passed_attempts}/{s.verified_attempts} passed
                                 </td>
                                 <td className="py-3 px-4 text-right">
                                   <div className="flex items-center justify-end gap-2">
                                     <div className="w-20 bg-border h-1.5 rounded-full overflow-hidden">
                                       <div
                                         className="h-full bg-primary rounded-full"
-                                        style={{ width: `${s.overall_mastery * 100}%` }}
+                                        style={{ width: `${s.average_verified_score}%` }}
                                       />
                                     </div>
                                     <span className="font-mono font-bold text-primary">
-                                      {(s.overall_mastery * 100).toFixed(0)}%
+                                      {s.average_verified_score.toFixed(0)}%
                                     </span>
                                   </div>
                                 </td>

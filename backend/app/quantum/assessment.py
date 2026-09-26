@@ -78,6 +78,23 @@ def compute_unitary_fidelity(u1: np.ndarray, u2: np.ndarray) -> float:
 # ─── Canonical Challenge Registry (5 Types) ───────────────────────────────────
 
 CANONICAL_CHALLENGES: Dict[str, ChallengeDefinition] = {
+    "bell-phase-verification": ChallengeDefinition(
+        id="bell-phase-verification",
+        type="debug",
+        title="Verify the Bell Pair's Hidden Phase",
+        subtitle="Repair a phase-flipped Bell circuit that looks identical in Z-basis counts.",
+        difficulty="Intermediate",
+        category="Entanglement & Phase",
+        instructions="The starter prepares |Phi->, whose 00/11 counts mimic |Phi+>. Remove the phase error so the complex statevector matches (|00> + |11>)/sqrt(2).",
+        target_description="Phase-sensitive statevector fidelity to |Phi+> >= 0.999",
+        starter_circuit=CircuitIR(schemaVersion="1.0", qubits=2, classicalBits=2, operations=[
+            CircuitOperation(id="b1", gate="H", targets=[0], step=0),
+            CircuitOperation(id="b2", gate="CX", targets=[1], controls=[0], step=1),
+            CircuitOperation(id="b3", gate="Z", targets=[0], step=2),
+        ]),
+        max_gates=4,
+        max_two_qubit_gates=1,
+    ),
     # 1. BUILD: 3-Qubit GHZ State
     "ghz-3qubit": ChallengeDefinition(
         id="ghz-3qubit",
@@ -257,24 +274,49 @@ def evaluate_challenge_submission(
 
         # Target Check by Challenge Type
         if challenge.id == "ghz-3qubit":
-            # GHZ State: 50% |000⟩, 50% |111⟩
-            p000 = sim_probs.get("000", 0.0)
-            p111 = sim_probs.get("111", 0.0)
-            cross_terms = sum(v for k, v in sim_probs.items() if k not in ("000", "111"))
-            ghz_match = p000 > 0.40 and p111 > 0.40 and cross_terms < 0.05
-            fidelity = float(p000 + p111) if ghz_match else 0.0
+            # A probability-only check cannot distinguish GHZ+ from the
+            # orthogonal GHZ- state. Grade the complex statevector instead.
+            from qiskit.quantum_info import Statevector
+
+            unitary_ops = [o for o in circuit.operations if o.gate not in ("MEASURE", "RESET")]
+            unitary_ir = CircuitIR(
+                schemaVersion=circuit.schemaVersion,
+                qubits=circuit.qubits,
+                classicalBits=circuit.classicalBits,
+                operations=unitary_ops,
+            )
+            actual_state = Statevector.from_instruction(build_qiskit_circuit(unitary_ir)).data
+            target_state = np.zeros(8, dtype=complex)
+            target_state[0] = 1.0 / np.sqrt(2.0)
+            target_state[7] = 1.0 / np.sqrt(2.0)
+            fidelity = compute_statevector_fidelity(target_state, actual_state)
+            ghz_match = fidelity >= 0.999
 
             test_cases.append(TestCaseResult(
                 name="GHZ State Amplitudes",
                 passed=ghz_match,
-                expected="50% |000⟩, 50% |111⟩, 0% cross-terms",
-                actual=f"{(p000*100):.1f}% |000⟩, {(p111*100):.1f}% |111⟩, {(cross_terms*100):.1f}% cross-terms",
-                details="Evaluates whether the 3 qubits are in maximal tripartite entanglement.",
+                expected="Statevector fidelity to GHZ+ ≥ 0.999, including relative phase",
+                actual=f"Statevector fidelity F = {fidelity:.6f}",
+                details="Checks amplitudes and relative phase; GHZ- is rejected.",
             ))
             if ghz_match:
                 feedback.append("Superposition on q0 coupled with CX cascades successfully created |GHZ⟩.")
             else:
-                feedback.append("Did not synthesize the GHZ state. Ensure an H gate on q0 is followed by CX(0,1) and CX(1,2).")
+                feedback.append("The state does not match GHZ+. Check both the CNOT cascade and the relative phase between |000⟩ and |111⟩.")
+
+        elif challenge.id == "bell-phase-verification":
+            from qiskit.quantum_info import Statevector
+            unitary = circuit.model_copy(update={"operations": [o for o in circuit.operations if o.gate not in ("MEASURE", "RESET")]})
+            actual = Statevector.from_instruction(build_qiskit_circuit(unitary)).data
+            target = np.array([1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)], dtype=complex)
+            fidelity = compute_statevector_fidelity(target, actual)
+            passed = fidelity >= 0.999
+            test_cases.append(TestCaseResult(
+                name="Bell relative-phase fidelity", passed=passed,
+                expected="F(|Phi+>, psi) >= 0.999", actual=f"Statevector fidelity F = {fidelity:.6f}",
+                details="This test distinguishes |Phi+> from |Phi-> even though both have identical Z-basis counts.",
+            ))
+            feedback.append("Bell phase verified." if passed else "The correlations look right, but the relative phase is wrong. Inspect or remove the extra Z operation.")
 
         elif challenge.id == "born-interference":
             # Target probabilities for H -> S -> H:
@@ -328,22 +370,35 @@ def evaluate_challenge_submission(
                 feedback.append("Unitary mismatch: ensure the second CNOT is controlled by q1 targeting q0 (CX 1->0).")
 
         elif challenge.id == "qasm-deutsch-oracle":
-            # Evaluates balanced oracle: f(0,0)=0, f(0,1)=1, f(1,0)=1, f(1,1)=0 (XOR on q2)
-            # Circuit must implement CX(0, 2) and CX(1, 2)
-            has_cx02 = any(o.gate == "CX" and 0 in (o.controls or []) and 2 in o.targets for o in ops)
-            has_cx12 = any(o.gate == "CX" and 1 in (o.controls or []) and 2 in o.targets for o in ops)
-            oracle_pass = has_cx02 and has_cx12
+            # Verify the complete transformation. Gate-presence checks accept
+            # cancelling pairs, so compare the submitted unitary to the oracle.
+            from qiskit.quantum_info import Operator
+
+            actual = Operator(build_qiskit_circuit(circuit)).data
+            target_qc = build_qiskit_circuit(CircuitIR(
+                schemaVersion="1.0",
+                qubits=3,
+                classicalBits=3,
+                operations=[
+                    CircuitOperation(gate="CX", controls=[0], targets=[2], step=0),
+                    CircuitOperation(gate="CX", controls=[1], targets=[2], step=1),
+                ],
+            ))
+            target = Operator(target_qc).data
+            fidelity = compute_unitary_fidelity(target, actual)
+            oracle_pass = fidelity >= 0.999
 
             test_cases.append(TestCaseResult(
                 name="Balanced Oracle Truth Table",
                 passed=oracle_pass,
-                expected="CX(q0 -> q2) and CX(q1 -> q2) implementing f(x) = x0 ⊕ x1",
-                actual="Configured correctly" if oracle_pass else "Missing oracle CNOT couplings to target q2",
+                expected="Unitary truth table y → y ⊕ x0 ⊕ x1 for all basis inputs",
+                actual=f"Oracle unitary fidelity F_U = {fidelity:.6f}",
+                details="Compares the full transformation, so cancelling gate pairs fail.",
             ))
             if oracle_pass:
                 feedback.append("Oracle correctly computes parity f(x) = x0 ⊕ x1 onto target ancilla q2.")
             else:
-                feedback.append("Oracle incomplete. Connect both control inputs q0 and q1 to ancilla q2 using CNOT gates.")
+                feedback.append("The submitted circuit does not implement parity for every input. Check for missing, reversed, or cancelling gates.")
 
     except Exception as e:
         test_cases.append(TestCaseResult(

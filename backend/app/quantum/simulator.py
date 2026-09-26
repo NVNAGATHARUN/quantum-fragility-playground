@@ -8,8 +8,9 @@ import time
 import math
 import numpy as np
 from typing import List, Dict, Tuple, Optional
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Statevector, partial_trace, DensityMatrix
+from qiskit_aer import AerSimulator
 
 from ..models.circuit_ir import (
     CircuitIR,
@@ -188,7 +189,13 @@ def compute_reduced_states(sv: Statevector, num_qubits: int) -> List[ReducedSubs
 
 
 def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulationResult:
-    """Executes verified quantum simulation on CircuitIR using Qiskit Aer and analytical statevectors."""
+    """Execute CircuitIR shots with Aer and return an ideal state preview.
+
+    Counts always come from the full circuit, including intermediate measurements
+    and reset operations. The statevector/reduced-state fields are an ideal
+    unitary preview with non-unitary operations omitted because a single pure
+    statevector cannot represent the mixed post-measurement ensemble.
+    """
     valid, err = validate_circuit_ir(circuit)
     if not valid:
         raise ValueError(err)
@@ -196,8 +203,8 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
     t0 = time.perf_counter()
     num_qubits = circuit.qubits
 
-    # 1. Full Statevector without measurement gates
-    pure_ops = [op for op in circuit.operations if op.gate != "MEASURE"]
+    # 1. Ideal preview without non-unitary operations.
+    pure_ops = [op for op in circuit.operations if op.gate not in ("MEASURE", "RESET")]
     pure_ir = CircuitIR(version=circuit.version, qubits=num_qubits, classicalBits=circuit.classicalBits, operations=pure_ops)
     qc_pure = build_qiskit_circuit(pure_ir)
     sv = Statevector.from_instruction(qc_pure)
@@ -226,18 +233,24 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
             )
         )
 
-    # 3. Measurement shots sampling
-    basis_keys = list(probabilities_dict.keys())
-    probs = [probabilities_dict[k] for k in basis_keys]
-    # Normalize probabilities for numerical stability
-    p_sum = sum(probs)
-    if p_sum > 0:
-        probs = [p / p_sum for p in probs]
-    else:
-        probs = [1.0 / len(probs)] * len(probs)
+    # 3. Execute the full circuit on Aer. Final measurements are appended so
+    # returned counts always describe the state after the complete circuit.
+    qc_shots = build_qiskit_circuit(circuit)
+    if circuit.classicalBits < num_qubits:
+        raise ValueError("classicalBits must be at least qubits for final readout")
+    for qubit in range(num_qubits):
+        qc_shots.measure(qubit, qubit)
+    aer = AerSimulator()
+    raw_counts = aer.run(transpile(qc_shots, aer), shots=shots).result().get_counts()
+    counts = {str(key).replace(" ", ""): int(value) for key, value in raw_counts.items()}
+    for idx in range(2 ** num_qubits):
+        counts.setdefault(format(idx, f"0{num_qubits}b"), 0)
 
-    sampled = np.random.multinomial(shots, probs)
-    counts: Dict[str, int] = {basis_keys[i]: int(sampled[i]) for i in range(len(basis_keys))}
+    has_non_unitary = any(op.gate in ("MEASURE", "RESET") for op in circuit.operations)
+    if has_non_unitary:
+        probabilities_dict = {
+            basis: round(count / shots, 5) for basis, count in sorted(counts.items())
+        }
 
     # 4. Reduced states per qubit
     reduced_states = compute_reduced_states(sv, num_qubits)

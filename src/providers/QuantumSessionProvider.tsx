@@ -1,11 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import {
-  fetchSessionAnalytics,
-  simulateCircuit,
-  type AnalyticsSession,
-  type CompetencyDomain,
-  type LabResult,
-} from '../api/quantum'
 import type { CircuitIR } from '../types/quantum'
 
 export interface ResolvedMisconceptionItem {
@@ -35,14 +28,8 @@ interface QuantumSessionContextType {
   labRecords: StudentLabRecord[]
   resolvedMisconceptions: ResolvedMisconceptionItem[]
   recordLabCompletion: (record: Omit<StudentLabRecord, 'timestamp'>) => void
-  competencyData: CompetencyDomain[]
   cognitiveDeltaTrend: Array<{ lab: string; tvd: number; accuracy: number }>
-  cohortAnalytics: AnalyticsSession | null
-  overallMastery: number
   meanTVD: number
-  isLoading: boolean
-  kernelStatus: 'live' | 'analytical'
-  refreshSession: () => Promise<void>
 }
 
 const QuantumSessionContext = createContext<QuantumSessionContextType | null>(null)
@@ -75,28 +62,6 @@ export const QuantumSessionProvider: React.FC<{ children: React.ReactNode }> = (
     return []
   })
 
-
-  const [cohortAnalytics, setCohortAnalytics] = useState<AnalyticsSession | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [kernelStatus, setKernelStatus] = useState<'live' | 'analytical'>('analytical')
-
-  // Load backend analytics session
-  const refreshSession = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const data = await fetchSessionAnalytics()
-      setCohortAnalytics(data)
-      setKernelStatus(data.kernelVersion.includes('Qiskit Aer') ? 'live' : 'analytical')
-    } catch (err) {
-      console.error('Failed to load session analytics', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    refreshSession()
-  }, [refreshSession])
 
   // Save to localStorage
   useEffect(() => {
@@ -161,44 +126,6 @@ export const QuantumSessionProvider: React.FC<{ children: React.ReactNode }> = (
       ? Math.round((tvds.reduce((a, b) => a + b, 0) / tvds.length) * 1000) / 1000
       : 0.0
 
-  // Grounded Overall Mastery: 0 if no records, otherwise derived from TVD accuracy and cleared labs
-  const overallMastery =
-    labRecords.length === 0
-      ? 0.0
-      : Math.round(((labRecords.filter(r => r.resolved).length / 8) * 60 + (1 - meanTVD) * 40) * 10) / 10
-
-  // 6-Domain Competency Radar: Derived strictly from learner activity
-  const domainDefs = [
-    { domain: 'Superposition', reqMisc: 'M01', label: 'Phase Interference & Measurement' },
-    { domain: 'Interference', reqMisc: 'M01', label: 'Constructive vs Destructive Interference' },
-    { domain: 'Entanglement', reqMisc: 'M02', label: 'Bell States & Quantum Correlation' },
-    { domain: 'Decoherence (T₁,T₂)', reqMisc: 'M03', label: 'Kraus Amplitude & Phase Damping' },
-    { domain: 'Hardware Awareness', reqMisc: 'M04', label: 'Measurement & Apparatus Back-Action' },
-    { domain: 'Algorithms', reqMisc: 'M05', label: 'Entangling Gates & Multi-Qubit Unitaries' },
-  ]
-
-  const competencyData = domainDefs.map(({ domain, reqMisc, label }) => {
-    const record = labRecords.find(r => r.misconceptionId === reqMisc)
-    if (!record) {
-      return {
-        domain,
-        score: 0,
-        fullMark: 100,
-        derivation: `Pending laboratory exploration: ${label}`,
-      }
-    }
-    const score = record.resolved
-      ? Math.round((1 - record.tvd) * 100)
-      : Math.round((1 - record.tvd) * 50)
-    return {
-      domain,
-      score,
-      fullMark: 100,
-      derivation: record.evidence || `Evaluated via ${record.title} (${(1 - record.tvd).toFixed(2)} accuracy)`,
-    }
-  })
-
-
   return (
     <QuantumSessionContext.Provider
       value={{
@@ -207,15 +134,8 @@ export const QuantumSessionProvider: React.FC<{ children: React.ReactNode }> = (
         labRecords,
         resolvedMisconceptions,
         recordLabCompletion,
-        competencyData,
         cognitiveDeltaTrend,
-        cohortAnalytics,
-
-        overallMastery,
         meanTVD,
-        isLoading,
-        kernelStatus,
-        refreshSession,
       }}
     >
       {children}

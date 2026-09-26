@@ -3,11 +3,13 @@
 Provides REST API endpoints for verified Qiskit simulation and Kraus noise modeling.
 """
 
+import os
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .models.circuit_ir import (
     CircuitIR,
@@ -62,6 +64,7 @@ from .routes.progress import router as progress_router
 from .routes.learn import router as learn_router
 from .routes.circuit_ir import router as circuit_ir_router
 from .routes.challenges import router as challenges_router
+from .routes.guided_labs import router as guided_labs_router
 
 
 @asynccontextmanager
@@ -86,19 +89,27 @@ app.include_router(progress_router)
 app.include_router(learn_router)
 app.include_router(circuit_ir_router)
 app.include_router(challenges_router)
+app.include_router(guided_labs_router)
 
 
 
-# CORS configuration
+# CORS configuration. Production origins are supplied as a comma-separated
+# environment variable instead of requiring a source-code edit.
+default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+    "https://qfp.vercel.app",
+]
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("QL_ALLOWED_ORIGINS", ",".join(default_origins)).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4000",
-        "http://127.0.0.1:4000",
-        "https://qfp.vercel.app",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -144,8 +155,23 @@ def get_system_capabilities():
     return probe_system_capabilities()
 
 
+def enforce_circuit_budget(circuit: CircuitIR) -> None:
+    """Reject statevector requests that can exhaust a shared teaching server."""
+    if circuit.qubits > 16:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Interactive simulation is limited to 16 qubits. Reduce the circuit or use an external backend.",
+        )
+    if len(circuit.operations) > 500:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Interactive simulation is limited to 500 operations per request.",
+        )
+
+
 @app.post("/api/v1/quantum/simulate", response_model=NormalizedSimulationResult)
 def run_simulation(req: SimulateRequest):
+    enforce_circuit_budget(req.circuit)
     try:
         result = simulate_circuit(req.circuit, shots=req.shots)
         return result
@@ -162,8 +188,8 @@ def run_simulation(req: SimulateRequest):
 
 class ParityRequest(BaseModel):
     circuit: "CircuitIR"
-    shots: int = 1024
-    tolerance: float = 0.01   # Maximum allowed TVD between frameworks
+    shots: int = Field(default=1024, ge=1, le=10000)
+    tolerance: float = Field(default=0.01, ge=0.0, le=1.0)   # Maximum allowed TVD between frameworks
 
 
 @app.post("/api/v1/quantum/parity")
@@ -181,6 +207,7 @@ def run_cross_framework_parity(req: ParityRequest):
     The parity assertion computes the Total Variation Distance between each
     pair of probability distributions and flags disagreement when TVD > tolerance.
     """
+    enforce_circuit_budget(req.circuit)
     from .quantum.capabilities import probe_system_capabilities
     from .quantum.simulator import simulate_circuit as qiskit_simulate
 
@@ -205,36 +232,15 @@ def run_cross_framework_parity(req: ParityRequest):
     pl_cap = caps.frameworks.get("pennylane")
     if pl_cap and pl_cap.status == "available":
         try:
-            import pennylane as qml
-            import numpy as np
-            from qiskit import QuantumCircuit
-            from qiskit.quantum_info import Statevector
-            from .quantum.simulator import build_qiskit_circuit
-
-            pure_ops = [op for op in req.circuit.operations if op.gate != "MEASURE"]
+            from .quantum.pennylane_adapter import simulate_pennylane_probabilities
             from .circuit.ir import CircuitIR as _IR
             pure_ir = _IR(
                 schemaVersion=req.circuit.schemaVersion,
                 qubits=req.circuit.qubits,
                 classicalBits=req.circuit.classicalBits,
-                operations=pure_ops,
+                operations=[op for op in req.circuit.operations if op.gate not in ("MEASURE", "RESET")],
             )
-
-            n = req.circuit.qubits
-            dev = qml.device("default.qubit", wires=n)
-
-            @qml.qnode(dev)
-            def pl_circuit():
-                from .quantum.simulator import build_qiskit_circuit
-                qc = build_qiskit_circuit(pure_ir)
-                # Use Qiskit→PennyLane bridge via statevector
-                sv = Statevector.from_instruction(qc)
-                state_vec = np.array(sv.data)
-                qml.StatePrep(state_vec, wires=list(range(n)))
-                return qml.probs(wires=list(range(n)))
-
-            pl_probs_arr = pl_circuit()
-            pl_probs = {format(i, f"0{n}b"): float(p) for i, p in enumerate(pl_probs_arr)}
+            pl_probs = simulate_pennylane_probabilities(pure_ir)
 
             results["circuits"]["pennylane"] = {
                 "status": "success",
@@ -270,36 +276,19 @@ def run_cross_framework_parity(req: ParityRequest):
     cirq_cap = caps.frameworks.get("cirq")
     if cirq_cap and cirq_cap.status == "available":
         try:
-            import cirq
-            import numpy as np
-            from qiskit.quantum_info import Statevector
-            from .quantum.simulator import build_qiskit_circuit
-
-            pure_ops = [op for op in req.circuit.operations if op.gate != "MEASURE"]
+            from .quantum.cirq_adapter import simulate_cirq_probabilities
             from .circuit.ir import CircuitIR as _IR2
+
             pure_ir2 = _IR2(
                 schemaVersion=req.circuit.schemaVersion,
                 qubits=req.circuit.qubits,
                 classicalBits=req.circuit.classicalBits,
-                operations=pure_ops,
+                operations=[
+                    op for op in req.circuit.operations
+                    if op.gate not in ("MEASURE", "RESET")
+                ],
             )
-
-            qc = build_qiskit_circuit(pure_ir2)
-            sv_qk = Statevector.from_instruction(qc)
-            sv_arr = np.array(sv_qk.data)
-
-            n = req.circuit.qubits
-            qubits = cirq.LineQubit.range(n)
-            cirq_circuit = cirq.Circuit(
-                cirq.StatePreparationChannel(sv_arr)(*qubits)
-            )
-            sim = cirq.Simulator()
-            result = sim.simulate(cirq_circuit)
-            cirq_sv = result.final_state_vector
-            cirq_probs = {
-                format(i, f"0{n}b"): float(abs(c) ** 2)
-                for i, c in enumerate(cirq_sv)
-            }
+            cirq_probs = simulate_cirq_probabilities(pure_ir2)
 
             results["circuits"]["cirq"] = {
                 "status": "success",
@@ -335,6 +324,7 @@ def run_cross_framework_parity(req: ParityRequest):
 
 @app.post("/api/v1/quantum/fragility")
 def run_fragility(req: FragilityRequest):
+    enforce_circuit_budget(req.circuit)
     try:
         result = simulate_fragility(req)
         return result
@@ -467,8 +457,12 @@ def mentor_guidance(req: MentorRequest):
 
 @app.get("/api/v1/analytics/session", response_model=AnalyticsSession)
 def get_analytics_session():
-    """Compute real session analytics from live Qiskit Aer simulation.
-    Every metric is derived from actual circuit execution — no fake data."""
+    """Run the legacy canonical-circuit benchmark.
+
+    This endpoint is not learner mastery or cohort evidence. Authoritative
+    learner analytics live under /api/v1/progress and instructor classroom
+    routes, where they are derived from persisted graded attempts.
+    """
     try:
         return compute_session_analytics()
     except Exception as e:
@@ -526,6 +520,8 @@ def run_grover_algorithm(req: GroverRequest):
 class BellStateRequest(BaseModel):
     bell_state: str = "phi_plus"   # 'phi_plus' | 'phi_minus' | 'psi_plus' | 'psi_minus'
     shots: int = 1024
+    measurement_basis: str = "Z"
+    noise_percent: float = 0
 
 
 @app.post("/api/v1/algorithms/bell-state")
@@ -538,6 +534,8 @@ def run_bell_state_algorithm(req: BellStateRequest):
         result = run_bell_state(
             bell_state=req.bell_state,
             shots=req.shots,
+            measurement_basis=req.measurement_basis,
+            noise_percent=req.noise_percent,
         )
         return {
             "bell_state": result.bell_state,
@@ -549,6 +547,10 @@ def run_bell_state_algorithm(req: BellStateRequest):
             "purity": result.purity,
             "correlation_zz": result.correlation_zz,
             "correlation_xx": result.correlation_xx,
+            "correlation_yy": result.correlation_yy,
+            "fidelity": result.fidelity,
+            "measurement_basis": result.measurement_basis,
+            "noise_percent": result.noise_percent,
             "circuit_depth": result.circuit_depth,
             "execution_time_ms": result.execution_time_ms,
             "explanation": result.explanation,
@@ -768,6 +770,7 @@ def run_entanglement_swapping_endpoint(req: EntanglementSwappingRequest):
             "circuit_depth": result.circuit_depth,
             "execution_time_ms": result.execution_time_ms,
             "explanation": result.explanation,
+            "model_provenance": result.model_provenance,
         }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -873,6 +876,7 @@ def run_vqe_endpoint(req: VQERequest):
             "circuit_depth": result.circuit_depth,
             "execution_time_ms": result.execution_time_ms,
             "explanation": result.explanation,
+            "model_provenance": result.model_provenance,
         }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

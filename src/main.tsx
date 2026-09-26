@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { GuidedTourProvider } from './providers/GuidedTourProvider'
 import './index.css'
+import './workspace.css'
+import './algorithm-labs.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

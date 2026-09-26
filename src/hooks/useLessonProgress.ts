@@ -57,7 +57,10 @@ export function useLessonProgress(): UseLessonProgressReturn {
 
   /** Fetch all completed lessons from the backend on mount (if authenticated) */
   useEffect(() => {
-    if (!isAuthenticated || !token) return;
+    let active = true;
+    setCompletedSet(new Set());
+    setError(null);
+    if (!isAuthenticated || !token) { setIsLoading(false); return; }
 
     setIsLoading(true);
     fetch('/api/v1/learn/progress', {
@@ -68,13 +71,15 @@ export function useLessonProgress(): UseLessonProgressReturn {
         return res.json() as Promise<LessonProgressRecord[]>;
       })
       .then(records => {
+        if (!active) return;
         const set = new Set(records.map(r => `${r.module_id}/${r.lesson_id}`));
         setCompletedSet(set);
       })
       .catch(err => {
-        setError(err.message || 'Progress load error');
+        if (active) setError(err.message || 'Progress load error');
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
   }, [isAuthenticated, token]);
 
   const isCompleted = useCallback(

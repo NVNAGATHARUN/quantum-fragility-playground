@@ -182,6 +182,8 @@ export interface MentorResponsePayload {
     cancellations: string[]
   } | null
   isValidated?: boolean
+  source?: 'deterministic' | 'gemini'
+  validationScope?: string
 }
 
 // ─── High-Precision Analytical Quantum Solver Fallback ───────────────────────
@@ -454,16 +456,11 @@ export async function simulateCircuit(
   shots: number = 1024,
   backend: string = 'qiskit-aer'
 ): Promise<NormalizedSimulationResult> {
-  try {
-    return await postJson<NormalizedSimulationResult>('/api/v1/quantum/simulate', {
+  return await postJson<NormalizedSimulationResult>('/api/v1/quantum/simulate', {
       circuit,
       shots,
       backend,
-    })
-  } catch (err) {
-    console.warn('FastAPI backend unreachable, executing in high-precision analytical kernel:', err)
-    return analyticalSimulateCircuit(circuit, shots)
-  }
+  })
 }
 
 export async function simulateFragility(
@@ -474,17 +471,12 @@ export async function simulateFragility(
     channel?: string
   }
 ): Promise<any> {
-  try {
-    return await postJson('/api/v1/quantum/fragility', {
+  return await postJson('/api/v1/quantum/fragility', {
       circuit: req.circuit,
       t1_us: req.t1_us ?? 50.0,
       t2_us: req.t2_us ?? 70.0,
       channel: req.channel ?? 'amplitude_damping',
-    })
-  } catch (err) {
-    console.warn('FastAPI backend unreachable, computing Kraus master equation analytically:', err)
-    return analyticalFragility(req)
-  }
+  })
 }
 
 export async function evaluatePrediction(req: PredictionRequest): Promise<CognitiveDeltaResponse> {
@@ -600,107 +592,7 @@ export async function fetchConflictLab(labId: string): Promise<ConflictLabScenar
 }
 
 export async function fetchSessionAnalytics(): Promise<AnalyticsSession> {
-  try {
-    return await getJson<AnalyticsSession>('/api/v1/analytics/session')
-  } catch (err) {
-    console.warn('FastAPI session analytics offline, running local Qiskit Aer analytics pipeline...')
-    // Run real canonical circuits analytically to derive genuine scores
-    const c_hh: CircuitIR = {
-      version: '1.0',
-      qubits: 1,
-      classicalBits: 1,
-      operations: [
-        { id: 'g1', gate: 'H', targets: [0], controls: [], step: 0 },
-        { id: 'g2', gate: 'H', targets: [0], controls: [], step: 1 },
-      ],
-    }
-    const c_hzh: CircuitIR = {
-      version: '1.0',
-      qubits: 1,
-      classicalBits: 1,
-      operations: [
-        { id: 'g1', gate: 'H', targets: [0], controls: [], step: 0 },
-        { id: 'g2', gate: 'Z', targets: [0], controls: [], step: 1 },
-        { id: 'g3', gate: 'H', targets: [0], controls: [], step: 2 },
-      ],
-    }
-    const resHH = analyticalSimulateCircuit(c_hh, 1024)
-    const resHZH = analyticalSimulateCircuit(c_hzh, 1024)
-    const p0_hh = resHH.probabilities['0'] ?? 1.0
-    const p1_hzh = resHZH.probabilities['1'] ?? 1.0
-
-    const tvd_m01 = Math.round((Math.abs(0.5 - p0_hh) + Math.abs(0.5 - 0.0)) / 2 * 10000) / 10000
-    const tvd_m02 = 0.5000 // naive belief Bob sees 100% vs actual 50/50
-    const tvd_m03 = 0.5000 // naive belief X-basis gives 50/50 vs actual 100% |0>
-
-    const labResults: LabResult[] = [
-      {
-        labId: 'lab-m01-interference',
-        misconceptionId: 'M01',
-        title: 'Superposition ≠ Classical Coin Toss',
-        simulatedProbabilities: resHH.probabilities,
-        naivePrediction: { '0': 0.5, '1': 0.5 },
-        cognitiveDelta: tvd_m01,
-        resolved: tvd_m01 < 0.10,
-        pedagogicalNote: `H²=I: P(|0⟩)=${p0_hh.toFixed(3)} via constructive interference. H·Z·H yields P(|1⟩)=${p1_hzh.toFixed(3)} via destructive interference.`,
-        shots: 1024,
-      },
-      {
-        labId: 'lab-m02-no-signaling',
-        misconceptionId: 'M02',
-        title: 'Entanglement ≠ FTL Signaling',
-        simulatedProbabilities: { '0': 0.5, '1': 0.5 },
-        naivePrediction: { '0': 0.0, '1': 1.0 },
-        cognitiveDelta: tvd_m02,
-        resolved: false,
-        pedagogicalNote: 'Bob marginal P(0)=0.500, P(1)=0.500 regardless of Alice measurement. No-signaling confirmed.',
-        shots: 1024,
-      },
-      {
-        labId: 'lab-m03-mixture',
-        misconceptionId: 'M03',
-        title: 'Coherent |+⟩ ≠ Statistical Mixture',
-        simulatedProbabilities: { '0': 1.0, '1': 0.0 },
-        naivePrediction: { '0': 0.5, '1': 0.5 },
-        cognitiveDelta: tvd_m03,
-        resolved: false,
-        pedagogicalNote: 'X-basis rotation collapses pure |+⟩ to 100% |0⟩, demonstrating quantum phase coherence.',
-        shots: 1024,
-      },
-    ]
-
-    const competencyRadar: CompetencyDomain[] = [
-      { domain: 'Superposition', score: Math.round(p0_hh * 100), fullMark: 100, derivation: `P(|0⟩) from H²|0⟩ = ${p0_hh.toFixed(4)}` },
-      { domain: 'Interference', score: Math.round(p1_hzh * 100), fullMark: 100, derivation: `P(|1⟩) from H·Z·H|0⟩ = ${p1_hzh.toFixed(4)}` },
-      { domain: 'Entanglement', score: 85.0, fullMark: 100, derivation: 'Bob marginal P(0)=0.500 satisfies No-Signaling' },
-      { domain: 'Decoherence (T₁,T₂)', score: 82.0, fullMark: 100, derivation: 'Master equation Kraus operator fidelity' },
-      { domain: 'Hardware Awareness', score: 88.0, fullMark: 100, derivation: 'Mean circuit fidelity across hardware presets' },
-      { domain: 'Algorithms', score: 78.0, fullMark: 100, derivation: 'Composite gate transformation accuracy' },
-    ]
-
-    return {
-      labResults,
-      deltaConvergence: [
-        { lab: 'Lab 1 (M01)', tvd: tvd_m01, accuracy: Math.round((1 - tvd_m01) * 100) },
-        { lab: 'Lab 2 (M02)', tvd: tvd_m02, accuracy: Math.round((1 - tvd_m02) * 100) },
-        { lab: 'Lab 3 (M03)', tvd: tvd_m03, accuracy: Math.round((1 - tvd_m03) * 100) },
-      ],
-      competencyRadar,
-      resolvedCount: labResults.filter(l => l.resolved).length,
-      totalMisconceptions: 8,
-      finalTVD: tvd_m01,
-      overallMastery: 84.5,
-      cohortMisconceptionPrevalence: [
-        { id: 'M01', name: 'Coin Toss Superposition', prevalence: 64, count: 21, severity: 'high', tvd: 0.50 },
-        { id: 'M02', name: 'FTL Entangled Signaling', prevalence: 52, count: 17, severity: 'high', tvd: 0.50 },
-        { id: 'M03', name: 'Statistical Mixture Trap', prevalence: 45, count: 15, severity: 'medium', tvd: 0.50 },
-        { id: 'M04', name: 'Passive Measurement', prevalence: 38, count: 12, severity: 'medium', tvd: 0.38 },
-        { id: 'M05', name: 'CNOT Always Entangles', prevalence: 28, count: 9, severity: 'low', tvd: 0.28 },
-      ],
-      simulatedCircuitsCount: 18,
-      kernelVersion: 'Qiskit Aer 0.17.2',
-    }
-  }
+  return getJson<AnalyticsSession>('/api/v1/analytics/session')
 }
 
 export function askMentor(req: MentorRequestPayload): Promise<MentorResponsePayload> {

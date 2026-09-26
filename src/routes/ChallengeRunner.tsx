@@ -15,6 +15,7 @@ import type { CircuitIR, GateOperation, SupportedGate, NormalizedSimulationResul
 import { simulateCircuit } from '../api/quantum';
 import BlochSphere3D from '../components/BlochSphere3D';
 import { useQuantumSession } from '../providers/QuantumSessionProvider';
+import { useAuth } from '../providers/AuthProvider';
 
 const CHALLENGE_GATES: Array<{ gate: SupportedGate; label: string }> = [
   { gate: 'H', label: 'H' },
@@ -33,6 +34,7 @@ const CHALLENGE_GATES: Array<{ gate: SupportedGate; label: string }> = [
 export default function ChallengeRunner() {
   const { challengeId } = useParams<{ challengeId: string }>();
   const { recordCircuitRun } = useQuantumSession();
+  const { token, isAuthenticated, openAuthModal } = useAuth();
 
   const [challenge, setChallenge] = useState<ChallengeDefinition | null>(null);
   const [circuit, setCircuit] = useState<CircuitIR>({
@@ -95,7 +97,7 @@ export default function ChallengeRunner() {
         ? { '0': parseFloat(predP0) || 0, '1': parseFloat(predP1) || 0 }
         : undefined;
 
-      const res = await evaluateChallenge(challengeId, circuit, predDict);
+      const res = await evaluateChallenge(challengeId, circuit, predDict, token);
       setAssessment(res);
     } catch (err: any) {
       setErrorMsg(err.message || 'Evaluation failed');
@@ -194,6 +196,12 @@ export default function ChallengeRunner() {
       </div>
 
       {/* ── Main Two-Column Layout ────────────────────────────────────────── */}
+      {!isAuthenticated && (
+        <div className="p-3 rounded-xl border border-brand/30 bg-brand/10 text-xs text-text-secondary flex items-center justify-between gap-3">
+          <span>Your circuit can be graded anonymously. Sign in to save the verified attempt to your progress.</span>
+          <button className="btn btn-primary text-xs px-3 py-1.5" onClick={() => openAuthModal('login')}>Sign in</button>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── Left Column: Instructions, Constraints & Assessment Results (5 cols) ── */}
         <div className="lg:col-span-5 space-y-5">
