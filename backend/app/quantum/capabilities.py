@@ -267,17 +267,19 @@ def _test_qbraid() -> FrameworkCapability:
                 reason="Credentials not configured (set QBRAID_API_KEY).",
             )
 
-        # If API key is present, attempt client verification
+        # Credentials alone do not prove that a remote service is reachable or
+        # that this application can execute a job. Keep qBraid explicitly
+        # partial until a real submission-and-result adapter is implemented.
         return FrameworkCapability(
             id="qbraid",
             name="qBraid Cloud",
             installed=True,
             version=version,
             configured=True,
-            selfTestPassed=True,
-            reachable=True,
-            status="available",
-            reason=None,
+            selfTestPassed=False,
+            reachable=None,
+            status="partially_available",
+            reason="Credentials detected, but remote job execution is not integrated or verified.",
         )
     except Exception as e:
         return FrameworkCapability(

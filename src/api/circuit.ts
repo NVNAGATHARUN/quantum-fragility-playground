@@ -9,11 +9,10 @@
  */
 
 import type { CircuitIR } from '../types/quantum'
-
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? ''
+import { apiUrl } from './client'
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -191,7 +190,7 @@ export interface ProvenanceData {
 }
 
 export async function fetchSharedCircuit(circuitId: string): Promise<SharedCircuitData> {
-  const res = await fetch(`${BASE_URL}/api/v1/circuits/share/${circuitId}`)
+  const res = await fetch(apiUrl(`/api/v1/circuits/share/${circuitId}`))
   if (!res.ok) {
     throw new Error('Circuit permalink not found or is private')
   }
@@ -203,7 +202,7 @@ export async function shareCircuit(
   circuitId: string,
   isPublic: boolean = true
 ): Promise<SharedCircuitData> {
-  const res = await fetch(`${BASE_URL}/api/v1/circuits/${circuitId}/share`, {
+  const res = await fetch(apiUrl(`/api/v1/circuits/${circuitId}/share`), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -222,7 +221,7 @@ export async function forkCircuit(
   circuitId: string,
   title?: string
 ): Promise<{ id: string; title: string; parent_id: string }> {
-  const res = await fetch(`${BASE_URL}/api/v1/circuits/${circuitId}/fork`, {
+  const res = await fetch(apiUrl(`/api/v1/circuits/${circuitId}/fork`), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -238,7 +237,7 @@ export async function forkCircuit(
 }
 
 export async function fetchCircuitProvenance(circuitId: string): Promise<ProvenanceData> {
-  const res = await fetch(`${BASE_URL}/api/v1/circuits/${circuitId}/provenance`)
+  const res = await fetch(apiUrl(`/api/v1/circuits/${circuitId}/provenance`))
   if (!res.ok) {
     throw new Error('Failed to load circuit provenance')
   }
@@ -252,7 +251,7 @@ export async function saveUserCircuit(
   circuit_ir: CircuitIR,
   is_public: boolean = false
 ): Promise<{ id: string; title: string }> {
-  const res = await fetch(`${BASE_URL}/api/v1/circuits`, {
+  const res = await fetch(apiUrl('/api/v1/circuits'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

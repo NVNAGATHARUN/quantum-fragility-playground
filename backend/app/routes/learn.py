@@ -27,6 +27,7 @@ from sqlalchemy import select
 from ..db.session import get_db
 from ..db.models import User, LessonProgress, LearnerProfile
 from ..auth.router import get_current_user
+from ..pedagogy.evidence import mark_intervention_studied
 
 router = APIRouter(prefix="/api/v1/learn", tags=["learn"])
 
@@ -147,6 +148,16 @@ async def record_lesson_progress(
         profile = prof_res.scalar_one_or_none()
         if profile:
             profile.total_time_minutes += 12
+
+    # Lesson completion remains participation evidence.  When it matches an
+    # active diagnosis it advances the intervention to "targeted"; only a
+    # later passing server assessment can resolve it.
+    await mark_intervention_studied(
+        db,
+        user_id=current_user.id,
+        module_id=body.module_id,
+        lesson_id=body.lesson_id,
+    )
 
     await db.commit()
     await db.refresh(record)

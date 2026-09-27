@@ -17,6 +17,15 @@ def test_health_endpoint():
     assert "Qiskit Aer" in data["kernel"]
 
 
+def test_readiness_endpoint_checks_database_and_simulator():
+    response = client.get("/health/ready")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    assert data["database"] == "reachable"
+    assert "aer" in data["simulation_backend"].lower()
+
+
 def test_simulate_api_endpoint():
     payload = {
         "circuit": {

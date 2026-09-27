@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../providers/AuthProvider';
+import { apiUrl } from '../api/client';
 
 const TOKEN_KEY = 'ql_jwt_token';
 
@@ -63,7 +64,7 @@ export function useLessonProgress(): UseLessonProgressReturn {
     if (!isAuthenticated || !token) { setIsLoading(false); return; }
 
     setIsLoading(true);
-    fetch('/api/v1/learn/progress', {
+    fetch(apiUrl('/api/v1/learn/progress'), {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {
@@ -104,7 +105,7 @@ export function useLessonProgress(): UseLessonProgressReturn {
 
       setError(null);
       try {
-        const res = await fetch('/api/v1/learn/progress', {
+        const res = await fetch(apiUrl('/api/v1/learn/progress'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

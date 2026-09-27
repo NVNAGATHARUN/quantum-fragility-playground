@@ -8,8 +8,7 @@
  */
 
 import type { CircuitIR, StateAmplitude } from "../types/quantum";
-
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
+import { apiUrl } from './client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,7 +34,7 @@ export interface GroverResult {
 
 export async function runGrover(req: GroverRunRequest): Promise<GroverResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/grover`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/grover'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

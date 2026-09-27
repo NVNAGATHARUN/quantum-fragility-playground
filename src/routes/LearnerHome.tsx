@@ -340,7 +340,7 @@ export default function LearnerHome() {
               </h1>
               <p className="text-base sm:text-lg leading-relaxed text-slate-300 max-w-xl">
                 Experience real-time quantum decoherence, 3D Bloch sphere vector dynamics, open quantum
-                system noise models, and verified Qiskit Aer simulations with zero compromises.
+                system noise models, and simulator-backed Qiskit Aer experiments.
               </p>
             </motion.div>
 

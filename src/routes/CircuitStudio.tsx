@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
   Check,
@@ -7,12 +7,14 @@ import {
   Code2,
   Copy,
   Download,
+  GitCompare,
   Info,
   Play,
   Plus,
   Redo2,
   RotateCcw,
   Save,
+  Share2,
   Sparkles,
   Trash2,
   Undo2,
@@ -25,6 +27,7 @@ import type {
 } from "../types/quantum";
 import {
   circuitCode,
+  isRotationGate,
   MAX_QUBITS,
   MAX_STEPS,
   parseStudioQasm,
@@ -34,6 +37,16 @@ import {
   validateStudioCircuit,
 } from "../lib/studio";
 import { useQuantumSession } from "../providers/QuantumSessionProvider";
+import { apiUrl } from "../api/client";
+import {
+  runParityCheck,
+  fetchSharedCircuit,
+  forkCircuit,
+  saveUserCircuit,
+  shareCircuit,
+  type ParityResponse,
+} from "../api/circuit";
+import { useAuth } from "../providers/AuthProvider";
 
 const DRAFT_KEY = "ql_studio_draft_v1";
 const descriptions: Record<string, string> = {
@@ -49,6 +62,8 @@ const descriptions: Record<string, string> = {
   CX: "Controlled X: flip the target when the control is |1⟩.",
   CZ: "Controlled Z adds a minus sign to the |11⟩ component.",
   SWAP: "Exchange the quantum states of two qubits.",
+  MEASURE: "Measure a qubit into the matching classical bit. This changes subsequent quantum evolution.",
+  RESET: "Reset a qubit to |0⟩. This is non-unitary and can destroy coherence.",
 };
 function initialCircuit() {
   try {
@@ -128,6 +143,8 @@ function BlochPreview({
 }
 
 export default function CircuitStudio() {
+  const { circuitId } = useParams();
+  const { token, user, openAuthModal } = useAuth();
   const { recordCircuitRun } = useQuantumSession();
   const [circuit, setCircuit] = useState<CircuitIR>(initialCircuit);
   const [past, setPast] = useState<CircuitIR[]>([]);
@@ -152,12 +169,18 @@ export default function CircuitStudio() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
+  const [parityRunning, setParityRunning] = useState(false);
   const [shots, setShots] = useState(1024);
   const [result, setResult] = useState<NormalizedSimulationResult | null>(null);
   const [resultCircuit, setResultCircuit] = useState("");
+  const [parity, setParity] = useState<ParityResponse | null>(null);
+  const [parityCircuit, setParityCircuit] = useState("");
   const [resultTab, setResultTab] = useState("Probabilities");
   const [selectedQubit, setSelectedQubit] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(circuitId ?? null);
+  const [savedOwnerId, setSavedOwnerId] = useState<string | null>(null);
+  const [circuitTitle, setCircuitTitle] = useState("Untitled circuit");
   const abortRef = useRef<AbortController | null>(null);
   const preview = useMemo(() => previewCircuit(circuit), [circuit]);
   const code = circuitCode(circuit, format);
@@ -177,6 +200,8 @@ export default function CircuitStudio() {
   const signature = JSON.stringify(circuit);
   const currentResult = result && resultCircuit === signature;
   const staleResult = result && !currentResult;
+  const currentParity = parity && parityCircuit === signature;
+  const staleParity = parity && !currentParity;
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent("quantum-lens:studio-context", {
@@ -204,6 +229,21 @@ export default function CircuitStudio() {
     }
   }
   useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => {
+    if (!circuitId) return;
+    let active = true;
+    fetchSharedCircuit(circuitId).then(shared => {
+      if (!active) return;
+      validateStudioCircuit(shared.circuit_ir);
+      setCircuit(shared.circuit_ir);
+      setCircuitTitle(shared.title);
+      setSavedId(shared.id);
+      setSavedOwnerId(shared.author_id);
+      setSaved(true);
+      setNotice(`Loaded shared circuit by ${shared.author_name}.`);
+    }).catch(error => { if (active) setError(error instanceof Error ? error.message : "Could not load shared circuit"); });
+    return () => { active = false; };
+  }, [circuitId]);
   useEffect(() => {
     const close = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -329,12 +369,13 @@ export default function CircuitStudio() {
       return;
     }
     const theta = (Number(angle) * Math.PI) / 180;
-    if (gate.startsWith("R") && (!angle.trim() || !Number.isFinite(theta))) {
+    if (isRotationGate(gate) && (!angle.trim() || !Number.isFinite(theta))) {
       setError("Enter a valid rotation angle.");
       return;
     }
     commit({
       ...circuit,
+      classicalBits: gate === "MEASURE" ? Math.max(circuit.classicalBits, circuit.qubits) : circuit.classicalBits,
       operations: [
         ...circuit.operations,
         {
@@ -342,7 +383,8 @@ export default function CircuitStudio() {
           gate,
           targets: [qubit],
           step,
-          ...(gate.startsWith("R") ? { params: { theta } } : {}),
+          ...(gate === "MEASURE" ? { classicalTargets: [qubit] } : {}),
+          ...(isRotationGate(gate) ? { params: { theta } } : {}),
         },
       ],
     });
@@ -381,7 +423,7 @@ export default function CircuitStudio() {
     }
     const theta = (Number(gateDraft.angle) * Math.PI) / 180;
     if (
-      inspected.gate.startsWith("R") &&
+      isRotationGate(inspected.gate) &&
       (!gateDraft.angle.trim() || !Number.isFinite(theta))
     ) {
       setError("Enter a finite rotation angle in degrees.");
@@ -395,7 +437,8 @@ export default function CircuitStudio() {
           ? [gateDraft.target, gateDraft.control]
           : [gateDraft.target],
       ...(inspected.controls?.length ? { controls: [gateDraft.control] } : {}),
-      ...(inspected.gate.startsWith("R") ? { params: { theta } } : {}),
+      ...(isRotationGate(inspected.gate) ? { params: { theta } } : {}),
+      ...(inspected.gate === "MEASURE" ? { classicalTargets: [gateDraft.target] } : {}),
     };
     commit({
       ...circuit,
@@ -404,16 +447,40 @@ export default function CircuitStudio() {
       ),
     });
   }
-  function save() {
+  async function save() {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(circuit));
+      if (!token) {
+        setSaved(true);
+        setNotice("Draft saved in this browser. Sign in to save it to your account.");
+        openAuthModal("login");
+        return;
+      }
+      const savedCircuit = await saveUserCircuit(token, circuitTitle.trim() || "Untitled circuit", "Created in Quantum Lens Circuit Studio", circuit);
+      setSavedId(savedCircuit.id);
+      setSavedOwnerId(user?.id ?? null);
       setSaved(true);
-      setNotice("Circuit saved to this browser.");
+      setNotice("Circuit saved to your account.");
     } catch {
-      setError(
-        "Browser storage is unavailable. Download your QASM to keep a copy.",
-      );
+      setError("The circuit could not be saved. Download the QASM to keep a copy.");
     }
+  }
+  async function share() {
+    if (!token || !savedId) { setError("Save this circuit to your account before sharing it."); return; }
+    try {
+      const shared = await shareCircuit(token, savedId, true);
+      const url = `${window.location.origin}${shared.permalink_url}`;
+      await navigator.clipboard.writeText(url);
+      setNotice("Public read-only link copied. Other learners can fork it.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not share circuit"); }
+  }
+  async function forkLoaded() {
+    if (!token || !circuitId) { openAuthModal("login"); return; }
+    try {
+      const forked = await forkCircuit(token, circuitId, `${circuitTitle} — fork`);
+      setSavedId(forked.id); setSavedOwnerId(user?.id ?? null); setSaved(true); setCircuitTitle(forked.title);
+      setNotice("Fork saved to your account with source attribution.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not fork circuit"); }
   }
   function download() {
     const url = URL.createObjectURL(new Blob([code], { type: "text/plain" }));
@@ -432,7 +499,7 @@ export default function CircuitStudio() {
     setError("");
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || ""}/api/v1/quantum/simulate`,
+        apiUrl("/api/v1/quantum/simulate"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -463,6 +530,27 @@ export default function CircuitStudio() {
     }
   }
 
+  async function compareFrameworks() {
+    setParityRunning(true);
+    setError("");
+    try {
+      const data = await runParityCheck(circuit, shots, 0.01);
+      setParity(data);
+      setParityCircuit(signature);
+      setNotice(
+        data.all_pass
+          ? "Qiskit, PennyLane, and Cirq agree within the configured tolerance."
+          : "A cross-framework difference exceeded the configured tolerance.",
+      );
+    } catch {
+      setError(
+        "Cross-framework verification could not run. Start the Python backend with Qiskit, PennyLane, and Cirq installed.",
+      );
+    } finally {
+      setParityRunning(false);
+    }
+  }
+
   return (
     <div className="ql-page ql-studio">
       <div className="ql-page-heading">
@@ -472,21 +560,33 @@ export default function CircuitStudio() {
           <p>Build a circuit and watch the quantum state change.</p>
         </div>
         <div className="ql-studio-heading-actions">
+          <input className="ql-input" aria-label="Circuit name" value={circuitTitle} onChange={event => { setCircuitTitle(event.target.value); setSaved(false); }} />
           <button
             className="ql-button ql-button-white"
             onClick={save}
             disabled={editing}
           >
             {saved ? <Check size={15} /> : <Save size={15} />}
-            {saved ? "Saved locally" : "Save circuit"}
+            {saved ? "Saved" : "Save circuit"}
           </button>
+          {savedId && token && savedOwnerId === user?.id && <button className="ql-button ql-button-white" onClick={share}><Share2 size={15}/> Share</button>}
+          {circuitId && user && savedOwnerId !== user.id && <button className="ql-button ql-button-white" onClick={forkLoaded}>Fork to my workspace</button>}
           <button
             className="ql-button ql-button-primary"
-            disabled={running || editing}
+            disabled={running || parityRunning || editing}
             onClick={runBackend}
           >
             <Play size={14} />
             {running ? "Running…" : "Run on Qiskit"}
+          </button>
+          <button
+            className="ql-button ql-button-white"
+            disabled={running || parityRunning || editing || Boolean(preview.truncatedAt)}
+            onClick={compareFrameworks}
+            title={preview.truncatedAt ? "Cross-engine parity currently covers unitary circuits. Remove measurement/reset to compare." : undefined}
+          >
+            <GitCompare size={14} />
+            {parityRunning ? "Comparing…" : "Compare engines"}
           </button>
         </div>
       </div>
@@ -517,7 +617,7 @@ export default function CircuitStudio() {
         </label>
         <div className="ql-studio-toolbar-right">
           <span className="ql-status-label">
-            <span className="ql-dot" /> Ideal browser preview
+            <span className="ql-dot" /> {preview.truncatedAt ? `Pure-state preview stops before ${preview.truncatedAt.toLowerCase()}` : "Ideal browser preview"}
           </span>
           <label>
             QISKIT SHOTS
@@ -550,7 +650,7 @@ export default function CircuitStudio() {
                   aria-pressed={selectedGate === g}
                   aria-label={`${g} gate`}
                   title={descriptions[g]}
-                  className={`ql-gate-pick ${selectedGate === g ? "selected" : ""} ${g.startsWith("R") ? "rotation" : ""}`}
+                  className={`ql-gate-pick ${selectedGate === g ? "selected" : ""} ${isRotationGate(g) ? "rotation" : ""}`}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", g);
                     setSelectedGate(g);
@@ -589,7 +689,7 @@ export default function CircuitStudio() {
               </button>
             ))}
           </div>
-          {selectedGate.startsWith("R") && (
+          {isRotationGate(selectedGate) && (
             <label className="ql-angle-field">
               Rotation (degrees)
               <input
@@ -855,7 +955,7 @@ export default function CircuitStudio() {
                     }
                   />
                 </label>
-                {inspected.gate.startsWith("R") && (
+                {isRotationGate(inspected.gate) && (
                   <label>
                     Angle (degrees)
                     <input
@@ -912,7 +1012,9 @@ export default function CircuitStudio() {
         <section className="ql-panel ql-results-panel">
           <div className="ql-panel-title">
             <h2>State inspector</h2>
-            <span className="ql-pill">Exact probabilities</span>
+            <span className="ql-pill">
+              {preview.truncatedAt ? "Pre-operation pure state" : "Exact probabilities"}
+            </span>
           </div>
           <div className="ql-tabs ql-result-tabs">
             {["Probabilities", "Statevector", "Shot counts"].map((t) => (
@@ -926,6 +1028,11 @@ export default function CircuitStudio() {
               </button>
             ))}
           </div>
+          {preview.truncatedAt && (
+            <p className="ql-chart-caption">
+              Pure-state views show the circuit immediately before the first {preview.truncatedAt.toLowerCase()} operation. Open Shot counts after running Qiskit for the complete circuit result.
+            </p>
+          )}
           {resultTab === "Probabilities" && (
             <>
               <div
@@ -954,7 +1061,7 @@ export default function CircuitStudio() {
               </div>
               <p className="ql-chart-caption">
                 Computational basis · bit order |q{circuit.qubits - 1}…q0⟩ ·
-                ideal, noiseless state
+                {preview.truncatedAt ? " ideal state before the first non-unitary operation" : " ideal, noiseless state"}
               </p>
             </>
           )}
@@ -1051,6 +1158,58 @@ export default function CircuitStudio() {
           </p>
         </section>
       </div>
+      <section className="ql-panel ql-parity-panel" aria-label="Cross-framework verification">
+        <div className="ql-panel-title">
+          <h2>
+            <GitCompare size={17} /> Cross-framework evidence
+          </h2>
+          <span className="ql-pill">Simulator-derived</span>
+        </div>
+        {!currentParity ? (
+          <div className="ql-parity-empty">
+            <div>
+              <h3>{staleParity ? "The circuit changed after verification." : "Verify one circuit across three independent engines."}</h3>
+              <p>
+                Qiskit Aer is the reference. PennyLane and Cirq independently translate the same CircuitIR; total variation distance must remain at or below 0.01.
+              </p>
+            </div>
+            <button
+              className="ql-button ql-button-primary"
+              disabled={parityRunning || running || editing || Boolean(preview.truncatedAt)}
+              onClick={compareFrameworks}
+              title={preview.truncatedAt ? "Cross-engine parity currently covers unitary circuits. Remove measurement/reset to compare." : undefined}
+            >
+              <GitCompare size={14} />
+              {parityRunning ? "Comparing…" : staleParity ? "Verify again" : "Run parity check"}
+            </button>
+          </div>
+        ) : (
+          <div className="ql-parity-content">
+            <div className="ql-framework-grid">
+              {Object.entries(parity!.circuits).map(([framework, frameworkResult]) => (
+                <article key={framework} className={frameworkResult.status === "success" ? "available" : "unavailable"}>
+                  <span>{framework === "qiskit" ? "Reference engine" : "Independent adapter"}</span>
+                  <h3>{framework === "qiskit" ? "Qiskit Aer" : framework === "pennylane" ? "PennyLane" : "Cirq"}</h3>
+                  <p>{frameworkResult.backend || frameworkResult.error || frameworkResult.status}</p>
+                  <strong>{frameworkResult.status === "success" ? "Executed" : "Unavailable"}</strong>
+                </article>
+              ))}
+            </div>
+            <div className="ql-parity-checks">
+              {parity!.parity_checks.map((check) => (
+                <div key={`${check.framework_a}-${check.framework_b}`}>
+                  <span>{check.framework_a} ↔ {check.framework_b}</span>
+                  <code>TVD {check.tvd.toFixed(6)} / {check.tolerance.toFixed(2)}</code>
+                  <strong className={check.pass ? "pass" : "fail"}>{check.pass ? "PASS" : "REVIEW"}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="ql-provenance-note">
+              Provenance: probabilities were computed by the named local simulator engines. This comparison does not represent cloud or quantum-hardware execution.
+            </p>
+          </div>
+        )}
+      </section>
       <section className="ql-panel ql-code-panel">
         <div className="ql-panel-title">
           <h2>
@@ -1129,7 +1288,7 @@ export default function CircuitStudio() {
         <div className="ql-code-footer">
           <span>
             {format === "qasm"
-              ? "Editable unitary subset · 12 gates · angles in radians"
+              ? "Editable OpenQASM subset · gates, measurement, reset · angles in radians"
               : "Generated Python · run in your own Qiskit environment"}
           </span>
           <div>

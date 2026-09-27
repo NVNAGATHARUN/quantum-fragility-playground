@@ -69,19 +69,19 @@
     {
       "id": "m07-variational-hybrid",
       "title": "Variational & Hybrid Algorithms",
-      "status": "planned",
+      "status": "available",
       "lessons": [
-        { "id": "vqe",  "content_version": null, "status": "planned" },
-        { "id": "qaoa", "content_version": null, "status": "planned" }
+        { "id": "vqe",  "content_version": "1.0.0", "status": "available" },
+        { "id": "qaoa", "content_version": "1.0.0", "status": "available" }
       ]
     },
     {
       "id": "m08-real-systems",
       "title": "Real Quantum Systems",
-      "status": "planned",
+      "status": "available",
       "lessons": [
-        { "id": "decoherence-relaxation", "content_version": null, "status": "planned" },
-        { "id": "cryostat-hardware",      "content_version": null, "status": "planned" }
+        { "id": "decoherence-relaxation", "content_version": "1.0.0", "status": "available" },
+        { "id": "cryostat-hardware",      "content_version": "1.0.0", "status": "available" }
       ]
     }
   ]

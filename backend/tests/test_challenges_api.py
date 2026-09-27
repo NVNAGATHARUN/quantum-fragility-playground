@@ -86,6 +86,23 @@ def test_evaluate_build_ghz_challenge_success():
     assert all(tc["passed"] for tc in data["test_cases"])
 
 
+def test_invalid_auth_token_keeps_401_semantics():
+    payload = {
+        "circuit": {
+            "schemaVersion": "1.0",
+            "qubits": 3,
+            "classicalBits": 3,
+            "operations": [],
+        }
+    }
+    res = client.post(
+        "/api/v1/challenges/ghz-3qubit/evaluate",
+        json=payload,
+        headers={"Authorization": "Bearer invalid-token"},
+    )
+    assert res.status_code == 401
+
+
 def test_evaluate_debug_swap_challenge():
     # Corrected SWAP: CX(0->1), CX(1->0), CX(0->1)
     payload = {

@@ -30,7 +30,7 @@ def test_get_curriculum_manifest(client):
     assert "m02-qubits-measurement" in mod_ids
 
 
-def test_core_curriculum_modules_four_through_six_are_released(client):
+def test_all_ps26140_curriculum_modules_are_released(client):
     """Core concepts promised by PS26140 must not remain placeholder modules."""
     res = client.get("/api/v1/learn/curriculum")
     assert res.status_code == 200
@@ -40,6 +40,8 @@ def test_core_curriculum_modules_four_through_six_are_released(client):
         "m04-superposition-interference": 4,
         "m05-entanglement-correlation": 4,
         "m06-standard-algorithms": 3,
+        "m07-variational-hybrid": 2,
+        "m08-real-systems": 2,
     }
     for module_id, lesson_count in expected_counts.items():
         assert modules[module_id]["status"] == "available"

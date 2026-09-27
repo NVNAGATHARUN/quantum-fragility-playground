@@ -5,11 +5,13 @@ Provides REST API endpoints for verified Qiskit simulation and Kraus noise model
 
 import os
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models.circuit_ir import (
     CircuitIR,
@@ -56,7 +58,7 @@ from .quantum.vqe import run_vqe
 
 
 from contextlib import asynccontextmanager
-from .db.session import init_db
+from .db.session import get_db, init_db
 from .auth.router import router as auth_router
 from .routes.classrooms import router as classrooms_router
 from .routes.circuits import router as circuits_router
@@ -65,6 +67,7 @@ from .routes.learn import router as learn_router
 from .routes.circuit_ir import router as circuit_ir_router
 from .routes.challenges import router as challenges_router
 from .routes.guided_labs import router as guided_labs_router
+from .routes.diagnostics import router as diagnostics_router
 
 
 @asynccontextmanager
@@ -90,6 +93,7 @@ app.include_router(learn_router)
 app.include_router(circuit_ir_router)
 app.include_router(challenges_router)
 app.include_router(guided_labs_router)
+app.include_router(diagnostics_router)
 
 
 
@@ -142,6 +146,27 @@ def health_check():
         "platform": "Quantum Lens AI",
         "kernel": "Qiskit Aer",
         "version": "3.0.0",
+    }
+
+
+@app.get("/health/ready")
+async def readiness_check(db: AsyncSession = Depends(get_db)):
+    """Verify the two dependencies required for a judge-facing learning run."""
+    try:
+        await db.execute(text("SELECT 1"))
+        from qiskit_aer import AerSimulator
+
+        backend = AerSimulator().name
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Readiness dependency failed: {exc}",
+        )
+    return {
+        "status": "ready",
+        "database": "reachable",
+        "simulation_backend": backend,
+        "version": app.version,
     }
 
 

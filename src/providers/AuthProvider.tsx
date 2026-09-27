@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRole, UserRole } from './RoleProvider';
+import { apiUrl } from '../api/client';
 
 export interface AuthUser {
   id: string;
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchCurrentUser = useCallback(async (authToken: string) => {
     try {
-      const res = await fetch('/api/v1/auth/me', {
+      const res = await fetch(apiUrl('/api/v1/auth/me'), {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (res.ok) {
@@ -66,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token, fetchCurrentUser]);
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/v1/auth/login', {
+    const res = await fetch(apiUrl('/api/v1/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -86,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (email: string, password: string, fullName: string, role: UserRole) => {
-    const res = await fetch('/api/v1/auth/signup', {
+    const res = await fetch(apiUrl('/api/v1/auth/signup'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

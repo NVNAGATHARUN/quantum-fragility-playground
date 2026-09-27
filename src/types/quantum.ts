@@ -40,6 +40,7 @@ export interface GateOperation {
   targets: number[]
   controls?: number[]
   params?: GateParams
+  classicalTargets?: number[]
   step: number
 }
 

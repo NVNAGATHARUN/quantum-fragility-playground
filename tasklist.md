@@ -1,6 +1,6 @@
 # Quantum Lens AI — living task list
 
-Updated: 2026-09-27. Mark an item complete only after implementation and verification. This tracked roadmap records the current repository state; the earlier research snapshot remains in the local review outputs.
+Updated: 2026-09-28. Mark an item complete only after implementation and verification. This tracked roadmap records the current repository state; the earlier research snapshot remains in the local review outputs.
 
 ## Completed — algorithm lab UI sprint
 
@@ -15,7 +15,7 @@ Updated: 2026-09-27. Mark an item complete only after implementation and verific
 - [x] Correct the Bell first checkpoint to q1q0 bit order and simplify checkpoint titles and breadcrumbs.
 - [x] Verification: production build and diff checks pass; browser journeys complete all four guided labs. Manually verify undo/redo, stale-result clearing, explicit gate removal and paired placement; desktop (1440px) and mobile (390px) layout checks show no page-width overflow.
 
-Known simulator limitation remains tracked below: the generic backend omits measurement collapse from its state preview. The redesigned result panel labels this limitation; this UI sprint does not complete the scientific simulator/grading fixes.
+The generic simulator now executes measurement/reset shot semantics in Aer. Its labelled pure-state preview stops before the first non-unitary operation rather than presenting later gates as if collapse had not occurred.
 
 ### Library and Labs discovery clarity
 
@@ -33,9 +33,9 @@ The page indexes now guide discovery. The pedagogical depth and correctness of i
 - [x] Visible undo/redo labels and Ctrl/Command-Z, Shift-Z, and Ctrl-Y shortcuts; text fields retain their native editing shortcuts.
 - [x] Live OpenQASM validation with operation line numbers, disabled invalid imports, preserved last valid circuit, and synchronized generated code after visual edits/history. Applying unchanged generated code preserves canvas placement.
 - [x] Protect code drafts from canvas edits, saving a stale circuit, and incoming suggested circuits.
-- [x] Verification: 13 Studio tests pass; production build passes; browser checks cover control reversal, angle edits, button/keyboard undo/redo, invalid QASM, and valid code import.
+- [x] Verification: 14 Studio tests pass; production build passes; browser checks cover control reversal, angle edits, button/keyboard undo/redo, invalid QASM, valid code import, and measurement/reset semantics.
 
-Qiskit remains a generated export; editable import supports the documented OpenQASM unitary subset.
+Qiskit remains a generated export; editable import supports the documented OpenQASM gate, measurement and reset subset.
 
 - [x] Unified blue theme: dark navy workspace, blue-indigo actions and navigation, cool white typography, blue illustrations and common lab accents. Dark theme now loads for returning users too; removed the workspace light-mode switch. Verified overview, learning path, Circuit Studio and Bell lab visually; production build and diff checks pass.
 
@@ -70,13 +70,17 @@ Qiskit remains a generated export; editable import supports the documented OpenQ
 
 ### Winning-probability implementation sprint
 
+- [x] Add server-owned alternate baseline/post diagnostics for all M01–M08 concepts, persist attempts, drive misconception transitions, and expose measured cohort learning gains without fabricated metrics.
+- [x] Connect Circuit Studio account saves, public permalink sharing, shared-circuit loading and provenance-preserving forks to the existing backend APIs.
+
 - [x] Add adversarial scientific tests for GHZ phase, oracle cancellation, measurement collapse and reset semantics.
 - [x] Add server-owned rubrics for all 12 guided checkpoints, authenticated persistence, and failure-safe frontend verification.
 - [x] Add a phase-sensitive Bell mastery challenge and connect the Bell guided journey to it.
 - [x] Pass live guided/studio circuit context into Aria, expose deterministic vs Gemini provenance, reject invalid generated circuits, and remove unprovable optimizer claims.
+- [x] Expose Aria's circuit/simulator/learner evidence and course citations, verify structured Gemini numerical claims, reject conflicts, and add a reproducible 40-case offline capability benchmark with an explicit non-expert-review boundary.
 - [x] Replace instructor roster vanity metrics with verified attempts, pass count and average server score.
 - [x] Harden instructor provisioning, JWT configuration, Docker database persistence and clean-install dependency declarations.
-- [x] Final verification: native Cirq and PennyLane are installed; 132 backend tests and 13 Studio tests pass; the production build, dependency-lock dry-run and diff check pass; README and judge claims were audited.
+- [x] Final verification: native Cirq and PennyLane are installed; 154 backend tests, 14 Studio tests and 2 Chromium journeys pass; the production build, dependency audit and diff check pass.
 
 - [ ] QL-001–005: dependency locks, authoritative CI, Docker baseline and product-claim audit are complete; hosted full-stack deployment verification remains.
 - [ ] QL-006–009: role provisioning, authentication/secrets, compute/AI limits and dependency security.
@@ -84,12 +88,12 @@ Qiskit remains a generated export; editable import supports the documented OpenQ
 - [ ] QL-014–017: finish Circuit Studio parity with the full brief, including all specified gates, robust code editing/import and noisy execution. Existing Studio work is partial.
 - [ ] QL-018–020: genuinely independent Qiskit/Cirq/PennyLane adapters, optional qBraid integration and conformance tests.
 - [ ] QL-021–025: finish curriculum, connect labs to lessons, semantic assessment grading, personalized recommendations and grounded tutor evaluation. The five lab visuals alone do not complete these items.
-- [ ] QL-026–029: API winning-journey integration and Studio regression coverage are complete; browser E2E, formal accessibility and operational scaling remain.
+- [ ] QL-026–029: API and Chromium winning-journey coverage are complete; Firefox/WebKit, formal accessibility and operational scaling remain.
 - [ ] QL-030–033: evidence-based README, repository hygiene, demonstration and technical Q&A package.
 
 ## Current release notes
 
 - The five lab routes require a working FastAPI/Qiskit backend; they now show an error when it is unavailable rather than presenting invented results.
 - Automated API integration covers the instructor assignment → guided Bell checkpoint → phase challenge → recommendation/completion journey. Cross-browser UI automation remains pending under QL-027.
-- Final verification for this sprint: 132 backend tests and 13 Circuit Studio tests pass; TypeScript and the production frontend bundle compile; dependency-lock dry-run and `git diff --check` pass. Non-blocking warnings remain for outdated Browserslist data and the 544 kB BlochSphere3D chunk.
+- Final verification for this sprint: 154 backend tests, 14 Circuit Studio tests and 2 Chromium journeys pass; TypeScript and the production frontend bundle compile; `npm audit` and `git diff --check` pass. The 555 kB BlochSphere3D chunk warning remains.
 - The build succeeds with non-blocking outdated Browserslist data and a large BlochSphere3D chunk warning; bundle cleanup remains pending.

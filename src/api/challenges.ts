@@ -7,11 +7,10 @@
  */
 
 import type { CircuitIR } from '../types/quantum';
-
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? '';
+import { apiUrl } from './client';
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
+  const res = await fetch(apiUrl(path));
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`API error ${res.status}: ${text}`);
@@ -20,7 +19,7 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 async function postJson<T>(path: string, body: unknown, token?: string | null): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

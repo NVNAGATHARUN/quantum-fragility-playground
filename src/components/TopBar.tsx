@@ -20,6 +20,7 @@ import {
 import { useTheme } from '../providers/ThemeProvider';
 import { useRole } from '../providers/RoleProvider';
 import { useAuth } from '../providers/AuthProvider';
+import { apiUrl } from '../api/client';
 
 interface TopBarProps {
   onOpenCommandPalette: () => void;
@@ -68,7 +69,7 @@ export default function TopBar({
   const measurePing = useCallback(async () => {
     const t0 = performance.now();
     try {
-      const res = await fetch('/health', { method: 'GET', cache: 'no-store' });
+      const res = await fetch(apiUrl('/health'), { method: 'GET', cache: 'no-store' });
       const t1 = performance.now();
       if (res.ok) {
         setPingMs(Math.round(t1 - t0));
@@ -83,7 +84,7 @@ export default function TopBar({
   // Capabilities fetch
   const fetchCapabilities = useCallback(async () => {
     try {
-      const res = await fetch('/api/v1/system/capabilities', { cache: 'no-store' });
+      const res = await fetch(apiUrl('/api/v1/system/capabilities'), { cache: 'no-store' });
       if (res.ok) {
         const data: CapabilitiesData = await res.json();
         setCapabilities(data);

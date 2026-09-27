@@ -68,7 +68,8 @@ Standard quantum educational tools suffer from three fundamental deficiencies:
 - **Drag-and-Drop Quantum Workbench:** Flexible circuit canvas supporting universal gate sets:
   - Single-qubit unitaries: $H, X, Y, Z, S, T, R_x(\theta), R_y(\theta), R_z(\theta)$
   - Multi-qubit entangling gates: $\text{CNOT}, \text{CZ}, \text{SWAP}$
-- **Code Synchronization:** Visual edits update generated code; valid edits to the supported OpenQASM 3 unitary subset can be applied back to the canvas:
+  - Non-unitary operations: qubit measurement into an explicit classical bit and reset to $|0\rangle$
+- **Code Synchronization:** Visual edits update generated code; valid edits to the supported OpenQASM 3 subset can be applied back to the canvas:
   1. **OpenQASM 3.0** representation.
   2. **IBM Qiskit (Python)** export.
   3. Canonical AST Intermediate Representation (IR).
@@ -91,6 +92,10 @@ Standard quantum educational tools suffer from three fundamental deficiencies:
 ## 🔬 Mathematical Physics & Open Quantum Systems Engine
 
 Core circuit results execute through Qiskit Aer. Cirq and PennyLane use independent native adapters for the supported unitary CircuitIR subset. Analytical noise and network/chemistry teaching models are explicitly labelled with provenance in their results.
+
+For circuits containing measurement or reset, sampled counts execute the complete circuit in Aer. The browser and API pure-state previews stop immediately before the first non-unitary operation, because one statevector cannot represent the resulting mixed ensemble without choosing a measurement branch.
+
+ARIA exposes the circuit, simulator and persisted learner evidence used for each response, links guidance to internal course material, and labels deterministic versus Gemini output. Structured Gemini claims about probabilities, purity and entropy are checked against server-owned simulator values; conflicting claims are rejected in favor of the deterministic grounded tutor. The reproducible offline contract benchmark and its claim boundary are recorded in [`docs/ARIA_EVALUATION.md`](docs/ARIA_EVALUATION.md).
 
 ### Density Matrix Dynamics & Kraus Representation
 An initial density operator $\rho(0)$ evolves under non-unitary environmental channels via the Kraus representation:
@@ -271,14 +276,25 @@ docker-compose up --build -d
 
 ## 🧪 Automated Test Verification
 
-CI installs from clean dependency manifests, runs the backend suite, runs Circuit Studio regression tests, and compiles the production frontend. To reproduce the backend checks locally:
+CI installs from clean dependency manifests, runs the backend suite and Circuit Studio regression tests, compiles the production frontend, and executes the signed-in adaptive-learning journey in Chromium. To reproduce those checks locally:
 
 ```powershell
-# Run the automated backend test suite
 backend\.venv\Scripts\python.exe -m pytest backend/tests -v -o pythonpath=backend
+npm run test:studio
+npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
-The exact count is intentionally not hard-coded here; the latest CI run is the source of truth.
+The browser test verifies the evidence loop from a failed phase-interference assessment through remediation, a passing retry, resolved misconception state, personalized Aria guidance, multi-engine Circuit Studio execution, account-backed saving, and measurement-aware OpenQASM import. The exact counts are intentionally not hard-coded here; the latest CI run is the source of truth.
+
+For a repeatable judging account and preloaded misconception evidence, reset the dedicated demo data before a presentation:
+
+```powershell
+backend\.venv\Scripts\python.exe backend/scripts/seed_demo.py --reset
+```
+
+Use `GET /health/ready` to verify that the database and Qiskit Aer simulator are available before the demo.
 
 ---
 
@@ -290,7 +306,7 @@ The table below records this repository's implemented capabilities. Competitor c
 | :--- | :---: |
 | Kraus density-matrix fragility simulation | Implemented and numerically tested |
 | Lindblad constraint guidance | Implemented in the fragility workflow |
-| Visual circuit + supported OpenQASM editing | Implemented |
+| Visual circuit + supported OpenQASM editing | Implemented for the documented gate, measurement and reset subset |
 | Qiskit Aer execution | Implemented |
 | Independent native Cirq and PennyLane execution | Implemented for the supported unitary CircuitIR subset with phase-sensitive conformance tests |
 | Guided labs and phase-sensitive challenges | Server-verified and persisted for signed-in learners |
@@ -302,14 +318,14 @@ The table below records this repository's implemented capabilities. Competitor c
 
 | PS 26140 deliverable | Repository evidence | Current status |
 | :--- | :--- | :---: |
-| Structured quantum curriculum | M01–M06 lessons with prediction, misconception, lab and checkpoint blocks | Implemented core path |
-| Graphical and code circuit design | Circuit Studio with visual gates, history, parameter editing and supported OpenQASM import | Implemented subset |
+| Structured quantum curriculum | M01–M08 lessons with prediction, misconception, lab and checkpoint blocks | Implemented published path |
+| Graphical and code circuit design | Circuit Studio with visual gates, measurement/reset, history, parameter editing and supported OpenQASM import | Implemented subset |
 | Multiple simulator backends | Qiskit Aer plus native Cirq and PennyLane parity adapters | Implemented simulator path |
 | State and result visualization | Bloch sphere, amplitudes, probabilities, counts, density/noise views | Implemented |
 | AI tutoring | Circuit-aware deterministic tutor plus optional Gemini, with provenance | Implemented; eval expansion pending |
 | Assessment and coding challenges | Server-graded guided checkpoints and adversarial phase-sensitive challenges | Implemented core path |
-| Progress and personalization | Verified evidence summary and reasoned next-activity recommendation | Implemented |
-| Instructor workflow | Classrooms, roster evidence and due-date assignments | Implemented core path |
+| Progress and personalization | Alternate-form baseline/post diagnostics, M01–M08 evidence, remediation state and reasoned next-activity recommendation | Implemented core path |
+| Instructor workflow | Classrooms, roster evidence, measured cohort learning gains and due-date assignments | Implemented core path |
 | Real quantum hardware | No production hardware connector is claimed | Future integration |
 
 ---

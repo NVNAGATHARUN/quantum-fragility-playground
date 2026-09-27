@@ -3,6 +3,8 @@
  * Strictly communicates with /api/v1/classrooms endpoints.
  */
 
+import { apiUrl } from './client';
+
 export interface ClassroomItem {
   id: string;
   name: string;
@@ -70,9 +72,14 @@ export interface ClassroomMisconceptionsResponse {
   misconceptions: MisconceptionPrevalenceItem[];
   student_matrix: StudentMatrixRow[];
 }
+export interface ClassroomLearningGains {
+  classroom_id: string; student_count: number; paired_learners: number;
+  average_baseline: number | null; average_post: number | null; average_improvement: number | null;
+  students: Array<{ student_id: string; full_name: string; baseline_score: number | null; post_score: number | null; improvement: number | null }>;
+}
 
 export async function fetchClassrooms(token: string): Promise<ClassroomItem[]> {
-  const res = await fetch('/api/v1/classrooms', {
+  const res = await fetch(apiUrl('/api/v1/classrooms'), {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
@@ -82,7 +89,7 @@ export async function fetchClassrooms(token: string): Promise<ClassroomItem[]> {
 }
 
 export async function fetchClassroomRoster(token: string, classId: string): Promise<EnrolledStudent[]> {
-  const res = await fetch(`/api/v1/classrooms/${classId}/roster`, {
+  const res = await fetch(apiUrl(`/api/v1/classrooms/${classId}/roster`), {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
@@ -95,7 +102,7 @@ export async function fetchClassroomMisconceptions(
   token: string,
   classId: string
 ): Promise<ClassroomMisconceptionsResponse> {
-  const res = await fetch(`/api/v1/classrooms/${classId}/misconceptions`, {
+  const res = await fetch(apiUrl(`/api/v1/classrooms/${classId}/misconceptions`), {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
@@ -104,8 +111,14 @@ export async function fetchClassroomMisconceptions(
   return res.json();
 }
 
+export async function fetchClassroomLearningGains(token: string, classId: string): Promise<ClassroomLearningGains> {
+  const res = await fetch(apiUrl(`/api/v1/classrooms/${classId}/learning-gains`), { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error('Failed to load measured learning gains');
+  return res.json();
+}
+
 export async function createClassroom(token: string, name: string): Promise<ClassroomItem> {
-  const res = await fetch('/api/v1/classrooms', {
+  const res = await fetch(apiUrl('/api/v1/classrooms'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -124,7 +137,7 @@ export async function enrollInClassroom(
   token: string,
   code: string
 ): Promise<{ success: boolean; message: string; classroom_id: string; classroom_name: string; code: string }> {
-  const res = await fetch('/api/v1/classrooms/enroll', {
+  const res = await fetch(apiUrl('/api/v1/classrooms/enroll'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -140,13 +153,13 @@ export async function enrollInClassroom(
 }
 
 export async function fetchAssignments(token: string, classId: string): Promise<ClassroomAssignment[]> {
-  const res = await fetch(`/api/v1/classrooms/${classId}/assignments`, { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(apiUrl(`/api/v1/classrooms/${classId}/assignments`), { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) throw new Error('Failed to load assignments');
   return res.json();
 }
 
 export async function createAssignment(token: string, classId: string, body: Omit<ClassroomAssignment, 'id'|'created_at'|'completed_count'|'student_count'|'current_user_completed'>): Promise<ClassroomAssignment> {
-  const res = await fetch(`/api/v1/classrooms/${classId}/assignments`, { method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`}, body:JSON.stringify(body) });
+  const res = await fetch(apiUrl(`/api/v1/classrooms/${classId}/assignments`), { method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`}, body:JSON.stringify(body) });
   if (!res.ok) throw new Error('Failed to create assignment');
   return res.json();
 }

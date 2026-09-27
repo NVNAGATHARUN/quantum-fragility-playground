@@ -15,10 +15,54 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from ..db.session import get_db
-from ..db.models import User, Classroom, Enrollment, LearnerProfile, LearnerMisconception, CircuitAttempt, Assignment, LessonProgress
+from ..db.models import User, Classroom, Enrollment, LearnerProfile, LearnerMisconception, CircuitAttempt, Assignment, LessonProgress, DiagnosticAttempt
 from ..auth.router import get_current_user, require_roles
 
 router = APIRouter(prefix="/api/v1/classrooms", tags=["classrooms"])
+
+
+@router.get("/{classroom_id}/learning-gains")
+async def get_classroom_learning_gains(
+    classroom_id: str,
+    current_user: User = Depends(require_roles(["instructor"])),
+    db: AsyncSession = Depends(get_db),
+):
+    classroom = (await db.execute(select(Classroom).where(
+        Classroom.id == classroom_id, Classroom.instructor_id == current_user.id
+    ))).scalar_one_or_none()
+    if not classroom:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    students = (await db.execute(
+        select(User).join(Enrollment, User.id == Enrollment.user_id).where(Enrollment.classroom_id == classroom_id)
+    )).scalars().all()
+    student_ids = [student.id for student in students]
+    attempts = [] if not student_ids else (await db.execute(
+        select(DiagnosticAttempt).where(DiagnosticAttempt.user_id.in_(student_ids)).order_by(DiagnosticAttempt.completed_at.desc())
+    )).scalars().all()
+    latest = {}
+    for attempt in attempts:
+        latest.setdefault((attempt.user_id, attempt.phase), attempt)
+    rows = []
+    for student in students:
+        baseline = latest.get((student.id, "baseline"))
+        post = latest.get((student.id, "post"))
+        rows.append({
+            "student_id": student.id, "full_name": student.full_name,
+            "baseline_score": baseline.score if baseline else None,
+            "post_score": post.score if post else None,
+            "improvement": round(post.score - baseline.score, 1) if baseline and post else None,
+        })
+    paired = [row for row in rows if row["improvement"] is not None]
+    baseline_rows = [row for row in rows if row["baseline_score"] is not None]
+    post_rows = [row for row in rows if row["post_score"] is not None]
+    average = lambda values: round(sum(values) / len(values), 1) if values else None
+    return {
+        "classroom_id": classroom_id, "student_count": len(students), "paired_learners": len(paired),
+        "average_baseline": average([row["baseline_score"] for row in baseline_rows]),
+        "average_post": average([row["post_score"] for row in post_rows]),
+        "average_improvement": average([row["improvement"] for row in paired]),
+        "students": rows,
+    }
 
 
 def generate_classroom_code() -> str:

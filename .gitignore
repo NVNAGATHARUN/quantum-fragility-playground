@@ -35,6 +35,9 @@ backend/.venv/
 
 # Local SQLite database (runtime data, not source)
 quantum_lens.db
+e2e_quantum_lens.db
+test-results/
+playwright-report/
 
 # IDE / editor
 .vscode/

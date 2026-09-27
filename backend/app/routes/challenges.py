@@ -21,6 +21,7 @@ from ..quantum.assessment import (
     AssessmentResult,
     evaluate_challenge_submission,
 )
+from ..pedagogy.evidence import misconception_for_activity, record_assessment_evidence
 
 router = APIRouter(prefix="/api/v1/challenges", tags=["challenges"])
 
@@ -94,12 +95,28 @@ async def evaluate_challenge(
                     "score": result.score,
                     "passed": result.passed,
                     "fidelity": result.fidelity,
+                    "misconception_id": misconception_for_activity("server_assessment", challenge_id),
+                    "reason": result.feedback[0] if result.feedback else (
+                        "All server-owned tests passed." if result.passed else "One or more server-owned tests failed."
+                    ),
                     "test_cases": [case.model_dump(mode="json") for case in result.test_cases],
                 },
                 was_correct=result.passed,
             )
             db.add(attempt)
             await db.flush()
+
+            await record_assessment_evidence(
+                db,
+                user_id=user.id,
+                misconception_id=misconception_for_activity("server_assessment", challenge_id),
+                passed=result.passed,
+                evidence=(
+                    f"{CANONICAL_CHALLENGES[challenge_id].title}: "
+                    f"score {result.score:.1f}%. "
+                    f"{result.feedback[0] if result.feedback else 'Server-owned assessment completed.'}"
+                ),
+            )
 
             attempts = (await db.execute(
                 select(CircuitAttempt).where(CircuitAttempt.user_id == user.id)
@@ -114,6 +131,8 @@ async def evaluate_challenge(
                 ) if assessed else 0.0
             await db.commit()
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -4,11 +4,10 @@ import type {
   Bb84RunConfig,
   Bb84RunSummary,
 } from '../types/quantum'
-
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? ''
+import { apiUrl } from './client'
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

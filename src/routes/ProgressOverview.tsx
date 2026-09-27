@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  ClipboardCheck,
   FlaskConical,
   Sparkles,
   Target,
@@ -13,13 +14,24 @@ import { useLessonProgress } from "../hooks/useLessonProgress";
 import { useAuth } from "../providers/AuthProvider";
 import { useQuantumSession } from "../providers/QuantumSessionProvider";
 import { fetchClassrooms, fetchAssignments, type ClassroomAssignment } from "../api/classrooms";
+import { fetchProgressSummary, type StudentProgressSummary } from "../api/progress";
+import { fetchDiagnosticSummary, type DiagnosticSummary } from "../api/diagnostics";
 
 export default function ProgressOverview() {
   const { user, token, openAuthModal } = useAuth();
   const [assignments, setAssignments] = useState<ClassroomAssignment[]>([]);
+  const [serverProgress, setServerProgress] = useState<StudentProgressSummary | null>(null);
+  const [diagnostic, setDiagnostic] = useState<DiagnosticSummary | null>(null);
   useEffect(() => {
-    if (!token || user?.role !== 'student') { setAssignments([]); return; }
+    if (!token || user?.role !== 'student') {
+      setAssignments([]);
+      setServerProgress(null);
+      setDiagnostic(null);
+      return;
+    }
     fetchClassrooms(token).then(classes => Promise.all(classes.map(c => fetchAssignments(token, c.id)))).then(groups => setAssignments(groups.flat())).catch(() => setAssignments([]));
+    fetchProgressSummary(token).then(setServerProgress).catch(() => setServerProgress(null));
+    fetchDiagnosticSummary(token).then(setDiagnostic).catch(() => setDiagnostic(null));
   }, [token, user?.role]);
   const { isCompleted, error, isLoading } = useLessonProgress();
   const { labRecords, simulatedCircuitsCount } = useQuantumSession();
@@ -67,6 +79,34 @@ export default function ProgressOverview() {
           connection and refresh.
         </div>
       )}
+      {serverProgress?.recommendation && (
+        <section className="ql-panel ql-adaptive-recommendation" aria-label="Evidence-based recommendation">
+          <div>
+            <span className="ql-eyebrow">
+              {serverProgress.recommendation.misconception_id
+                ? `${serverProgress.recommendation.misconception_id} · ${serverProgress.recommendation.stage?.toUpperCase()}`
+                : "EVIDENCE-BASED NEXT STEP"}
+            </span>
+            <h2>{serverProgress.recommendation.title}</h2>
+            <p>{serverProgress.recommendation.reason}</p>
+            <small>Evidence: {serverProgress.recommendation.evidence}</small>
+          </div>
+          <Link to={serverProgress.recommendation.route} className="ql-button ql-button-primary">
+            Start targeted activity <ArrowRight size={15} />
+          </Link>
+        </section>
+      )}
+      {user?.role === 'student' && (
+        <section className="ql-panel ql-diagnostic-banner" aria-label="Concept diagnostic">
+          <ClipboardCheck size={28}/>
+          <div>
+            <span className="ql-eyebrow">MEASURED LEARNING</span>
+            <h2>{diagnostic?.baseline ? 'Verify your learning with an alternate form' : 'Establish your concept baseline'}</h2>
+            <p>{diagnostic?.post && diagnostic.improvement !== null ? `Latest measured improvement: ${diagnostic.improvement >= 0 ? '+' : ''}${diagnostic.improvement} percentage points.` : 'Test eight core mental models and receive evidence-backed remediation.'}</p>
+          </div>
+          <Link to={`/diagnostic?phase=${diagnostic?.baseline ? 'post' : 'baseline'}`} className="ql-button ql-button-white">{diagnostic?.baseline ? 'Take post diagnostic' : 'Start baseline'} <ArrowRight size={15}/></Link>
+        </section>
+      )}
       <div className="ql-progress-stats">
         {[
           {
@@ -87,9 +127,11 @@ export default function ProgressOverview() {
           },
           {
             icon: FlaskConical,
-            number: simulatedCircuitsCount,
-            label: "Circuit runs",
-            detail: "Recorded in this browser",
+            number: serverProgress?.verified_attempts ?? simulatedCircuitsCount,
+            label: serverProgress ? "Verified attempts" : "Circuit runs",
+            detail: serverProgress
+              ? `${serverProgress.passed_attempts} passed · server graded`
+              : "Recorded in this browser",
           },
         ].map(({ icon: Icon, number, label, detail }) => (
           <div className="ql-panel" key={label}>
@@ -137,15 +179,15 @@ export default function ProgressOverview() {
           </div>
         </section>
         <aside className="ql-panel ql-next-lesson">
-          <span className="ql-eyebrow">A GOOD NEXT STEP</span>
+          <span className="ql-eyebrow">{serverProgress ? "YOUR LEARNING STATE" : "A GOOD NEXT STEP"}</span>
           <BookOpen size={30} />
-          <h2>{next.title}</h2>
-          <p>{next.summary}</p>
+          <h2>{serverProgress?.recommendation.title ?? next.title}</h2>
+          <p>{serverProgress?.recommendation.reason ?? next.summary}</p>
           <Link
-            to={`/learn/${next.moduleId}/${next.id}`}
+            to={serverProgress?.recommendation.route ?? `/learn/${next.moduleId}/${next.id}`}
             className="ql-button ql-button-primary"
           >
-            {done.length ? "Continue learning" : "Start learning"}
+            {serverProgress ? "Follow recommendation" : done.length ? "Continue learning" : "Start learning"}
             <ArrowRight size={15} />
           </Link>
         </aside>

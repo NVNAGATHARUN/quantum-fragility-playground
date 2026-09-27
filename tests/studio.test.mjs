@@ -131,6 +131,23 @@ test("exported QASM reconstructs the same complex state", () => {
     near(s.imag, expected.states[i].imag);
   });
 });
+test("measurement and reset round-trip while pure-state preview stops honestly", () => {
+  const measured = parseStudioQasm(
+    'OPENQASM 3.0; include "stdgates.inc"; qubit[1] q; bit[1] c; h q[0]; c[0] = measure q[0]; x q[0];',
+  );
+  assert.equal(measured.classicalBits, 1);
+  assert.equal(measured.operations[1].gate, "MEASURE");
+  assert.deepEqual(measured.operations[1].classicalTargets, [0]);
+  const preview = previewCircuit(measured);
+  assert.equal(preview.truncatedAt, "MEASURE");
+  near(preview.states[0].probability, 0.5);
+  near(preview.states[1].probability, 0.5);
+  const restored = parseStudioQasm(circuitCode(measured));
+  assert.equal(restored.operations[1].gate, "MEASURE");
+  const reset = qasm("x q[0]; reset q[0]; h q[0];", 1);
+  assert.equal(previewCircuit(reset).truncatedAt, "RESET");
+  assert.match(circuitCode(measured, "qiskit"), /qc\.measure\(0, 0\)/);
+});
 test("parallel circuit exports do not consume one visual step per statement", () => {
   const circuit = {
     version: "1.0",
@@ -149,7 +166,6 @@ test("parallel circuit exports do not consume one visual step per statement", ()
 });
 test("reject unsupported, malformed, oversized and overlapping circuits", () => {
   for (const body of [
-    "measure q[0];",
     "rx(alert(1)) q[0];",
     "cx q[0], q[0];",
     "x q[4];",

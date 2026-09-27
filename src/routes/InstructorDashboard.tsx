@@ -33,6 +33,7 @@ import {
   fetchClassrooms,
   fetchClassroomRoster,
   fetchClassroomMisconceptions,
+  fetchClassroomLearningGains,
   createClassroom,
   fetchAssignments,
   createAssignment,
@@ -43,6 +44,7 @@ import {
   StudentMatrixRow,
   StudentMisconceptionStatus,
   ClassroomAssignment,
+  ClassroomLearningGains,
 } from '../api/classrooms';
 
 type ActiveTab = 'heatmap' | 'roster' | 'catalog';
@@ -58,6 +60,7 @@ export default function InstructorDashboard() {
   const [misconceptionsData, setMisconceptionsData] = useState<ClassroomMisconceptionsResponse | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('heatmap');
   const [assignments, setAssignments] = useState<ClassroomAssignment[]>([]);
+  const [learningGains, setLearningGains] = useState<ClassroomLearningGains | null>(null);
   const [assignmentChoice, setAssignmentChoice] = useState('bell-phase');
   const [assignmentDueDate, setAssignmentDueDate] = useState(() => {
     const date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -107,14 +110,16 @@ export default function InstructorDashboard() {
     async (classId: string) => {
       if (!token) return;
       try {
-        const [rosterData, miscData, assignmentData] = await Promise.all([
+        const [rosterData, miscData, assignmentData, gainsData] = await Promise.all([
           fetchClassroomRoster(token, classId),
           fetchClassroomMisconceptions(token, classId),
           fetchAssignments(token, classId),
+          fetchClassroomLearningGains(token, classId),
         ]);
         setRoster(rosterData);
         setMisconceptionsData(miscData);
         setAssignments(assignmentData);
+        setLearningGains(gainsData);
       } catch (e) {
         console.error('Failed to load cohort telemetry', e);
       }
@@ -133,6 +138,7 @@ export default function InstructorDashboard() {
       setRoster([]);
       setMisconceptionsData(null);
       setAssignments([]);
+      setLearningGains(null);
     }
   }, [selectedClassId, loadCohortData]);
 
@@ -574,6 +580,15 @@ export default function InstructorDashboard() {
                       )}
                     </button>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    ['Baseline average', learningGains?.average_baseline],
+                    ['Post average', learningGains?.average_post],
+                    ['Measured gain', learningGains?.average_improvement],
+                    ['Paired learners', learningGains?.paired_learners],
+                  ].map(([label, value]) => <div key={String(label)} className="p-3 rounded-xl border border-border bg-slate-500/5"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div><strong className="text-xl text-text-primary">{value == null ? '—' : `${label === 'Measured gain' && Number(value) > 0 ? '+' : ''}${value}${label === 'Paired learners' ? '' : label === 'Measured gain' ? ' pp' : '%'}`}</strong></div>)}
                 </div>
 
                 {/* Workspace Navigation Tabs */}

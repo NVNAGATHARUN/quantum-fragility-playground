@@ -28,6 +28,8 @@ import type {
 import BlochSphere3D from "../components/BlochSphere3D";
 import { useQuantumSession } from "../providers/QuantumSessionProvider";
 import { useAuth } from "../providers/AuthProvider";
+import { apiUrl } from "../api/client";
+import { fetchProgressSummary, type StudentProgressSummary } from "../api/progress";
 import "../guided-labs.css";
 
 const GATES: {
@@ -173,6 +175,7 @@ export default function GuidedLabRunner() {
   const [error, setError] = useState("");
   const [hint, setHint] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [nextStep, setNextStep] = useState<StudentProgressSummary["recommendation"] | null>(null);
   const [selectedGate, setSelectedGate] = useState<SupportedGate>("H");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pending, setPending] = useState<{
@@ -194,6 +197,7 @@ export default function GuidedLabRunner() {
     setError("");
     setHint(false);
     setCompleted(false);
+    setNextStep(null);
     setSelectedGate("H");
     setSelectedId(null);
     setPending(null);
@@ -306,8 +310,7 @@ export default function GuidedLabRunner() {
     setError("");
     setResult(null);
     try {
-      const base = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
-      const response = await fetch(base + "/api/v1/quantum/simulate", {
+      const response = await fetch(apiUrl("/api/v1/quantum/simulate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ circuit, shots: 1024, backend: "qiskit-aer" }),
@@ -342,8 +345,7 @@ export default function GuidedLabRunner() {
     setVerifying(true);
     setError("");
     try {
-      const base = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
-      const response = await fetch(`${base}/api/v1/guided-labs/${labId}/checkpoints/${stepIndex}/evaluate`, {
+      const response = await fetch(apiUrl(`/api/v1/guided-labs/${labId}/checkpoints/${stepIndex}/evaluate`), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ circuit }),
@@ -353,6 +355,10 @@ export default function GuidedLabRunner() {
         setError(verified.reason || verified.detail || "The server could not verify this checkpoint.");
         return;
       }
+    if (token) {
+      const summary = await fetchProgressSummary(token);
+      setNextStep(summary?.recommendation ?? null);
+    }
     setCheckpoints((p) => ({
       ...p,
       [stepIndex]: { circuit: clone(circuit), result },
@@ -581,9 +587,15 @@ export default function GuidedLabRunner() {
               <Link to="/labs/studio">
                 Open Circuit Studio <ArrowRight size={14} />
               </Link>
-              {labId === "bell-state" && (
+              {labId === "bell-state" && !nextStep && (
                 <Link to="/challenges/bell-phase-verification">
                   Verify Bell phase mastery <ArrowRight size={14} />
+                </Link>
+              )}
+              {nextStep && (
+                <Link to={nextStep.route}>
+                  {nextStep.misconception_id ? `${nextStep.misconception_id}: ` : ""}
+                  {nextStep.title} <ArrowRight size={14} />
                 </Link>
               )}
             </div>

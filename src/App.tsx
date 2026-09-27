@@ -59,6 +59,7 @@ const VQE = lazy(() => import("./routes/Algorithms/VQE"));
 const HardwareExplorer = lazy(() => import("./routes/HardwareExplorer")); // /explore/hardware
 const StudentProgress = lazy(() => import("./routes/StudentProgress")); // /progress
 const ProgressOverview = lazy(() => import("./routes/ProgressOverview"));
+const DiagnosticAssessment = lazy(() => import("./routes/DiagnosticAssessment"));
 const InstructorDashboard = lazy(() => import("./routes/InstructorDashboard")); // /instructor
 const DesignSystem = lazy(() => import("./routes/DesignSystem")); // /design-system (dev)
 const About = lazy(() => import("./routes/About"));
@@ -258,6 +259,7 @@ export default function App() {
 
                       {/* ── PROGRESS / INSTRUCTOR ───────────────────────────── */}
                       <Route path="/progress" element={<ProgressOverview />} />
+                      <Route path="/diagnostic" element={<DiagnosticAssessment />} />
                       <Route
                         path="/progress/details"
                         element={<StudentProgress />}

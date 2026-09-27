@@ -171,3 +171,22 @@ class LessonProgress(Base):
 
     user = relationship("User", backref="lesson_progress")
 
+
+class DiagnosticAttempt(Base):
+    """Server-graded baseline or post-remediation concept diagnostic."""
+
+    __tablename__ = "diagnostic_attempts"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    phase = Column(String(20), nullable=False)  # baseline | post
+    form_version = Column(String(20), nullable=False, default="1.0")
+    score = Column(Float, nullable=False)
+    correct_count = Column(Integer, nullable=False)
+    item_count = Column(Integer, nullable=False)
+    concept_scores = Column(JSON, nullable=False)
+    responses = Column(JSON, nullable=False)
+    completed_at = Column(DateTime, default=utc_now, nullable=False)
+
+    user = relationship("User", backref="diagnostic_attempts")
+

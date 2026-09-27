@@ -5,6 +5,8 @@
  * Zero synthetic student data.
  */
 
+import { apiUrl } from './client';
+
 export interface MisconceptionSummaryItem {
   id: string;
   misconception_id: string;
@@ -13,7 +15,6 @@ export interface MisconceptionSummaryItem {
   detected_at: string;
   resolved_at?: string;
 }
-
 export interface StudentProgressSummary {
   user_id: string;
   full_name: string;
@@ -34,7 +35,15 @@ export interface StudentProgressSummary {
   verified_attempts: number;
   passed_attempts: number;
   competency_evidence: Array<{ domain: string; score: number; attempts: number; passed: number; evidence: string }>;
-  recommendation: { title: string; reason: string; route: string; evidence: string };
+  recommendation: {
+    title: string;
+    reason: string;
+    route: string;
+    evidence: string;
+    misconception_id?: string;
+    stage?: 'detected' | 'targeted' | 'resolved';
+    conflict_route?: string;
+  };
 }
 
 export async function fetchProgressSummary(token?: string | null): Promise<StudentProgressSummary | null> {
@@ -42,7 +51,7 @@ export async function fetchProgressSummary(token?: string | null): Promise<Stude
   if (!authToken) return null;
 
   try {
-    const res = await fetch('/api/v1/progress/summary', {
+    const res = await fetch(apiUrl('/api/v1/progress/summary'), {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },

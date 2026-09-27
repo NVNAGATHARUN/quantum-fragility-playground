@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, CheckCircle2, AlertTriangle, XCircle, ChevronDown, X, RefreshCw } from 'lucide-react';
+import { apiUrl } from '../api/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ export default function TelemetryBar() {
     setPingState('checking');
     const t0 = performance.now();
     try {
-      const res = await fetch('/health', { method: 'GET', cache: 'no-store' });
+      const res = await fetch(apiUrl('/health'), { method: 'GET', cache: 'no-store' });
       const t1 = performance.now();
       if (res.ok) {
         setPingMs(Math.round(t1 - t0));
@@ -115,7 +116,7 @@ export default function TelemetryBar() {
   const fetchCapabilities = useCallback(async () => {
     setCapsError(null);
     try {
-      const res = await fetch('/api/v1/system/capabilities', { cache: 'no-store' });
+      const res = await fetch(apiUrl('/api/v1/system/capabilities'), { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: CapabilitiesData = await res.json();
       setCapabilities(data);

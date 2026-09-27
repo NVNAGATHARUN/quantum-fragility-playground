@@ -16,6 +16,7 @@ import { simulateCircuit } from '../api/quantum';
 import BlochSphere3D from '../components/BlochSphere3D';
 import { useQuantumSession } from '../providers/QuantumSessionProvider';
 import { useAuth } from '../providers/AuthProvider';
+import { fetchProgressSummary, type StudentProgressSummary } from '../api/progress';
 
 const CHALLENGE_GATES: Array<{ gate: SupportedGate; label: string }> = [
   { gate: 'H', label: 'H' },
@@ -48,6 +49,7 @@ export default function ChallengeRunner() {
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [assessment, setAssessment] = useState<AssessmentResult | null>(null);
+  const [nextStep, setNextStep] = useState<StudentProgressSummary['recommendation'] | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Prediction challenge inputs
@@ -62,6 +64,7 @@ export default function ChallengeRunner() {
         setChallenge(ch);
         setCircuit(JSON.parse(JSON.stringify(ch.starter_circuit)));
         setAssessment(null);
+        setNextStep(null);
       })
       .catch((err) => setErrorMsg(err.message || 'Challenge not found'));
   }, [challengeId]);
@@ -99,6 +102,10 @@ export default function ChallengeRunner() {
 
       const res = await evaluateChallenge(challengeId, circuit, predDict, token);
       setAssessment(res);
+      if (token) {
+        const summary = await fetchProgressSummary(token);
+        setNextStep(summary?.recommendation ?? null);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Evaluation failed');
     } finally {
@@ -139,6 +146,7 @@ export default function ChallengeRunner() {
       setCircuit(JSON.parse(JSON.stringify(challenge.starter_circuit)));
       setSimResult(null);
       setAssessment(null);
+      setNextStep(null);
     }
   };
 
@@ -342,6 +350,21 @@ export default function ChallengeRunner() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+          {assessment && nextStep && (
+            <div className="p-5 rounded-xl border border-brand/30 bg-brand/10 space-y-3 shadow-subtle" aria-label="Personalized next step">
+              <span className="text-[10px] uppercase tracking-wider text-brand font-bold">
+                {nextStep.misconception_id
+                  ? `${nextStep.misconception_id} · ${nextStep.stage}`
+                  : 'Evidence-based next step'}
+              </span>
+              <h2 className="text-sm font-semibold text-text-primary">{nextStep.title}</h2>
+              <p className="text-xs leading-relaxed text-text-secondary">{nextStep.reason}</p>
+              <p className="text-[10px] font-mono text-text-muted">Evidence: {nextStep.evidence}</p>
+              <Link to={nextStep.route} className="btn btn-primary text-xs inline-flex items-center gap-2">
+                Continue adaptive journey <ArrowLeft className="w-3 h-3 rotate-180" />
+              </Link>
             </div>
           )}
         </div>

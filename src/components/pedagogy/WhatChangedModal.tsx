@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GitCompare, X, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import type { CircuitIR, WhatChangedDiff } from '../../types/quantum';
+import { apiUrl } from '../../api/client';
 
 interface WhatChangedModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export default function WhatChangedModal({
     const fetchDiff = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch('/api/v1/pedagogy/what-changed', {
+        const res = await fetch(apiUrl('/api/v1/pedagogy/what-changed'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ circuitA, circuitB }),

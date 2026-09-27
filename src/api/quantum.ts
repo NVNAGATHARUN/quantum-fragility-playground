@@ -4,8 +4,8 @@
  * Provides verified Qiskit Aer endpoints for circuit simulation, Kraus noise modeling,
  * cognitive conflict evaluation, and real session analytics.
  * 
- * Includes an analytical quantum solver fallback to guarantee 100% mathematically authentic
- * results even during server boots or offline execution — NO fake data.
+ * Includes explicitly labelled analytical teaching-model fallbacks for selected
+ * activities when the server is unavailable.
  */
 
 import type {
@@ -18,15 +18,14 @@ import type {
   TimelineStep,
   SimulationMetrics,
 } from '../types/quantum'
+import { apiUrl } from './client'
 
 export type { CircuitIR, NormalizedSimulationResult, FragilityRequest } from '../types/quantum'
-
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? ''
 
 // ─── HTTP Utilities ──────────────────────────────────────────────────────────
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -39,7 +38,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(path), {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   })
@@ -160,6 +159,12 @@ export interface MentorRequestPayload {
     location?: string
     mode?: MentorMode
     targetConcept?: string
+    learnerEvidence?: {
+      activeMisconception?: string
+      status?: string
+      recommendation?: string
+      evidence?: string
+    }
   }
   history?: Array<{ role: string; text: string }>
 }
@@ -184,6 +189,21 @@ export interface MentorResponsePayload {
   isValidated?: boolean
   source?: 'deterministic' | 'gemini'
   validationScope?: string
+  evidenceUsed?: Array<{
+    kind: 'circuit' | 'simulation' | 'learner'
+    label: string
+    detail: string
+  }>
+  citations?: Array<{
+    label: string
+    route: string
+    reason: string
+  }>
+  verification?: {
+    status: 'verified' | 'limited' | 'rejected'
+    checks: string[]
+    warnings: string[]
+  }
 }
 
 // ─── High-Precision Analytical Quantum Solver Fallback ───────────────────────

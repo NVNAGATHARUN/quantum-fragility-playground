@@ -13,9 +13,13 @@ export const STUDIO_GATES = [
   "CX",
   "CZ",
   "SWAP",
+  "MEASURE",
+  "RESET",
 ] as const;
 export const MAX_QUBITS = 5;
 export const MAX_STEPS = 16;
+export const isRotationGate = (gate: string) =>
+  gate === "RX" || gate === "RY" || gate === "RZ";
 type Complex = { r: number; i: number };
 const add = (a: Complex, b: Complex): Complex => ({
   r: a.r + b.r,
@@ -66,8 +70,13 @@ export function validateStudioCircuit(circuit: CircuitIR) {
           (op.controls?.length || 0) !== (paired ? 1 : 0)
     )
       throw new Error("Invalid gate target/control configuration.");
-    if (op.gate.startsWith("R") && !Number.isFinite(op.params?.theta))
+    if (isRotationGate(op.gate) && !Number.isFinite(op.params?.theta))
       throw new Error("Rotation gates need a finite angle in radians.");
+    if (op.gate === "MEASURE") {
+      const classical = op.classicalTargets?.[0] ?? op.targets[0];
+      if (!Number.isInteger(classical) || classical < 0 || classical >= circuit.classicalBits)
+        throw new Error("Measurement needs a classical bit inside the circuit register.");
+    }
     // Reserve the connection span so wires never hide overlapping gate operations.
     for (let q = Math.min(...wires); q <= Math.max(...wires); q++) {
       const key = `${op.step}:${q}`;
@@ -84,7 +93,12 @@ export function previewCircuit(circuit: CircuitIR) {
   let state = Array.from({ length: 2 ** circuit.qubits }, (_, i) =>
     c(i === 0 ? 1 : 0),
   );
+  let truncatedAt: "MEASURE" | "RESET" | null = null;
   for (const op of ordered(circuit)) {
+    if (op.gate === "MEASURE" || op.gate === "RESET") {
+      truncatedAt = op.gate;
+      break;
+    }
     const target = op.targets[0],
       mask = 1 << target;
     if (["CX", "CZ", "SWAP"].includes(op.gate)) {
@@ -146,7 +160,7 @@ export function previewCircuit(circuit: CircuitIR) {
       }
     return { x, y, z, purity: (1 + x * x + y * y + z * z) / 2 };
   });
-  return { states, bloch };
+  return { states, bloch, truncatedAt };
 }
 
 export function circuitCode(
@@ -155,12 +169,15 @@ export function circuitCode(
 ) {
   const operations = ordered(circuit).map((op) => {
     const wires = [...(op.controls || []), ...op.targets];
-    const args = op.gate.startsWith("R")
+    const args = isRotationGate(op.gate)
       ? `${Number((op.params?.theta || 0).toFixed(8))}`
       : "";
-    return format === "qasm"
-      ? `${op.gate.toLowerCase()}${args ? `(${args})` : ""} ${wires.map((q) => `q[${q}]`).join(", ")};`
-      : `qc.${op.gate.toLowerCase()}(${[...(args ? [args] : []), ...wires].join(", ")})`;
+    if (op.gate === "MEASURE") {
+      const classical = op.classicalTargets?.[0] ?? op.targets[0];
+      return format === "qasm" ? `c[${classical}] = measure q[${op.targets[0]}];` : `qc.measure(${op.targets[0]}, ${classical})`;
+    }
+    if (op.gate === "RESET") return format === "qasm" ? `reset q[${op.targets[0]}];` : `qc.reset(${op.targets[0]})`;
+    return format === "qasm" ? `${op.gate.toLowerCase()}${args ? `(${args})` : ""} ${wires.map((q) => `q[${q}]`).join(", ")};` : `qc.${op.gate.toLowerCase()}(${[...(args ? [args] : []), ...wires].join(", ")})`;
   });
   return (
     format === "qasm"
@@ -169,12 +186,13 @@ export function circuitCode(
           `include "stdgates.inc";`,
           "",
           `qubit[${circuit.qubits}] q;`,
+          ...(circuit.classicalBits ? [`bit[${circuit.classicalBits}] c;`] : []),
           ...operations,
         ]
       : [
           "from qiskit import QuantumCircuit",
           "",
-          `qc = QuantumCircuit(${circuit.qubits})`,
+          `qc = QuantumCircuit(${circuit.qubits}, ${circuit.classicalBits})`,
           ...operations,
           "",
           "print(qc)",
@@ -182,7 +200,7 @@ export function circuitCode(
   ).join("\n");
 }
 
-/** Strict parser for the studio's documented unitary OpenQASM subset; never executes code. */
+/** Strict parser for the studio's documented OpenQASM subset; never executes code. */
 export function parseStudioQasm(source: string): CircuitIR {
   if (source.length > 20000)
     throw new Error("Keep studio code under 20,000 characters.");
@@ -210,21 +228,36 @@ export function parseStudioQasm(source: string): CircuitIR {
   if (!register) throw new Error("Declare one register: qubit[2] q;");
   if (Number(register[1]) < 1 || Number(register[1]) > MAX_QUBITS)
     throw new Error("Choose between 1 and 5 qubits.");
+  let classicalBits = 0;
+  const classicalRegister = statements[0]?.match(/^bit\s*\[\s*(\d+)\s*\]\s+c$/);
+  if (classicalRegister) {
+    classicalBits = Number(classicalRegister[1]);
+    if (classicalBits < 1 || classicalBits > Number(register[1])) throw new Error("Classical register must contain between 1 and the number of qubits.");
+    statements.shift();
+  }
   const nextStep = Array.from({ length: MAX_QUBITS }, () => 0);
   const operations: GateOperation[] = statements.map((line, index) => {
     try {
+      const measurement = line.match(/^c\[\s*(\d+)\s*\]\s*=\s*measure\s+q\[\s*(\d+)\s*\]$/i);
+      if (measurement) {
+        const classical = Number(measurement[1]), qubit = Number(measurement[2]);
+        if (!classicalBits) throw new Error("Declare bit[n] c before measurement.");
+        if (classical >= classicalBits || qubit >= Number(register[1])) throw new Error("Measurement references a bit outside its register.");
+        const step = nextStep[qubit]++;
+        return { id: `import-${index}`, gate: "MEASURE", targets: [qubit], classicalTargets: [classical], step };
+      }
       const match = line.match(
-        /^(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap)(?:\(\s*([^)]*)\s*\))?\s+q\[\s*(\d+)\s*\](?:\s*,\s*q\[\s*(\d+)\s*\])?$/i,
+        /^(h|x|y|z|s|t|rx|ry|rz|cx|cz|swap|reset)(?:\(\s*([^)]*)\s*\))?\s+q\[\s*(\d+)\s*\](?:\s*,\s*q\[\s*(\d+)\s*\])?$/i,
       );
       if (!match)
         throw new Error(
-          `Unsupported statement: ${line}. Use H, X, Y, Z, S, T, RX, RY, RZ, CX, CZ or SWAP.`,
+          `Unsupported statement: ${line}. Use supported gates, RESET, or c[i] = measure q[i].`,
         );
       const gate = match[1].toUpperCase() as SupportedGate;
       const first = Number(match[3]),
         second = match[4] === undefined ? undefined : Number(match[4]);
       let params;
-      if (gate.startsWith("R")) {
+      if (isRotationGate(gate)) {
         const raw = (match[2] || "").replace(/\s/g, "");
         const pi = raw.match(
           /^(-?)(?:(\d+(?:\.\d+)?)\*)?pi(?:\/(\d+(?:\.\d+)?))?$/,
@@ -284,7 +317,7 @@ export function parseStudioQasm(source: string): CircuitIR {
   const circuit: CircuitIR = {
     version: "1.0",
     qubits: Number(register[1]),
-    classicalBits: 0,
+    classicalBits,
     operations,
   };
   validateStudioCircuit(circuit);

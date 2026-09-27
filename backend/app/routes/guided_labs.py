@@ -11,6 +11,7 @@ from ..circuit.ir import CircuitIR
 from ..db.models import CircuitAttempt, LearnerProfile, User
 from ..db.session import get_db
 from ..quantum.guided_assessment import RUBRICS, evaluate_guided_checkpoint
+from ..pedagogy.evidence import misconception_for_activity, record_assessment_evidence
 
 router = APIRouter(prefix="/api/v1/guided-labs", tags=["guided-labs"])
 
@@ -42,14 +43,28 @@ async def evaluate_checkpoint(lab_id: str, checkpoint: int, body: GuidedEvaluate
         raise HTTPException(404, "Guided checkpoint not found")
     user = await _optional_user(authorization, db)
     if user:
+        misconception_id = misconception_for_activity("guided_lab", lab_id)
         attempt = CircuitAttempt(
             user_id=user.id,
             circuit_ir=body.circuit.model_dump(mode="json"),
-            outcome={"source": "guided_lab", "lab_id": lab_id, "checkpoint": checkpoint, **result},
+            outcome={
+                "source": "guided_lab",
+                "lab_id": lab_id,
+                "checkpoint": checkpoint,
+                "misconception_id": misconception_id,
+                **result,
+            },
             was_correct=result["passed"],
         )
         db.add(attempt)
         await db.flush()
+        await record_assessment_evidence(
+            db,
+            user_id=user.id,
+            misconception_id=misconception_id,
+            passed=result["passed"],
+            evidence=f"Guided lab {lab_id}, checkpoint {checkpoint + 1}: {result['reason']}",
+        )
         attempts = (await db.execute(select(CircuitAttempt).where(CircuitAttempt.user_id == user.id))).scalars().all()
         verified = [a for a in attempts if isinstance(a.outcome, dict) and a.outcome.get("source") in {"guided_lab", "server_assessment"}]
         profile = (await db.execute(select(LearnerProfile).where(LearnerProfile.user_id == user.id))).scalar_one_or_none()

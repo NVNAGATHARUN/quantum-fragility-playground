@@ -197,30 +197,12 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
 
                             <div className="mt-32 grid grid-cols-2 gap-32 w-full">
                                 <div className="space-y-4">
-                                    <div className="flex justify-between text-[10px] font-mono text-text-muted">
-                                        <span>FIDELITY</span>
-                                        <span className="text-brand-cyan">{0.98 + Math.random() * 0.02}</span>
-                                    </div>
-                                    <div className="h-[2px] w-full bg-white/5 overflow-hidden">
-                                        <motion.div
-                                            animate={{ width: ["100%", "95%", "100%"] }}
-                                            transition={{ duration: 5, repeat: Infinity }}
-                                            className="h-full bg-brand-cyan shadow-[0_0_8px_#22d3ee]"
-                                        />
-                                    </div>
+                                    <div className="text-[10px] font-mono text-text-muted">MODEL SOURCE</div>
+                                    <div className="text-xs font-mono text-brand-cyan">Concept animation</div>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="flex justify-between text-[10px] font-mono text-text-muted">
-                                        <span>COH. TIME</span>
-                                        <span className="text-brand-primary">124.5 μs</span>
-                                    </div>
-                                    <div className="h-[2px] w-full bg-white/5 overflow-hidden">
-                                        <motion.div
-                                            animate={{ width: ["0%", "80%", "0%"] }}
-                                            transition={{ duration: 3, repeat: Infinity }}
-                                            className="h-full bg-brand-primary shadow-[0_0_8px_#4f46e5]"
-                                        />
-                                    </div>
+                                    <div className="text-[10px] font-mono text-text-muted">NUMERICAL METRICS</div>
+                                    <div className="text-xs font-mono text-brand-primary">Available in full lab</div>
                                 </div>
                             </div>
                         </div>
@@ -230,7 +212,7 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
 
             <div className="px-32 py-16 flex items-center gap-12 text-[11px] font-mono text-text-muted opacity-40 italic">
                 <span className="w-8 h-8 rounded-full bg-brand-primary animate-ping" />
-                Interactive simulation guide for {experiment.title.toLowerCase()} concepts.
+                Illustrative concept guide. Launch the full lab for simulator-derived measurements.
             </div>
         </section>
     );
@@ -262,7 +244,7 @@ const LearningBySimulation = () => {
             >
                 <div className="absolute top-0 right-0 p-32 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-1000 font-orbitron">⚛</div>
                 <h3 className="text-3xl font-orbitron font-900 shadow-brand-primary mb-16">The Quantum Lab Awaits</h3>
-                <p className="text-text-secondary text-lg mb-40 max-w-2xl mx-auto font-medium">Once you've completed all guides, you're ready to perform high-fidelity research simulations with 7 custom noise channels and real-time gate debugging.</p>
+                <p className="text-text-secondary text-lg mb-40 max-w-2xl mx-auto font-medium">Once you've completed all guides, continue into the interactive lab with 7 configurable noise channels and real-time gate debugging.</p>
                 <Link to="/fragility-lab" className="btn btn-primary !px-64 !py-20 text-sm font-black uppercase tracking-[4px] shadow-[0_10px_40px_rgba(79,70,229,0.3)]">
                     Enter Research Lab
                 </Link>

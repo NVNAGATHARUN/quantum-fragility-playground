@@ -22,6 +22,7 @@ from ..db.models import (
     SavedCircuit,
 )
 from ..auth.router import get_current_user
+from ..pedagogy.evidence import intervention_recommendation
 
 router = APIRouter(prefix="/api/v1/progress", tags=["progress"])
 
@@ -201,13 +202,16 @@ async def get_progress_summary(
                 "evidence": "Server-graded guided checkpoints and challenges" if items else "No verified evidence yet",
             })
 
+        active_diagnoses = [m for m in misconceptions if m.status in {"detected", "targeted"}]
         passed_keys = {(a.outcome.get("source"), a.outcome.get("lab_id"), a.outcome.get("checkpoint"), a.outcome.get("challenge_id")) for a in passed}
-        if not verified:
+        if active_diagnoses:
+            recommendation = intervention_recommendation(active_diagnoses[0])
+        elif not verified:
             recommendation = {"title": "Start with phase and interference", "reason": "No verified assessment evidence exists yet.", "route": "/learn/m04-superposition-interference/global-vs-relative-phase", "evidence": "0 verified attempts"}
         elif ("guided_lab", "bell-state", 2, None) in passed_keys and not any(a.outcome.get("challenge_id") == "bell-phase-verification" and a.outcome.get("passed") for a in verified):
             recommendation = {"title": "Verify the Bell pair's hidden phase", "reason": "You completed the Bell construction; the next step is a phase-sensitive mastery check.", "route": "/challenges/bell-phase-verification", "evidence": "Bell guided lab completed"}
-        elif any(not a.outcome.get("passed") for a in verified[-3:]):
-            last_failed = next(a for a in reversed(verified) if not a.outcome.get("passed"))
+        elif verified and not verified[-1].outcome.get("passed"):
+            last_failed = verified[-1]
             is_bell = last_failed.outcome.get("challenge_id") == "bell-phase-verification" or last_failed.outcome.get("lab_id") == "bell-state"
             recommendation = {"title": "Rebuild the missing concept", "reason": last_failed.outcome.get("reason") or "A recent verified attempt did not pass.", "route": "/learn/m05-entanglement-correlation/bell-states" if is_bell else "/learn/m04-superposition-interference/phase-challenge", "evidence": f"Attempt {last_failed.id[:8]}"}
         else:

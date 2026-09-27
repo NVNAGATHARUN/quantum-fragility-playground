@@ -11,7 +11,7 @@
  * algorithm clients below still have analytical fallback paths.
  */
 
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? "";
+import { apiUrl } from './client';
 
 // ─── Bell State (AL-01) ───────────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ export async function runBellState(
   req: BellStateRequest,
 ): Promise<BellStateResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/bell-state`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/bell-state'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -94,7 +94,7 @@ export async function runDeutschJozsa(
   req: DeutschJozsaRequest,
 ): Promise<DeutschJozsaResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/deutsch-jozsa`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/deutsch-jozsa'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -136,7 +136,7 @@ export async function runTeleportation(
   req: TeleportationRequest,
 ): Promise<TeleportationResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/teleportation`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/teleportation'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -179,7 +179,7 @@ export interface QFTResult {
 
 export async function runQFT(req: QFTRequest): Promise<QFTResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/qft`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/qft'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -228,7 +228,7 @@ export interface BB84Result {
 
 export async function runBB84(req: BB84Request): Promise<BB84Result> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/qkd-bb84`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/qkd-bb84'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -242,105 +242,6 @@ export async function runBB84(req: BB84Request): Promise<BB84Result> {
   } catch {
     throw new Error("The verified BB84 backend is unavailable. No synthetic result was substituted.");
   }
-}
-
-function analyticalBB84(req: BB84Request): BB84Result {
-  const n = req.n_bits;
-  const alice_bits: number[] = [];
-  const alice_bases: string[] = [];
-  const bob_bases: string[] = [];
-  const eve_bases: string[] = [];
-  const eve_measured_bits: number[] = [];
-  const bob_measured_bits: number[] = [];
-
-  for (let i = 0; i < n; i++) {
-    const aBit = Math.random() < 0.5 ? 0 : 1;
-    const aBase = Math.random() < 0.5 ? "+" : "x";
-    const bBase = Math.random() < 0.5 ? "+" : "x";
-    const eBase = Math.random() < 0.5 ? "+" : "x";
-
-    alice_bits.push(aBit);
-    alice_bases.push(aBase);
-    bob_bases.push(bBase);
-    eve_bases.push(eBase);
-
-    let state = aBit;
-    let currBase = aBase;
-
-    if (req.eve_present) {
-      if (eBase === currBase) {
-        // Eve matches Alice basis
-        eve_measured_bits.push(aBit);
-      } else {
-        // Measurement collapse
-        const eBit = Math.random() < 0.5 ? 0 : 1;
-        eve_measured_bits.push(eBit);
-        state = eBit;
-        currBase = eBase;
-      }
-    } else {
-      eve_measured_bits.push(0);
-    }
-
-    if (bBase === currBase) {
-      bob_measured_bits.push(state);
-    } else {
-      bob_measured_bits.push(Math.random() < 0.5 ? 0 : 1);
-    }
-  }
-
-  const sifted_indices: number[] = [];
-  for (let i = 0; i < n; i++) {
-    if (alice_bases[i] === bob_bases[i]) {
-      sifted_indices.push(i);
-    }
-  }
-
-  const alice_sifted = sifted_indices.map((i) => alice_bits[i]);
-  const bob_sifted = sifted_indices.map((i) => bob_measured_bits[i]);
-
-  let errors = 0;
-  for (let k = 0; k < sifted_indices.length; k++) {
-    if (alice_sifted[k] !== bob_sifted[k]) errors++;
-  }
-
-  const qber = sifted_indices.length > 0 ? errors / sifted_indices.length : 0;
-  const is_secure = qber <= 0.11 && sifted_indices.length >= 2;
-  const verdict = is_secure
-    ? "SECURE_KEY_ESTABLISHED"
-    : "EAVESDROPPER_DETECTED_ABORT";
-
-  let final_key_hex = "KEY_COMPROMISED";
-  if (is_secure && alice_sifted.length > 0) {
-    const bitStr = alice_sifted.join("");
-    const padded = bitStr + "0".repeat((4 - (bitStr.length % 4)) % 4);
-    final_key_hex = parseInt(padded, 2).toString(16).toUpperCase();
-  }
-
-  const explanation = req.eve_present
-    ? `SECURITY BREACH DETECTED! Eve executed an Intercept-Resend attack. Measuring photons in conjugate bases collapsed the states, raising QBER to ${(qber * 100).toFixed(1)}%. Since QBER > 11.0% (Shor-Preskill limit), Alice and Bob safely aborted key exchange. Quantum physics prevented undetected espionage!`
-    : `BB84 completed securely. Alice and Bob matched bases on ${sifted_indices.length} of ${n} qubits (${((sifted_indices.length / n) * 100).toFixed(1)}% sifted efficiency) with QBER = ${(qber * 100).toFixed(1)}% (≤ 11.0% threshold). Quantum key established.`;
-
-  return {
-    n_bits: n,
-    eve_present: req.eve_present,
-    alice_bits,
-    alice_bases,
-    bob_bases,
-    eve_bases: req.eve_present ? eve_bases : [],
-    eve_measured_bits: req.eve_present ? eve_measured_bits : [],
-    bob_measured_bits,
-    sifted_indices,
-    alice_sifted_key: alice_sifted,
-    bob_sifted_key: bob_sifted,
-    qber: Math.round(qber * 1000) / 1000,
-    is_secure,
-    security_verdict: verdict,
-    final_key_hex,
-    circuit_depth: 3,
-    execution_time_ms: 11.2,
-    explanation,
-  };
 }
 
 // --- Quantum Network Lab: Entanglement Swapping / Repeater (AL-08) ----------
@@ -373,7 +274,7 @@ export async function runEntanglementSwapping(
 ): Promise<EntanglementSwappingResult> {
   try {
     const res = await fetch(
-      `${BASE_URL}/api/v1/algorithms/entanglement-swapping`,
+      apiUrl('/api/v1/algorithms/entanglement-swapping'),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -388,47 +289,6 @@ export async function runEntanglementSwapping(
   } catch {
     throw new Error("The verified entanglement-swapping backend is unavailable. No synthetic result was substituted.");
   }
-}
-
-function analyticalEntanglementSwapping(
-  req: EntanglementSwappingRequest,
-): EntanglementSwappingResult {
-  const d = req.distance_km;
-  const ALPHA_DB_PER_KM = 0.2;
-  const directLossDb = ALPHA_DB_PER_KM * d;
-  const repeaterLossDb = ALPHA_DB_PER_KM * (d / 2);
-  const directProb = Math.pow(10, -directLossDb / 10);
-  const repeaterProb = Math.pow(10, -repeaterLossDb / 10);
-  const bsmOutcomes = ["00", "01", "10", "11"];
-  const bsmOutcome = bsmOutcomes[Math.floor(Math.random() * 4)];
-  const counts: Record<string, number> = {
-    "00": 256,
-    "01": 256,
-    "10": 256,
-    "11": 256,
-  };
-  const probs: Record<string, number> = {
-    "00": 0.25,
-    "01": 0.25,
-    "10": 0.25,
-    "11": 0.25,
-  };
-  return {
-    distance_km: d,
-    use_repeater: true,
-    bsm_outcome: bsmOutcome,
-    alice_bob_state_label: "|F+?_AB = (|00?+|11?)/v2",
-    direct_transmission_prob: Math.round(directProb * 1e6) / 1e6,
-    repeater_transmission_prob: Math.round(repeaterProb * 1e6) / 1e6,
-    fidelity: 0.9995,
-    entanglement_entropy: 1.0,
-    subsystem_purity: 0.5,
-    counts,
-    probabilities: probs,
-    circuit_depth: 8,
-    execution_time_ms: 22.4,
-    explanation: `Quantum Repeater SUCCESS at ${(d / 2).toFixed(0)} km intermediate node. Direct loss = ${directLossDb.toFixed(1)} dB vs ${repeaterLossDb.toFixed(1)} dB per segment. Alice and Bob share |Φ+⟩_AB (F=0.9995) without direct photon exchange!`,
-  };
 }
 
 // ─── QAOA: Quantum Approximate Optimization Algorithm (AL-06) ────────────────
@@ -486,7 +346,7 @@ export interface QAOAResult {
 
 export async function runQAOA(req: QAOARequest): Promise<QAOAResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/qaoa`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/qaoa'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -700,7 +560,7 @@ export interface VQEResult {
 
 export async function runVQE(req: VQERequest): Promise<VQEResult> {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/algorithms/vqe`, {
+    const res = await fetch(apiUrl('/api/v1/algorithms/vqe'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

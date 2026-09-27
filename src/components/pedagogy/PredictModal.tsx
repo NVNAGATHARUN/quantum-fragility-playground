@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Brain, AlertTriangle, CheckCircle2, ArrowRight, X } from 'lucide-react';
 import type { CircuitIR, CognitiveDeltaResult } from '../../types/quantum';
+import { apiUrl } from '../../api/client';
 
 interface PredictModalProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ export default function PredictModal({
     }
 
     try {
-      const res = await fetch('/api/v1/pedagogy/predict', {
+      const res = await fetch(apiUrl('/api/v1/pedagogy/predict'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

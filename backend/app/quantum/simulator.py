@@ -192,9 +192,9 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
     """Execute CircuitIR shots with Aer and return an ideal state preview.
 
     Counts always come from the full circuit, including intermediate measurements
-    and reset operations. The statevector/reduced-state fields are an ideal
-    unitary preview with non-unitary operations omitted because a single pure
-    statevector cannot represent the mixed post-measurement ensemble.
+    and reset operations. The statevector/reduced-state fields describe the
+    pure state immediately before the first non-unitary operation because a
+    single statevector cannot represent the later mixed ensemble.
     """
     valid, err = validate_circuit_ir(circuit)
     if not valid:
@@ -204,7 +204,8 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
     num_qubits = circuit.qubits
 
     # 1. Ideal preview without non-unitary operations.
-    pure_ops = [op for op in circuit.operations if op.gate not in ("MEASURE", "RESET")]
+    first_non_unitary = next((i for i, op in enumerate(circuit.operations) if op.gate in ("MEASURE", "RESET")), len(circuit.operations))
+    pure_ops = circuit.operations[:first_non_unitary]
     pure_ir = CircuitIR(version=circuit.version, qubits=num_qubits, classicalBits=circuit.classicalBits, operations=pure_ops)
     qc_pure = build_qiskit_circuit(pure_ir)
     sv = Statevector.from_instruction(qc_pure)
@@ -235,9 +236,16 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
 
     # 3. Execute the full circuit on Aer. Final measurements are appended so
     # returned counts always describe the state after the complete circuit.
-    qc_shots = build_qiskit_circuit(circuit)
-    if circuit.classicalBits < num_qubits:
-        raise ValueError("classicalBits must be at least qubits for final readout")
+    # Visual/code-first circuits legitimately contain no classical register.
+    # Allocate a readout register in an execution-only copy instead of forcing
+    # the editor's unitary CircuitIR to carry synthetic measurement metadata.
+    readout_ir = CircuitIR(
+        version=circuit.version,
+        qubits=num_qubits,
+        classicalBits=max(circuit.classicalBits, num_qubits),
+        operations=circuit.operations,
+    )
+    qc_shots = build_qiskit_circuit(readout_ir)
     for qubit in range(num_qubits):
         qc_shots.measure(qubit, qubit)
     aer = AerSimulator()
