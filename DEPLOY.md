@@ -5,6 +5,24 @@ Quantum Lens AI is designed for multi-target deployment (Vercel, Render, Docker,
 ## Repository
 - GitHub: `https://github.com/NVNAGATHARUN/gst-qlp.git`
 
+## Public Demo Deployment
+
+The repository includes `render.yaml` for a reproducible Render Blueprint:
+
+- `gst-qlp-api`: Dockerized FastAPI/Qiskit web service.
+- `gst-qlp-db`: managed PostgreSQL used through `DATABASE_URL`.
+- Generated production JWT and instructor-invite secrets.
+- Readiness checks through `/health/ready`.
+
+Deploy the Blueprint from the repository, then deploy the Vite frontend with:
+
+```powershell
+vercel --prod --yes --name gst-qlp --build-env VITE_API_BASE_URL=https://gst-qlp-api.onrender.com
+```
+
+The free Render database is suitable only for the judging preview and expires
+after 30 days. Move the database and API to paid instances for persistent use.
+
 ## Architecture Targets
 1. **Frontend (Vercel / Nginx):**
    - Built via Vite (`npm run build`).

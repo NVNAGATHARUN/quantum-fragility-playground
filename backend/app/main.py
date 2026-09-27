@@ -111,9 +111,11 @@ allowed_origins = [
     for origin in os.getenv("QL_ALLOWED_ORIGINS", ",".join(default_origins)).split(",")
     if origin.strip()
 ]
+allowed_origin_regex = os.getenv("QL_ALLOWED_ORIGIN_REGEX") or None
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

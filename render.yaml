@@ -1,0 +1,30 @@
+databases:
+  - name: gst-qlp-db
+    plan: free
+    databaseName: quantum_lens
+    user: quantum_lens
+
+services:
+  - type: web
+    name: gst-qlp-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gst-qlp-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: INSTRUCTOR_INVITE_CODE
+        generateValue: true
+      - key: QL_ALLOWED_ORIGINS
+        value: https://gst-qlp.vercel.app
+      - key: QL_ALLOWED_ORIGIN_REGEX
+        value: https://.*\.vercel\.app
