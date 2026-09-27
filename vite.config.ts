@@ -9,7 +9,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      host: true,
       port: 5173,
+      allowedHosts: true,
       proxy: {
         '/health': {
           target: fastApiTarget,
@@ -24,6 +26,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
       },
+    },
+    preview: {
+      host: true,
+      port: 5173,
+      allowedHosts: true,
     },
   }
 })

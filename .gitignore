@@ -42,3 +42,7 @@ quantum_lens.db
 
 # Scratch / internal agent notes
 NOTES.md
+
+# Tunnel / local binary tools
+.tools/
+
