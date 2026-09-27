@@ -33,7 +33,7 @@ after 30 days. Move the database and API to paid instances for persistent use.
      setting. Docker/Nginx leaves it empty and uses the same-origin proxy.
 
 2. **Backend (FastAPI / Qiskit Aer):**
-   - High-performance asynchronous Python 3.12 production container; CI also verifies Python 3.11 compatibility.
+   - High-performance asynchronous Python 3.11 server.
    - Run command: `uvicorn backend.app.main:app --host 0.0.0.0 --port 8000`
    - Real-time Qiskit Aer 0.17.2 density matrix simulation and circuit IR validation.
 
