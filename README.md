@@ -91,7 +91,7 @@ Standard quantum educational tools suffer from three fundamental deficiencies:
 
 ## 🔬 Mathematical Physics & Open Quantum Systems Engine
 
-Core circuit results execute through Qiskit Aer. Cirq and PennyLane use independent native adapters for the supported unitary CircuitIR subset. Analytical noise and network/chemistry teaching models are explicitly labelled with provenance in their results.
+Circuit Studio can execute the supported unitary CircuitIR subset independently through Qiskit Aer, Cirq, or PennyLane and reports the framework that actually ran. Qiskit Aer additionally supports measurement and reset semantics. Analytical noise and network/chemistry teaching models are explicitly labelled with provenance in their results.
 
 For circuits containing measurement or reset, sampled counts execute the complete circuit in Aer. The browser and API pure-state previews stop immediately before the first non-unitary operation, because one statevector cannot represent the resulting mixed ensemble without choosing a measurement branch.
 
@@ -143,7 +143,7 @@ flowchart TB
         QiskitSim["Qiskit Aer + Native Cirq/PennyLane Adapters"]
         IRValidator["Circuit Semantic IR & Gate Registry"]
         Pedagogy["Misconception Engine & Heatmap Aggregator"]
-        DB[(SQLite / SQLAlchemy Models)]
+        DB[(PostgreSQL / SQLAlchemy Models)]
     end
 
     UI --> StudioState
@@ -165,6 +165,7 @@ flowchart TB
 | Route | Component | Description & Key Pedagogical Objective |
 | :--- | :--- | :--- |
 | `/` | `Home.tsx` | Executive portal, capability status, quick start walkthrough, and system architecture. |
+| `/judge` | `JudgeDemo.tsx` | Seven-minute PS 26140 evidence path from diagnosis through measured remediation. |
 | `/labs/fragility` | `FragilityLab.tsx` | 3D Bloch sphere, density matrix noise sliders, sonification, and Lindblad metrics. |
 | `/labs/studio` | `GateBuilder.tsx` | Drag-and-drop circuit synthesis with bidirectional OpenQASM & Qiskit code docking. |
 | `/explore/hardware`| `HardwareExplorer.tsx` | 3D Dilution Refrigerator ($15\text{ mK}$) with real-time DRAG microwave pulse synthesis. |
@@ -276,6 +277,8 @@ docker-compose up --build -d
 
 ## 🧪 Automated Test Verification
 
+Public judging deployment: [Quantum Lens AI](https://gst-qlp.vercel.app/) · [SIH evidence walkthrough](https://gst-qlp.vercel.app/judge) · [API documentation](https://gst-qlp-api.onrender.com/docs)
+
 CI installs from clean dependency manifests, runs the backend suite and Circuit Studio regression tests, compiles the production frontend, and executes the signed-in adaptive-learning journey in Chromium. To reproduce those checks locally:
 
 ```powershell
@@ -320,9 +323,9 @@ The table below records this repository's implemented capabilities. Competitor c
 | :--- | :--- | :---: |
 | Structured quantum curriculum | M01–M08 lessons with prediction, misconception, lab and checkpoint blocks | Implemented published path |
 | Graphical and code circuit design | Circuit Studio with visual gates, measurement/reset, history, parameter editing and supported OpenQASM import | Implemented subset |
-| Multiple simulator backends | Qiskit Aer plus native Cirq and PennyLane parity adapters | Implemented simulator path |
+| Multiple simulator backends | User-selectable Qiskit Aer, Cirq and PennyLane execution plus cross-framework parity; qBraid is capability-reported but not installed | Implemented local-framework path |
 | State and result visualization | Bloch sphere, amplitudes, probabilities, counts, density/noise views | Implemented |
-| AI tutoring | Circuit-aware deterministic tutor plus optional Gemini, with provenance | Implemented; eval expansion pending |
+| AI tutoring | Circuit-aware deterministic tutor plus optional Gemini, per-response provenance, public mode status and a 40-case contract benchmark | Implemented contract; human/expert study pending |
 | Assessment and coding challenges | Server-graded guided checkpoints and adversarial phase-sensitive challenges | Implemented core path |
 | Progress and personalization | Alternate-form baseline/post diagnostics, M01–M08 evidence, remediation state and reasoned next-activity recommendation | Implemented core path |
 | Instructor workflow | Classrooms, roster evidence, measured cohort learning gains and due-date assignments | Implemented core path |

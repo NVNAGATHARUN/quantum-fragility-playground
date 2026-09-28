@@ -498,6 +498,33 @@ def mentor_guidance(req: MentorRequest):
         )
 
 
+@app.get("/api/v1/ai/status", tags=["ai"])
+def mentor_status():
+    """Disclose the active tutor mode and its scientific claim boundary."""
+    generative_enabled = bool(os.getenv("GEMINI_API_KEY", "").strip())
+    return {
+        "status": "available",
+        "mode": "hybrid" if generative_enabled else "deterministic",
+        "generative_provider": "gemini-2.0-flash" if generative_enabled else None,
+        "deterministic_fallback": True,
+        "simulator_claim_validation": True,
+        "provenance_disclosed_per_response": True,
+        "evaluation": "/api/v1/ai/evaluation",
+        "claim_boundary": (
+            "The deterministic benchmark verifies tutor contracts; it is not "
+            "an independent expert review or evidence of learner impact."
+        ),
+    }
+
+
+@app.get("/api/v1/ai/evaluation", tags=["ai"])
+def mentor_evaluation():
+    """Return the reproducible offline ARIA contract benchmark."""
+    from .ai.evaluation import run_deterministic_evaluation
+
+    return run_deterministic_evaluation()
+
+
 @app.get("/api/v1/analytics/session", response_model=AnalyticsSession)
 def get_analytics_session():
     """Run the legacy canonical-circuit benchmark.

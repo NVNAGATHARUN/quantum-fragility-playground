@@ -82,18 +82,18 @@ Qiskit remains a generated export; editable import supports the documented OpenQ
 - [x] Harden instructor provisioning, JWT configuration, Docker database persistence and clean-install dependency declarations.
 - [x] Final verification: native Cirq and PennyLane are installed; 154 backend tests, 14 Studio tests and 2 Chromium journeys pass; the production build, dependency audit and diff check pass.
 
-- [ ] QL-001–005: dependency locks, authoritative CI, Docker baseline and product-claim audit are complete; hosted full-stack deployment verification remains.
-- [ ] QL-006–009: role provisioning, authentication/secrets, compute/AI limits and dependency security.
+- [x] QL-001–005: dependency locks, authoritative CI, Docker baseline, claim audit and hosted Vercel/Render/PostgreSQL verification are complete.
+- [ ] QL-006–009: role provisioning, production secrets and simulation budgets are complete; public rate limiting and a configured production Gemini provider remain.
 - [x] QL-010–013: persistent server-graded learner evidence, mastery summary, recommendations and evidence-based instructor analytics.
 - [ ] QL-014–017: finish Circuit Studio parity with the full brief, including all specified gates, robust code editing/import and noisy execution. Existing Studio work is partial.
-- [ ] QL-018–020: genuinely independent Qiskit/Cirq/PennyLane adapters, optional qBraid integration and conformance tests.
-- [ ] QL-021–025: finish curriculum, connect labs to lessons, semantic assessment grading, personalized recommendations and grounded tutor evaluation. The five lab visuals alone do not complete these items.
+- [ ] QL-018–020: user-selectable independent Qiskit/Cirq/PennyLane execution, parity and conformance tests are complete; optional qBraid integration remains.
+- [ ] QL-021–025: curriculum, connected labs, semantic grading, recommendations and the grounded tutor contract benchmark are complete; independent educator review and a real learner-impact study remain.
 - [ ] QL-026–029: API and Chromium winning-journey coverage are complete; Firefox/WebKit, formal accessibility and operational scaling remain.
-- [ ] QL-030–033: evidence-based README, repository hygiene, demonstration and technical Q&A package.
+- [ ] QL-030–033: evidence-based README, repository hygiene and the public seven-minute judge walkthrough are complete; the final technical Q&A package remains.
 
 ## Current release notes
 
 - The five lab routes require a working FastAPI/Qiskit backend; they now show an error when it is unavailable rather than presenting invented results.
 - Automated API integration covers the instructor assignment → guided Bell checkpoint → phase challenge → recommendation/completion journey. Cross-browser UI automation remains pending under QL-027.
-- Final verification for this sprint: 154 backend tests, 14 Circuit Studio tests and 2 Chromium journeys pass; TypeScript and the production frontend bundle compile; `npm audit` and `git diff --check` pass. The 555 kB BlochSphere3D chunk warning remains.
+- Final verification for the current release candidate: 162 backend tests, 14 Circuit Studio tests and all 3 Chromium journeys pass; the production build, dependency audit and diff check pass. Public deployment smoke testing and the hosted CI rerun remain. The 555 kB BlochSphere3D chunk warning remains.
 - The build succeeds with non-blocking outdated Browserslist data and a large BlochSphere3D chunk warning; bundle cleanup remains pending.

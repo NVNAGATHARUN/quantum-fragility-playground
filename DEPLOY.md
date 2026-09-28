@@ -7,6 +7,11 @@ Quantum Lens AI is designed for multi-target deployment (Vercel, Render, Docker,
 
 ## Public Demo Deployment
 
+- Frontend: `https://gst-qlp.vercel.app`
+- SIH walkthrough: `https://gst-qlp.vercel.app/judge`
+- Backend: `https://gst-qlp-api.onrender.com`
+- API evidence: `https://gst-qlp-api.onrender.com/docs`
+
 The repository includes `render.yaml` for a reproducible Render Blueprint:
 
 - `gst-qlp-api`: Dockerized FastAPI/Qiskit web service.

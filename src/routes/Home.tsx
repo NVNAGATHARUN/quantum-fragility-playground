@@ -45,9 +45,14 @@ export default function Home() {
           </h1>
           <p>Build intuition. Test ideas. Make quantum computing click.</p>
         </div>
-        <Link to="/learn" className="ql-button ql-button-white">
-          Explore learning path <ArrowRight size={16} />
-        </Link>
+        <div className="ql-heading-actions">
+          <Link to="/judge" className="ql-button ql-button-primary">
+            SIH judge walkthrough <Sparkles size={16} />
+          </Link>
+          <Link to="/learn" className="ql-button ql-button-white">
+            Explore learning path <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
       <section className="ql-hero" aria-label="Begin your quantum journey">
         <div className="ql-hero-copy">

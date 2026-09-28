@@ -80,6 +80,13 @@ test('failed prediction becomes a targeted lesson, retry, and resolved recommend
   await expect(page.getByText('PASS')).toHaveCount(2);
   await page.getByRole('button', { name: 'Run on Qiskit' }).click();
   await expect(page.getByText(/Completed 1024 shots with qiskit-aer/i)).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel('Execution backend').selectOption('cirq');
+  await page.getByRole('button', { name: 'Run on Cirq' }).click();
+  await expect(page.getByText(/Completed 1024 shots with cirq-simulator/i)).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel('Execution backend').selectOption('pennylane');
+  await page.getByRole('button', { name: 'Run on PennyLane' }).click();
+  await expect(page.getByText(/Completed 1024 shots with pennylane-default\.qubit/i)).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel('Execution backend').selectOption('qiskit-aer');
   await page.getByLabel('Circuit name').fill('Adaptive Bell evidence');
   await page.getByRole('button', { name: 'Save circuit' }).click();
   await expect(page.getByText('Circuit saved to your account.')).toBeVisible();
@@ -104,6 +111,15 @@ test('failed prediction becomes a targeted lesson, retry, and resolved recommend
   await expect(page.getByRole('button', { name: 'Compare engines' })).toBeDisabled();
   await page.getByRole('button', { name: 'Run on Qiskit' }).click();
   await expect(page.getByText(/Completed 1024 shots with qiskit-aer/i)).toBeVisible({ timeout: 30_000 });
+});
+
+test('public judge walkthrough exposes live evidence and declared boundaries', async ({ page }) => {
+  await page.goto('/judge');
+  await expect(page.getByRole('heading', { name: 'One misconception. One verified learning loop.' })).toBeVisible();
+  await expect(page.getByText('Ready for demonstration')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Six steps, seven minutes.')).toBeVisible();
+  await expect(page.getByText(/Cirq and PennyLane currently cover the unitary editor subset/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Open Circuit Studio/i })).toHaveAttribute('href', '/labs/studio');
 });
 
 test('learner completes a server-graded baseline diagnostic in the UI', async ({ page, request }) => {

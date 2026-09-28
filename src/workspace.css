@@ -168,6 +168,34 @@
 .ql-diagnostic-concepts .passed span { color:#34d399; }
 .ql-diagnostic-concepts .review span { color:#fbbf24; }
 @media (max-width:700px) { .ql-diagnostic-banner { align-items:flex-start; flex-wrap:wrap; } .ql-diagnostic-options,.ql-diagnostic-concepts { grid-template-columns:1fr; } }
+
+/* SIH judge evidence walkthrough */
+.ql-heading-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.ql-judge-page { display:grid; gap:28px; }
+.ql-judge-hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.5fr); gap:24px; padding:34px; border:1px solid var(--border-subtle); border-radius:18px; background:linear-gradient(135deg,color-mix(in srgb,var(--brand-primary) 10%,var(--surface-raised)),var(--surface-raised)); }
+.ql-judge-hero h1 { max-width:760px; margin:8px 0 12px; font-size:clamp(2rem,4vw,4rem); line-height:1.03; }
+.ql-judge-hero > div > p:not(.ql-eyebrow) { max-width:720px; color:var(--text-muted); font-size:1.05rem; line-height:1.65; }
+.ql-judge-readiness { align-self:stretch; display:flex; flex-direction:column; gap:8px; padding:22px; border:1px solid color-mix(in srgb,#34d399 35%,var(--border-subtle)); border-radius:14px; background:color-mix(in srgb,#34d399 7%,var(--surface)); }
+.ql-judge-readiness > svg { color:#34d399; }
+.ql-judge-readiness > span { color:var(--text-muted); font-size:.72rem; font-weight:800; letter-spacing:.12em; }
+.ql-judge-readiness > strong { margin:6px 0; font-size:1.05rem; }
+.ql-judge-readiness > small { color:var(--text-muted); }
+.ql-judge-readiness.error { border-color:color-mix(in srgb,#fb7185 40%,var(--border-subtle)); }
+.ql-judge-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.ql-judge-step { position:relative; display:flex; min-height:260px; flex-direction:column; align-items:flex-start; gap:9px; padding:22px; border:1px solid var(--border-subtle); border-radius:14px; background:var(--surface-raised); }
+.ql-judge-step > svg { color:var(--brand-primary); }
+.ql-judge-step > span { color:var(--text-muted); font-size:.75rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.ql-judge-step h3 { margin:3px 0 0; font-size:1.1rem; }
+.ql-judge-step p { flex:1; margin:0; color:var(--text-muted); line-height:1.55; }
+.ql-judge-step a { display:flex; align-items:center; gap:6px; color:var(--brand-primary); font-weight:750; }
+.ql-judge-step-number { position:absolute; top:18px; right:18px; color:color-mix(in srgb,var(--text-muted) 40%,transparent); font-size:1.4rem; font-weight:900; }
+.ql-judge-alignment { padding:24px; }
+.ql-judge-alignment-row { display:grid; grid-template-columns:22px minmax(180px,.45fr) minmax(0,1fr); gap:12px; align-items:center; padding:13px 4px; border-top:1px solid var(--border-subtle); }
+.ql-judge-alignment-row svg { color:#34d399; }
+.ql-judge-alignment-row span { color:var(--text-muted); }
+.ql-judge-boundary { margin:18px 0 0; padding:14px; border-radius:10px; background:color-mix(in srgb,var(--brand-primary) 7%,var(--surface)); color:var(--text-muted); line-height:1.55; }
+@media (max-width:960px) { .ql-judge-hero { grid-template-columns:1fr; } .ql-judge-steps { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:640px) { .ql-heading-actions { justify-content:flex-start; } .ql-judge-hero { padding:22px; } .ql-judge-steps { grid-template-columns:1fr; } .ql-judge-alignment-row { grid-template-columns:22px 1fr; } .ql-judge-alignment-row span { grid-column:2; } }
 .ql-adaptive-recommendation h2 {
   margin: 7px 0;
   font-size: 20px;

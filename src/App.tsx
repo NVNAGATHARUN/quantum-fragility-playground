@@ -34,6 +34,7 @@ import { AuthModal } from "./components/AuthModal";
 // ─── Lazy-loaded routes ────────────────────────────────────────────────────────
 
 const Home = lazy(() => import("./routes/Home"));
+const JudgeDemo = lazy(() => import("./routes/JudgeDemo"));
 const Learn = lazy(() => import("./routes/Learn"));
 const LessonRunner = lazy(() => import("./routes/LessonRunner"));
 const LabsIndex = lazy(() => import("./routes/LabsIndex"));
@@ -108,6 +109,7 @@ export default function App() {
                     <Routes>
                       {/* ── PUBLIC / HOME ───────────────────────────────────── */}
                       <Route path="/" element={<Home />} />
+                      <Route path="/judge" element={<JudgeDemo />} />
                       <Route
                         path="/app/home"
                         element={<Navigate to="/" replace />}
