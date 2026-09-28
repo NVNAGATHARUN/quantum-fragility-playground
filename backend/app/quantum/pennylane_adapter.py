@@ -5,10 +5,11 @@ StatePrep bridge is used, keeping cross-framework verification independent.
 """
 
 from typing import Dict
+import numpy as np
 from ..circuit.ir import CircuitIR
 
 
-def simulate_pennylane_probabilities(circuit: CircuitIR) -> Dict[str, float]:
+def simulate_pennylane_statevector(circuit: CircuitIR) -> np.ndarray:
     import pennylane as qml
 
     operations = sorted(circuit.operations, key=lambda op: op.step or 0)
@@ -39,10 +40,19 @@ def simulate_pennylane_probabilities(circuit: CircuitIR) -> Dict[str, float]:
             elif gate == "CZ": qml.CZ(wires=[op.controls[0], target])
             elif gate == "SWAP": qml.SWAP(wires=op.targets)
             else: raise ValueError(f"Gate {gate} is not supported by the PennyLane adapter")
-        return qml.probs(wires=list(range(circuit.qubits)))
+        return qml.state()
 
     raw = execute()
+    canonical = np.zeros(len(raw), dtype=np.complex128)
+    for index, amplitude in enumerate(raw):
+        pennylane_bits = format(index, f"0{circuit.qubits}b")
+        canonical[int(pennylane_bits[::-1], 2)] = complex(amplitude)
+    return canonical
+
+
+def simulate_pennylane_probabilities(circuit: CircuitIR) -> Dict[str, float]:
+    state = simulate_pennylane_statevector(circuit)
     return {
-        format(index, f"0{circuit.qubits}b")[::-1]: float(probability)
-        for index, probability in enumerate(raw)
+        format(index, f"0{circuit.qubits}b"): float(abs(amplitude) ** 2)
+        for index, amplitude in enumerate(state)
     }

@@ -3,6 +3,7 @@
 Tests /health, /api/v1/quantum/simulate, and /api/v1/quantum/fragility endpoints.
 """
 
+import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -57,6 +58,63 @@ def test_simulate_api_endpoint():
     assert data["probabilities"]["00"] > 0.45
     assert data["probabilities"]["11"] > 0.45
     assert data["reducedStates"][0]["isEntangled"] is True
+
+
+@pytest.mark.parametrize(
+    ("requested_backend", "resolved_backend"),
+    [
+        ("qiskit-aer", "qiskit-aer"),
+        ("cirq", "cirq-simulator"),
+        ("pennylane", "pennylane-default.qubit"),
+    ],
+)
+def test_simulate_executes_the_selected_framework(requested_backend, resolved_backend):
+    payload = {
+        "circuit": {
+            "version": "1.0",
+            "qubits": 2,
+            "classicalBits": 2,
+            "operations": [
+                {"gate": "H", "targets": [0], "controls": [], "step": 0},
+                {"gate": "CX", "targets": [1], "controls": [0], "step": 1},
+            ],
+        },
+        "backend": requested_backend,
+        "shots": 256,
+    }
+    response = client.post("/api/v1/quantum/simulate", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["backend"] == resolved_backend
+    assert data["probabilities"]["00"] == pytest.approx(0.5, abs=1e-5)
+    assert data["probabilities"]["11"] == pytest.approx(0.5, abs=1e-5)
+    assert sum(data["counts"].values()) == 256
+
+
+@pytest.mark.parametrize("backend", ["cirq", "pennylane"])
+def test_unitary_only_backends_explain_measurement_limitation(backend):
+    payload = {
+        "circuit": {
+            "version": "1.0",
+            "qubits": 1,
+            "classicalBits": 1,
+            "operations": [
+                {"gate": "H", "targets": [0], "step": 0},
+                {
+                    "gate": "MEASURE",
+                    "type": "MEASURE",
+                    "targets": [0],
+                    "classicalTargets": [0],
+                    "step": 1,
+                },
+            ],
+        },
+        "backend": backend,
+        "shots": 128,
+    }
+    response = client.post("/api/v1/quantum/simulate", json=payload)
+    assert response.status_code == 400
+    assert "unitary circuits only" in response.json()["detail"]
 
 
 def test_simulation_rejects_unbounded_statevector_requests():

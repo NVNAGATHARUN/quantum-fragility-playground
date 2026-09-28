@@ -90,7 +90,9 @@ class NormalizedSimulationResult(BaseModel):
 
 class SimulateRequest(BaseModel):
     circuit: CircuitIR
-    backend: Literal["qiskit-aer", "ideal-statevector"] = "qiskit-aer"
+    backend: Literal[
+        "qiskit-aer", "ideal-statevector", "cirq", "pennylane"
+    ] = "qiskit-aer"
     shots: int = Field(default=1024, ge=1, le=10000)
 
 

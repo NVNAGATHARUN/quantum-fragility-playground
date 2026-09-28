@@ -171,8 +171,12 @@ export default function CircuitStudio() {
   const [running, setRunning] = useState(false);
   const [parityRunning, setParityRunning] = useState(false);
   const [shots, setShots] = useState(1024);
+  const [simulationBackend, setSimulationBackend] = useState<
+    "qiskit-aer" | "cirq" | "pennylane"
+  >("qiskit-aer");
   const [result, setResult] = useState<NormalizedSimulationResult | null>(null);
   const [resultCircuit, setResultCircuit] = useState("");
+  const [resultBackendRequest, setResultBackendRequest] = useState("");
   const [parity, setParity] = useState<ParityResponse | null>(null);
   const [parityCircuit, setParityCircuit] = useState("");
   const [resultTab, setResultTab] = useState("Probabilities");
@@ -198,7 +202,10 @@ export default function CircuitStudio() {
     Math.max(8, ...circuit.operations.map((o) => o.step + 2)),
   );
   const signature = JSON.stringify(circuit);
-  const currentResult = result && resultCircuit === signature;
+  const currentResult =
+    result &&
+    resultCircuit === signature &&
+    resultBackendRequest === simulationBackend;
   const staleResult = result && !currentResult;
   const currentParity = parity && parityCircuit === signature;
   const staleParity = parity && !currentParity;
@@ -503,26 +510,30 @@ export default function CircuitStudio() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ circuit, shots, backend: "qiskit-aer" }),
+          body: JSON.stringify({ circuit, shots, backend: simulationBackend }),
           signal: controller.signal,
         },
       );
-      if (
-        !res.ok ||
-        !res.headers.get("content-type")?.includes("application/json")
-      )
-        throw new Error("Simulator unavailable");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null) as { detail?: string } | null;
+        throw new Error(payload?.detail || `${simulationBackend} execution failed.`);
+      }
+      if (!res.headers.get("content-type")?.includes("application/json"))
+        throw new Error("Simulator returned an invalid response.");
       const data = (await res.json()) as NormalizedSimulationResult;
       if (!data.counts || !data.backend)
         throw new Error("Invalid simulator response");
       setResult(data);
       setResultCircuit(signature);
+      setResultBackendRequest(simulationBackend);
       setResultTab("Shot counts");
       recordCircuitRun();
       setNotice(`Completed ${data.shots} shots with ${data.backend}.`);
-    } catch {
+    } catch (caught) {
       setError(
-        "Qiskit could not be reached. The ideal browser preview is still available. Start the backend and try again for shot-based results.",
+        caught instanceof Error
+          ? caught.message
+          : `${simulationBackend} could not execute this circuit.`,
       );
     } finally {
       clearTimeout(timeout);
@@ -573,11 +584,29 @@ export default function CircuitStudio() {
           {circuitId && user && savedOwnerId !== user.id && <button className="ql-button ql-button-white" onClick={forkLoaded}>Fork to my workspace</button>}
           <button
             className="ql-button ql-button-primary"
-            disabled={running || parityRunning || editing}
+            disabled={
+              running ||
+              parityRunning ||
+              editing ||
+              (simulationBackend !== "qiskit-aer" && Boolean(preview.truncatedAt))
+            }
             onClick={runBackend}
+            title={
+              simulationBackend !== "qiskit-aer" && preview.truncatedAt
+                ? "Cirq and PennyLane currently execute unitary circuits. Select Qiskit Aer for measurement or reset."
+                : undefined
+            }
           >
             <Play size={14} />
-            {running ? "Running…" : "Run on Qiskit"}
+            {running
+              ? "Running…"
+              : `Run on ${
+                  simulationBackend === "qiskit-aer"
+                    ? "Qiskit"
+                    : simulationBackend === "cirq"
+                      ? "Cirq"
+                      : "PennyLane"
+                }`}
           </button>
           <button
             className="ql-button ql-button-white"
@@ -620,7 +649,24 @@ export default function CircuitStudio() {
             <span className="ql-dot" /> {preview.truncatedAt ? `Pure-state preview stops before ${preview.truncatedAt.toLowerCase()}` : "Ideal browser preview"}
           </span>
           <label>
-            QISKIT SHOTS
+            EXECUTION BACKEND
+            <select
+              className="ql-select"
+              aria-label="Execution backend"
+              value={simulationBackend}
+              onChange={(event) =>
+                setSimulationBackend(
+                  event.target.value as "qiskit-aer" | "cirq" | "pennylane",
+                )
+              }
+            >
+              <option value="qiskit-aer">Qiskit Aer · full circuit</option>
+              <option value="cirq">Cirq Simulator · unitary</option>
+              <option value="pennylane">PennyLane · unitary</option>
+            </select>
+          </label>
+          <label>
+            SHOTS
             <select
               className="ql-select"
               value={shots}
@@ -1119,7 +1165,13 @@ export default function CircuitStudio() {
                   <p>
                     {staleResult
                       ? "Run again to see counts for this circuit."
-                      : "Run on Qiskit to see sampled measurement counts."}
+                      : `Run on ${
+                          simulationBackend === "qiskit-aer"
+                            ? "Qiskit"
+                            : simulationBackend === "cirq"
+                              ? "Cirq"
+                              : "PennyLane"
+                        } to see sampled measurement counts.`}
                   </p>
                 </div>
               )}

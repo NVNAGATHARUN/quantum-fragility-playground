@@ -10,7 +10,7 @@ import numpy as np
 from ..circuit.ir import CircuitIR
 
 
-def simulate_cirq_probabilities(circuit: CircuitIR) -> Dict[str, float]:
+def _build_cirq_circuit(circuit: CircuitIR):
     import cirq
 
     qubits = cirq.LineQubit.range(circuit.qubits)
@@ -47,13 +47,30 @@ def simulate_cirq_probabilities(circuit: CircuitIR) -> Dict[str, float]:
         else:
             raise ValueError(f"Gate {gate} is not supported by the Cirq adapter")
 
+    return cirq, qubits, translated
+
+
+def simulate_cirq_statevector(circuit: CircuitIR) -> np.ndarray:
+    """Execute a unitary CircuitIR natively and return Qiskit-order amplitudes."""
+    cirq, qubits, translated = _build_cirq_circuit(circuit)
+
     state = cirq.Simulator(dtype=np.complex128).simulate(
         translated, qubit_order=qubits
     ).final_state_vector
-    probabilities: Dict[str, float] = {}
+
+    # Cirq orders LineQubit(0)..LineQubit(n-1) as big-endian. The public IR
+    # uses the Qiskit display convention q(n-1)..q0, so permute amplitudes once
+    # here and keep every downstream result in the canonical order.
+    canonical = np.zeros_like(state, dtype=np.complex128)
     for index, amplitude in enumerate(state):
-        # Cirq indexes q0..qn as big-endian. CircuitIR/Qiskit result labels are
-        # displayed q(n-1)..q0, so reverse the bit string for common labels.
         cirq_bits = format(index, f"0{circuit.qubits}b")
-        probabilities[cirq_bits[::-1]] = float(abs(amplitude) ** 2)
-    return probabilities
+        canonical[int(cirq_bits[::-1], 2)] = amplitude
+    return canonical
+
+
+def simulate_cirq_probabilities(circuit: CircuitIR) -> Dict[str, float]:
+    state = simulate_cirq_statevector(circuit)
+    return {
+        format(index, f"0{circuit.qubits}b"): float(abs(amplitude) ** 2)
+        for index, amplitude in enumerate(state)
+    }

@@ -20,6 +20,7 @@ from .models.circuit_ir import (
     FragilityRequest,
 )
 from .quantum.simulator import simulate_circuit
+from .quantum.multi_backend import simulate_selected_backend
 from .quantum.fragility import simulate_fragility
 from .pedagogy.evaluator import (
     PredictionRequest,
@@ -213,7 +214,9 @@ def enforce_circuit_budget(circuit: CircuitIR) -> None:
 def run_simulation(req: SimulateRequest):
     enforce_circuit_budget(req.circuit)
     try:
-        result = simulate_circuit(req.circuit, shots=req.shots)
+        result = simulate_selected_backend(
+            req.circuit, backend=req.backend, shots=req.shots
+        )
         return result
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
