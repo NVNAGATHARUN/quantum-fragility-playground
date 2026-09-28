@@ -9,6 +9,16 @@ from app.main import app
 client = TestClient(app)
 
 
+def test_api_root_is_a_useful_landing_response():
+    response = client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Quantum Lens AI API"
+    assert data["status"] == "online"
+    assert data["documentation"] == "/docs"
+    assert data["readiness"] == "/health/ready"
+
+
 def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200

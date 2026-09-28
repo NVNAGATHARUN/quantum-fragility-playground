@@ -141,6 +141,19 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(SecurityHeadersMiddleware)
 
 
+@app.get("/", tags=["system"])
+def api_landing():
+    """Give visitors a useful entry point instead of a generic 404."""
+    return {
+        "name": "Quantum Lens AI API",
+        "status": "online",
+        "version": app.version,
+        "frontend": "https://gst-qlp.vercel.app",
+        "documentation": "/docs",
+        "readiness": "/health/ready",
+    }
+
+
 @app.get("/health")
 def health_check():
     return {
