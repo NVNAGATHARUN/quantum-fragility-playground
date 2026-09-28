@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Quantum Lens AI API",
     description="Adaptive Quantum Learning Platform Simulation Kernel",
-    version="2.0.0",
+    version="3.0.0",
     lifespan=lifespan,
 )
 

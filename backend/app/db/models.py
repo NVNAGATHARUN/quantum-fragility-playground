@@ -27,7 +27,14 @@ def generate_uuid() -> str:
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    """Return naive UTC for columns declared as ``DateTime``.
+
+    PostgreSQL maps those columns to ``timestamp without time zone``.  Passing
+    an aware datetime makes asyncpg reject inserts, while SQLite silently
+    accepts it.  Keeping UTC as the convention and stripping the timezone
+    marker makes both database backends behave consistently.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
