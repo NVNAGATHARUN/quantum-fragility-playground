@@ -34,4 +34,4 @@ def test_bell_mastery_rejects_identical_counts_with_wrong_phase():
     ])
     result = evaluate_challenge_submission("bell-phase-verification", phi_minus)
     assert result.passed is False
-    assert result.fidelity == 0.0
+    assert result.fidelity < 1e-12
