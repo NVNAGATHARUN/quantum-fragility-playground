@@ -1,0 +1,182 @@
+[
+  {
+    "viewport": 1920,
+    "route": "home",
+    "scrollWidth": 1920,
+    "mainVisible": true,
+    "h1": "A new way to see the world.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1920,
+    "route": "learn",
+    "scrollWidth": 1920,
+    "mainVisible": true,
+    "h1": "One concept. A new perspective.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1920,
+    "route": "studio",
+    "scrollWidth": 1920,
+    "mainVisible": true,
+    "h1": "Small gates. Big possibilities.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1920,
+    "route": "lesson",
+    "scrollWidth": 1920,
+    "mainVisible": true,
+    "h1": "Complex Numbers & Phase",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1440,
+    "route": "home",
+    "scrollWidth": 1440,
+    "mainVisible": true,
+    "h1": "A new way to see the world.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1440,
+    "route": "learn",
+    "scrollWidth": 1440,
+    "mainVisible": true,
+    "h1": "One concept. A new perspective.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1440,
+    "route": "studio",
+    "scrollWidth": 1440,
+    "mainVisible": true,
+    "h1": "Small gates. Big possibilities.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1440,
+    "route": "lesson",
+    "scrollWidth": 1440,
+    "mainVisible": true,
+    "h1": "Complex Numbers & Phase",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1280,
+    "route": "home",
+    "scrollWidth": 1280,
+    "mainVisible": true,
+    "h1": "A new way to see the world.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1280,
+    "route": "learn",
+    "scrollWidth": 1280,
+    "mainVisible": true,
+    "h1": "One concept. A new perspective.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1280,
+    "route": "studio",
+    "scrollWidth": 1280,
+    "mainVisible": true,
+    "h1": "Small gates. Big possibilities.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1280,
+    "route": "lesson",
+    "scrollWidth": 1280,
+    "mainVisible": true,
+    "h1": "Complex Numbers & Phase",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1024,
+    "route": "home",
+    "scrollWidth": 1024,
+    "mainVisible": true,
+    "h1": "A new way to see the world.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1024,
+    "route": "learn",
+    "scrollWidth": 1024,
+    "mainVisible": true,
+    "h1": "One concept. A new perspective.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1024,
+    "route": "studio",
+    "scrollWidth": 1024,
+    "mainVisible": true,
+    "h1": "Small gates. Big possibilities.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 1024,
+    "route": "lesson",
+    "scrollWidth": 1024,
+    "mainVisible": true,
+    "h1": "Complex Numbers & Phase",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 390,
+    "route": "home",
+    "scrollWidth": 390,
+    "mainVisible": true,
+    "h1": "A new way to see the world.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 390,
+    "route": "learn",
+    "scrollWidth": 390,
+    "mainVisible": true,
+    "h1": "One concept. A new perspective.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 390,
+    "route": "studio",
+    "scrollWidth": 390,
+    "mainVisible": true,
+    "h1": "Small gates. Big possibilities.",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  },
+  {
+    "viewport": 390,
+    "route": "lesson",
+    "scrollWidth": 390,
+    "mainVisible": true,
+    "h1": "Complex Numbers & Phase",
+    "unlabeledButtons": 0,
+    "horizontalOverflow": false
+  }
+]

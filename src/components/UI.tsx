@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const Divider = () => <div className="h-px bg-brand-border/40 w-full my-12" />;
 
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="text-[10px] font-orbitron text-text-muted uppercase tracking-[2px] mb-12 transition-colors duration-300">
+  <div className="ql-section-label">
     {children}
   </div>
 );
 
 export const Card = ({ children, className = '', raised = false, style, id, ...props }: { children: React.ReactNode; className?: string; raised?: boolean; style?: React.CSSProperties; id?: string; [key: string]: any }) => (
-  <div id={id} className={`${raised ? 'glass-card-raised' : 'glass-card'} transition-all duration-300 ${className}`} style={style} {...props}>
+  <div id={id} className={`ql-legacy-card ${raised ? 'is-raised' : ''} ${className}`} style={style} {...props}>
     {children}
   </div>
 );
@@ -27,42 +27,41 @@ export const Badge = ({ children, color = 'primary', className = '' }: { childre
   };
 
   return (
-    <span className={`px-8 py-2 rounded-full border text-[10px] font-bold uppercase tracking-wider ${colorMap[color]} ${className}`}>
+    <span className={`ql-badge ${colorMap[color]} ${className}`}>
       {children}
     </span>
   );
 };
 
 export const SectionHeader = ({ title, subtitle, gradient = true }: { title: string; subtitle?: string; gradient?: boolean }) => (
-  <div className="mb-32">
-    <h2 className={`text-2xl md:text-3xl mb-8 transition-colors duration-300 ${gradient ? 'gradient-text' : 'text-text-primary'}`}>
+  <div className="ql-section-header">
+    <h2>
       {title}
     </h2>
-    {subtitle && <p className="text-text-secondary text-sm max-w-2xl transition-colors duration-300">{subtitle}</p>}
+    {subtitle && <p>{subtitle}</p>}
   </div>
 );
 
 export const PageHeader = ({ title, subtitle, icon, backLink }: { title: string; subtitle?: string; icon?: string; backLink?: string }) => (
-  <div className="mb-40 pt-24 flex justify-between items-start">
-    <div className="flex flex-col">
-      <div className="flex items-center gap-16 mb-8">
-        {icon && <span className="text-3xl">{icon}</span>}
-        <h1 className="text-4xl gradient-text transition-colors duration-300">{title}</h1>
+  <div className="ql-legacy-page-header">
+    <div>
+      <div>
+        <h1>{title}</h1>
       </div>
-      {subtitle && <p className="text-text-secondary text-lg max-w-3xl transition-colors duration-300">{subtitle}</p>}
+      {subtitle && <p>{subtitle}</p>}
     </div>
     {backLink && (
-      <Link to={backLink} className="btn btn-secondary !px-16 !py-6 text-[10px]">
-        ← Back
+      <Link to={backLink} className="ql-button ql-button-white">
+        Back
       </Link>
     )}
   </div>
 );
 
 export const InfoBox = ({ children, label, className = '' }: { children: React.ReactNode; label?: string; className?: string }) => (
-  <div className={`p-12 rounded-xl bg-brand-primary/5 border border-brand-primary/10 ${className}`}>
-    {label && <div className="text-[9px] font-orbitron text-brand-primary uppercase mb-4 tracking-widest">{label}</div>}
-    <div className="text-text-secondary text-[12px] leading-relaxed italic">
+  <div className={`ql-info-box ${className}`}>
+    {label && <div className="ql-info-label">{label}</div>}
+    <div>
       {children}
     </div>
   </div>
@@ -94,13 +93,13 @@ export const ExperimentLayout = ({
         backLink="/experiments"
       />
 
-      <div className="flex flex-col gap-8">
+      <div className="ql-how-to">
         <button
           onClick={() => setShowHowTo(!showHowTo)}
-          className="flex items-center gap-8 text-[11px] font-orbitron text-text-muted hover:text-text-secondary transition-all w-fit"
+          className="ql-how-to-trigger"
         >
-          <span>{showHowTo ? '▼' : '▶'}</span>
-          HOW TO USE
+          <span aria-hidden="true">{showHowTo ? '−' : '+'}</span>
+          How to use
         </button>
         <AnimatePresence>
           {showHowTo && (
@@ -110,8 +109,7 @@ export const ExperimentLayout = ({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="p-16 rounded-xl bg-brand-primary/5 border border-brand-primary/20 text-sm text-text-secondary leading-relaxed">
-                <span className="text-brand-cyan mr-8 self-start">🔬</span>
+              <div className="ql-how-to-content">
                 {howTo}
               </div>
             </motion.div>

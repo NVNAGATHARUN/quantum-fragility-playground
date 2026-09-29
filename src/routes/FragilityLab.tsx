@@ -152,8 +152,8 @@ export default function FragilityLab() {
   };
 
   return (
-    <div className="flex flex-col gap-24">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-12">
+    <div className="ql-fragility flex flex-col gap-24">
+      <div className="ql-fragility-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-12">
         <PageHeader
           title="Fragility Lab"
           subtitle="Explore how environmental interactions destroy quantum coherence through real-time noise simulation."
@@ -162,32 +162,31 @@ export default function FragilityLab() {
         <div className="flex items-center gap-8 self-end sm:self-auto">
           <div className="hidden md:flex items-center gap-6 px-12 py-6 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-[10px] font-mono text-cyan-300">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span>QISKIT AER KRAUS ENGINE</span>
+            <span>Qiskit Aer · Kraus model</span>
           </div>
           <button
             onClick={startResearchTour}
             className="btn btn-ghost !px-12 !py-6 border border-brand-primary/30 hover:bg-brand-primary/10 flex items-center gap-6 transition-all"
           >
-            <span className="text-sm">🎬</span>
-            <span className="font-orbitron text-[9px] font-bold tracking-widest uppercase opacity-90">Research Tour</span>
+            <span className="font-orbitron text-[9px] font-bold tracking-widest uppercase opacity-90">Start guided tour</span>
           </button>
         </div>
       </div>
 
       {/* PS 26140 Alignment Badge */}
-      <div className="flex items-center justify-between flex-wrap gap-8 p-12 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-300">
+      <div className="ql-fragility-evidence flex items-center justify-between flex-wrap gap-8 p-12 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-300">
         <div className="flex items-center gap-8">
           <span className="px-6 py-2 rounded bg-indigo-500/20 text-indigo-200 font-mono text-[10px] font-bold">PS 26140</span>
-          <span><strong>Smart Education Laboratory</strong> — Real-time Kraus operator mapping ρ ↦ ∑ₖ Kₖ ρ Kₖ† with Lindblad bound enforcement.</span>
+          <span><strong>Single-qubit reduced-state decoherence analysis</strong> · Kraus operator mapping ρ ↦ ∑ₖ Kₖ ρ Kₖ†.</span>
         </div>
         <div className="flex items-center gap-12 text-[11px] font-mono text-cyan-300">
-          <span>Backend: <strong>Qiskit Aer 0.17.2</strong></span>
+          <span>Model: <strong>Qiskit Aer</strong></span>
           <span>•</span>
           <span>Simulation: <strong>Analytic Density Matrix</strong></span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_360px] gap-24 items-start">
+      <div className="ql-fragility-grid grid grid-cols-1 lg:grid-cols-[300px_1fr_360px] gap-24 items-start">
         {/* Left: Controls */}
         <div className="flex flex-col gap-24">
           <Card className="p-20 flex flex-col gap-20">
@@ -228,21 +227,21 @@ export default function FragilityLab() {
                 }}
                 className={`btn text-[10px] font-orbitron ${audioEnabled ? 'bg-brand-cyan/20 border-brand-cyan text-brand-cyan' : 'border-brand-border text-text-muted'}`}
               >
-                {audioEnabled ? '🔊 Sonification ON' : '🔇 Audio Disabled'}
+                {audioEnabled ? 'Sonification on' : 'Audio disabled'}
               </button>
               <button
                 onClick={() => setSamplingMode(!samplingMode)}
                 className={`btn text-[10px] font-orbitron ${samplingMode ? 'bg-brand-purple/20 border-brand-purple text-brand-purple' : 'border-brand-border text-text-muted'}`}
               >
-                {samplingMode ? '🎲 Sampling Active' : '📉 Simulation Mode'}
+                {samplingMode ? 'Sampling active' : 'Simulation mode'}
               </button>
               <button
                 onClick={() => setRunning(!running)}
                 className={`btn btn-primary w-full ${running ? 'bg-brand-red' : ''}`}
               >
-                {running ? '⏸ Pause' : '▶ Resume Evolution'}
+                {running ? 'Pause evolution' : 'Resume evolution'}
               </button>
-              <button onClick={resetSimulation} className="btn btn-secondary w-full">↺ Reset State</button>
+              <button onClick={resetSimulation} className="btn btn-secondary w-full">Reset state</button>
             </div>
           </Card>
 
@@ -271,7 +270,7 @@ export default function FragilityLab() {
               </Badge>
             </div>
             <div className="absolute top-20 right-20 z-10 flex gap-8">
-              <button onClick={takeSnapshot} className="px-12 py-6 rounded-lg bg-surface/50 border border-brand-border text-[10px] font-orbitron hover:bg-surface transition-all">📸 Photo</button>
+              <button onClick={takeSnapshot} className="px-12 py-6 rounded-lg bg-surface/50 border border-brand-border text-[10px] font-orbitron hover:bg-surface transition-all">Capture state</button>
             </div>
             <BlochSphere3D ref={blochRef} state={state} health={r * 100} history={evoHistory} />
             <AnimatePresence>
@@ -334,8 +333,7 @@ export default function FragilityLab() {
             <div className="p-14 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col gap-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6 text-[10px] font-orbitron font-bold text-cyan-300 uppercase tracking-wider">
-                  <span className="text-sm">✨</span>
-                  AI Decoherence Diagnostic
+                  State interpretation
                 </div>
                 <span className="text-[9px] font-mono px-6 py-2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                   Fidelity: {(r * 100).toFixed(1)}%
@@ -343,15 +341,15 @@ export default function FragilityLab() {
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {r > 0.98 ? (
-                  '✨ Superposition is fully coherent. Quantum phase and amplitude are preserved; state is ready for unitary gate synthesis.'
+                  'Superposition is fully coherent. Quantum phase and amplitude are preserved; the state is ready for unitary evolution.'
                 ) : (noise.amplitudeDamping as number) > 0.15 ? (
-                  '⚡ T₁ Energy Relaxation dominant: Inelastic photon emission to 15 mK thermal bath. Recommended mitigation: Dynamical Decoupling (XY-4).'
+                  'T₁ energy relaxation is dominant. The state is losing energy toward the ground state.'
                 ) : (noise.phaseFlip as number) > 0.15 ? (
-                  '🌀 T₂ Pure Dephasing dominant: Longitudinal phase randomized without energy exchange. Recommended mitigation: Hahn spin-echo (π) refocusing.'
+                  'T₂-like dephasing is dominant. Relative phase is being randomized without energy exchange.'
                 ) : (noise.depolarizing as number) > 0.15 ? (
-                  '⚠️ Isotropic Depolarizing active: Bloch vector is contracting toward maximally mixed density matrix ρ = I/2.'
+                  'Isotropic depolarization is active. The Bloch vector is contracting toward the maximally mixed state ρ = I/2.'
                 ) : (
-                  '📉 Environmental interaction underway. Off-diagonal elements of density matrix are decaying.'
+                  'Environmental interaction is underway. Off-diagonal density-matrix terms are decaying.'
                 )}
               </p>
             </div>
@@ -377,7 +375,7 @@ export default function FragilityLab() {
           <Card className="p-20 flex flex-col gap-16">
             <h3 className="text-sm font-orbitron font-semibold text-text-primary tracking-wider uppercase">Snapshots</h3>
             {snapshots.length === 0 ? (
-              <div className="text-center py-32 opacity-20 italic text-xs">No snapshots yet — click 📸 Photo</div>
+              <div className="text-center py-32 opacity-20 italic text-xs">No snapshots yet. Capture the current state to compare it later.</div>
             ) : (
               <div className="flex flex-col gap-10">
                 {snapshots.map(s => (
@@ -412,7 +410,7 @@ export default function FragilityLab() {
                             href={s.imageUrl}
                             download={`bloch-${new Date(s.timestamp).toISOString().slice(0, 19).replace(/:/g, '-')}.png`}
                             className="px-8 py-4 rounded-md border border-brand-border text-[8px] hover:border-brand-cyan text-brand-cyan transition-all"
-                          >💾 Save</a>
+                          >Save</a>
                         )}
                         <button
                           onClick={() => resetTo(s.state)}

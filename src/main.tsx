@@ -6,6 +6,7 @@ import { GuidedTourProvider } from './providers/GuidedTourProvider'
 import './index.css'
 import './workspace.css'
 import './algorithm-labs.css'
+import './premium.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

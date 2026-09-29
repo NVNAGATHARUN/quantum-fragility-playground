@@ -13,9 +13,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // The unified navy theme is the initial experience, including for
-    // returning users who had the old light/green workspace selected.
-    return "dark";
+    const saved = window.localStorage.getItem("theme_mode");
+    return saved === "dark" || saved === "light" ? saved : "light";
   });
 
   useEffect(() => {

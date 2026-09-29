@@ -44,7 +44,7 @@ export default function VQELab() {
   }, [bondDistance]);
 
   return (
-    <div className="min-h-screen text-slate-100 p-4 sm:p-6 lg:p-8">
+    <div className="algorithm-lab premium-variational-lab al-vqe min-h-screen text-slate-100 p-4 sm:p-6 lg:p-8">
       {/* Breadcrumb & Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center gap-2 text-sm text-text-muted mb-4">
