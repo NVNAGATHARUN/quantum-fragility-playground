@@ -692,7 +692,7 @@ export default function CircuitStudio() {
           <p>Choose a gate, then click a wire. Or drag it onto the circuit.</p>
           <span className="ql-eyebrow">SINGLE QUBIT</span>
           <div className="ql-gate-buttons">
-            {STUDIO_GATES.filter((g) => !["CX", "CZ", "SWAP"].includes(g)).map(
+            {STUDIO_GATES.filter((g) => !["CX", "CZ", "SWAP", "MEASURE", "RESET"].includes(g)).map(
               (g) => (
                 <button
                   key={g}
@@ -738,6 +738,47 @@ export default function CircuitStudio() {
                 {g === "SWAP" ? "⇄" : g}
               </button>
             ))}
+          </div>
+          <span className="ql-eyebrow">OPERATIONS</span>
+          <div className="ql-gate-buttons" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
+            <button
+              draggable
+              aria-pressed={selectedGate === "MEASURE"}
+              aria-label="Measurement operation"
+              title={descriptions["MEASURE"]}
+              className={`ql-gate-pick ${selectedGate === "MEASURE" ? "selected" : ""}`}
+              style={{ width: "100%", fontSize: "11px", fontWeight: 600, letterSpacing: "0.03em" }}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", "MEASURE");
+                setSelectedGate("MEASURE");
+                setPending(null);
+              }}
+              onClick={() => {
+                setSelectedGate("MEASURE");
+                setPending(null);
+              }}
+            >
+              MEASURE
+            </button>
+            <button
+              draggable
+              aria-pressed={selectedGate === "RESET"}
+              aria-label="Reset to zero state"
+              title={descriptions["RESET"]}
+              className={`ql-gate-pick ${selectedGate === "RESET" ? "selected" : ""}`}
+              style={{ width: "100%", fontSize: "11px", fontWeight: 600, letterSpacing: "0.03em" }}
+              onDragStart={(e) => {
+                e.dataTransfer.setData("text/plain", "RESET");
+                setSelectedGate("RESET");
+                setPending(null);
+              }}
+              onClick={() => {
+                setSelectedGate("RESET");
+                setPending(null);
+              }}
+            >
+              |0⟩ RESET
+            </button>
           </div>
           {isRotationGate(selectedGate) && (
             <label className="ql-angle-field">
