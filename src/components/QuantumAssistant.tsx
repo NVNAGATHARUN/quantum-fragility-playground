@@ -222,6 +222,16 @@ export default function QuantumAssistant() {
   }
   return (
     <>
+      {!open && (
+        <button
+          className="ql-aria-launcher"
+          onClick={() => setOpen(true)}
+          aria-label="Open Aria AI tutor"
+        >
+          <Sparkles size={18} />
+          <span>Ask Aria</span>
+        </button>
+      )}
       {open && (
         <div className="ql-mentor-backdrop" onClick={() => setOpen(false)}>
           <div

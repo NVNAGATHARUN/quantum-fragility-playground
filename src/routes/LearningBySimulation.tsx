@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Atom, Gem, Link2, Magnet, type LucideIcon } from 'lucide-react';
 import { Card, PageHeader, Badge, InfoBox } from '../components/UI';
 import { SternGerlachCanvas, BellStateCanvas, CavityQEDCanvas } from '../components/learning/SimVisuals';
 
@@ -13,7 +12,7 @@ interface Step {
 interface Experiment {
     id: string;
     title: string;
-    Icon: LucideIcon;
+    icon: string;
     fullPath: string;
     steps: Step[];
     VisualComponent: React.FC<{ step: number }>;
@@ -23,7 +22,7 @@ const EXPERIMENTS: Experiment[] = [
     {
         id: 'stern-gerlach',
         title: 'Stern–Gerlach Experiment',
-        Icon: Magnet,
+        icon: '🧲',
         fullPath: '/experiments/stern-gerlach',
         VisualComponent: SternGerlachCanvas,
         steps: [
@@ -48,7 +47,7 @@ const EXPERIMENTS: Experiment[] = [
     {
         id: 'bell-state',
         title: 'Bell State (Entanglement) Experiment',
-        Icon: Link2,
+        icon: '🔗',
         fullPath: '/experiments/bell-state',
         VisualComponent: BellStateCanvas,
         steps: [
@@ -73,7 +72,7 @@ const EXPERIMENTS: Experiment[] = [
     {
         id: 'cavity-qed',
         title: 'Cavity Qubit Experiment',
-        Icon: Gem,
+        icon: '💎',
         fullPath: '/experiments/cavity-qed',
         VisualComponent: CavityQEDCanvas,
         steps: [
@@ -101,16 +100,16 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
     const [currentStep, setCurrentStep] = useState(0);
 
     return (
-        <section className="scroll-mt-80 ql-simulation-module">
-            <Card className="p-0 overflow-hidden">
+        <section className="scroll-mt-80">
+            <Card className="p-0 overflow-hidden border-brand-border/40 bg-surface/40 backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
                 <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] min-h-[520px]">
                     {/* Content Area */}
                     <div className="p-40 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-brand-border/60">
                         <div>
                             <div className="flex items-center justify-between mb-40">
                                 <div className="flex items-center gap-16">
-                                    <div className="ql-simulation-icon">
-                                        <experiment.Icon size={22} strokeWidth={1.7} />
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-cyan flex items-center justify-center text-2xl shadow-lg shadow-brand-primary/20">
+                                        {experiment.icon}
                                     </div>
                                     <h2 className="text-3xl font-orbitron font-900 tracking-tighter text-text-primary leading-none">
                                         {experiment.title.split(' ')[0]} <span className="gradient-text">{experiment.title.split(' ').slice(1).join(' ')}</span>
@@ -125,8 +124,6 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
                                     <button
                                         key={idx}
                                         onClick={() => setCurrentStep(idx)}
-                                        aria-label={`Go to ${experiment.title}, step ${idx + 1}: ${experiment.steps[idx].title}`}
-                                        aria-current={idx === currentStep ? 'step' : undefined}
                                         className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${idx === currentStep ? 'bg-brand-primary shadow-[0_0_15px_rgba(79,70,229,0.8)]' : idx < currentStep ? 'bg-brand-primary/40' : 'bg-white/5'}`}
                                     />
                                 ))}
@@ -175,8 +172,8 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                 >
-                                    <Link to={experiment.fullPath} className="ql-button ql-button-primary">
-                                        Open full lab <ArrowRight size={15} />
+                                    <Link to={experiment.fullPath} className="btn bg-green-500 hover:bg-green-400 text-black font-black uppercase text-[11px] tracking-widest !py-10 !px-24 rounded-full shadow-[0_0_30px_rgba(34,197,94,0.4)] hover:scale-105 transition-transform">
+                                        Launch Real Lab ⚛
                                     </Link>
                                 </motion.div>
                             )}
@@ -184,7 +181,7 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
                     </div>
 
                     {/* Visual Container */}
-                    <div className="ql-simulation-visual p-40 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div className="bg-[#050515]/80 p-40 flex flex-col items-center justify-center relative overflow-hidden">
                         {/* Visual Grid Background */}
                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                             style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
@@ -223,7 +220,7 @@ const ModuleCard = ({ experiment }: { experiment: Experiment }) => {
 
 const LearningBySimulation = () => {
     return (
-        <div className="flex flex-col gap-48 pb-64 ql-simulation-guide">
+        <div className="flex flex-col gap-48 pb-64">
             <PageHeader
                 title="Simulation Guides"
                 subtitle="Visual, step-by-step walkthroughs designed for students. Master the physics before you enter the lab."
@@ -243,12 +240,12 @@ const LearningBySimulation = () => {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="ql-simulation-cta"
+                className="mt-64 p-64 rounded-[40px] bg-gradient-to-br from-indigo-900/10 to-transparent border border-brand-border/40 text-center relative overflow-hidden group"
             >
-                <Atom size={32} strokeWidth={1.4} />
+                <div className="absolute top-0 right-0 p-32 text-8xl opacity-[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-1000 font-orbitron">⚛</div>
                 <h3 className="text-3xl font-orbitron font-900 shadow-brand-primary mb-16">The Quantum Lab Awaits</h3>
                 <p className="text-text-secondary text-lg mb-40 max-w-2xl mx-auto font-medium">Once you've completed all guides, continue into the interactive lab with 7 configurable noise channels and real-time gate debugging.</p>
-                <Link to="/labs/fragility" className="ql-button ql-button-primary">
+                <Link to="/fragility-lab" className="btn btn-primary !px-64 !py-20 text-sm font-black uppercase tracking-[4px] shadow-[0_10px_40px_rgba(79,70,229,0.3)]">
                     Enter Research Lab
                 </Link>
             </motion.div>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Magnet } from 'lucide-react';
 import { Card, Badge } from '../../components/UI';
 import BlochSphere3D from '../../components/BlochSphere3D';
 import LabShell, { TourStep } from '../../components/LabShell';
@@ -208,13 +207,13 @@ export default function SternGerlach() {
 
   return (
     <LabShell tourSteps={TOUR_STEPS} labName="Stern-Gerlach Lab" soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}>
-      <div className="ql-physics-lab" style={{ background: 'linear-gradient(135deg,#080c14 0%,#0d1220 100%)', minHeight: '100vh', padding: '32px 0' }}>
+      <div style={{ background: 'linear-gradient(135deg,#080c14 0%,#0d1220 100%)', minHeight: '100vh', padding: '32px 0' }}>
         <div className="flex flex-col gap-32 max-w-[1100px] mx-auto px-24">
 
           {/* Header */}
           <div className="flex flex-wrap items-end justify-between gap-16">
             <div>
-              <div className="flex items-center gap-12 mb-8"><span className="ql-physics-lab-icon"><Magnet size={20} /></span>
+              <div className="flex items-center gap-12 mb-8"><span className="text-3xl">🧲</span>
                 <div className="text-[10px] font-orbitron text-text-muted uppercase tracking-[3px]">Experiment I</div></div>
               <h1 className="text-4xl font-orbitron font-black tracking-tight"
                 style={{ background: 'linear-gradient(90deg,#22d3ee,#6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>

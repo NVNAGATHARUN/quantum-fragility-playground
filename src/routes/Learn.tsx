@@ -41,20 +41,28 @@ export default function Learn() {
           : m.status !== "available")),
   );
   return (
-    <div className="ql-page ql-human-learn">
+    <div className="ql-page">
+      <div className="ql-page-heading">
+        <div>
+          <p className="ql-eyebrow">THE LEARNING PATH</p>
+          <h1>One concept. A new perspective.</h1>
+          <p>A thoughtful path from your first qubit to quantum algorithms.</p>
+        </div>
+        <span className="ql-pill">
+          <BookOpen size={14} /> {availableLessons.length} available lessons
+        </span>
+      </div>
       <div className="ql-learning-layout">
         <div>
           <div className="ql-path-intro">
             <div>
-              <span className="ql-eyebrow">The learning path · {availableLessons.length} lessons</span>
-              <h1>Understand the idea.<br />Then test it.</h1>
+              <span className="ql-eyebrow">START WHERE YOU ARE</span>
+              <h2>From curiosity to understanding.</h2>
               <p>
-                Each short lesson gives you enough theory to make a prediction,
-                then sends you to the lab to check it.
+                Read a little, predict an outcome, then put your intuition to
+                the test. Each module brings the theory closer to something you
+                can see.
               </p>
-              <Link to={`/learn/${next.moduleId}/${next.id}`} className="ql-button ql-button-primary">
-                {completed ? "Continue my path" : "Start with the first idea"} <ArrowRight size={15} />
-              </Link>
             </div>
             <span className="ql-path-symbol" aria-hidden="true">
               |ψ⟩

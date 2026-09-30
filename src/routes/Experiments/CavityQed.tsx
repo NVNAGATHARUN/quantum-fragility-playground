@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Atom } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Card, Badge } from '../../components/UI';
 import LabShell, { TourStep } from '../../components/LabShell';
@@ -308,39 +307,40 @@ export default function CavityQed() {
 
     return (
         <LabShell tourSteps={TOUR_STEPS} labName="Cavity QED Lab" soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}>
-            <div className="ql-physics-lab min-h-screen bg-background-dark text-text-primary py-32 px-24">
+            <div className="min-h-screen bg-background-dark text-text-primary py-32 px-24">
                 <div className="max-w-[1200px] mx-auto flex flex-col gap-24">
 
                     {/* Top Status Bar */}
-                    <div className="ql-cavity-header flex flex-wrap items-start justify-between gap-16">
+                    <div className="flex flex-wrap items-start justify-between gap-16">
                         <div className="flex flex-col">
                             <div className="flex items-center gap-10 mb-4">
-                                <span className="ql-physics-lab-icon"><Atom size={20} /></span>
+                                <span className="p-8 rounded-lg bg-cyan-500/10 text-cyan-400 text-sm">⚛️</span>
                                 <span className="text-[10px] font-orbitron text-text-muted tracking-[4px] uppercase">Quantum Electrodynamics</span>
                             </div>
                             <h1 className="text-4xl font-black font-orbitron tracking-tighter bg-gradient-to-r from-cyan-400 to-indigo-500 bg-clip-text text-transparent italic">
-                                Cavity QED Lab
+                                CAVITY QED LAB
                             </h1>
                             <p className="text-text-secondary text-xs mt-4 max-w-sm uppercase tracking-widest font-bold opacity-60">
                                 Real-time Jaynes-Cummings Dynamics
                             </p>
                         </div>
 
-                        <div className="ql-cavity-metrics flex items-center gap-8">
+                        <div className="flex items-center gap-8">
                             {[
-                                { label: 'Atom Excitation', val: Pe, color: '#fbbf24' },
-                                { label: 'Cavity Photons', val: Pg, color: '#22d3ee' },
-                            ].map(({ label, val, color }) => (
-                                <div key={label} className="ql-cavity-metric bg-white/5 border border-white/10 p-12 rounded-2xl flex items-center gap-12 min-w-[160px]">
+                                { label: 'Atom Excitation', val: Pe, color: '#fbbf24', icon: '⚡' },
+                                { label: 'Cavity Photons', val: Pg, color: '#22d3ee', icon: '💎' },
+                            ].map(({ label, val, color, icon }) => (
+                                <div key={label} className="bg-white/5 border border-white/10 p-12 rounded-2xl flex items-center gap-12 min-w-[160px]">
+                                    <span className="text-lg">{icon}</span>
                                     <div className="flex flex-col">
                                         <span className="text-[8px] font-orbitron text-text-muted uppercase">{label}</span>
                                         <span className="text-xl font-mono font-black tabular-nums" style={{ color }}>{(val * 100).toFixed(1)}%</span>
                                     </div>
                                 </div>
                             ))}
-                            <div className={`ql-cavity-metric ql-cavity-regime p-16 rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center min-w-[120px] ${regime === 'strong' ? 'bg-cyan-500/10 border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.1)]' : 'bg-amber-500/10 border-amber-500/30'}`}>
+                            <div className={`p-16 rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center min-w-[120px] ${regime === 'strong' ? 'bg-cyan-500/10 border-cyan-500/30 shadow-[0_0_20px_rgba(34,211,238,0.1)]' : 'bg-amber-500/10 border-amber-500/30'}`}>
                                 <span className="text-[8px] font-orbitron font-bold text-text-muted uppercase mb-2">Coupling</span>
-                                <span className="text-xs font-black font-orbitron tracking-widest text-white">{regime === 'strong' ? 'Strong' : 'Weak'}</span>
+                                <span className="text-xs font-black font-orbitron tracking-widest text-white">{regime === 'strong' ? 'STRONG ⚡' : 'WEAK 〰'}</span>
                             </div>
                         </div>
                     </div>

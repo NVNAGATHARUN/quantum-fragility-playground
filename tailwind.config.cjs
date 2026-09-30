@@ -44,10 +44,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        orbitron: ["'IBM Plex Sans'", "'Segoe UI'", 'sans-serif'],
-        inter: ["'IBM Plex Sans'", "'Segoe UI'", 'sans-serif'],
-        sans: ["'IBM Plex Sans'", "'Segoe UI'", 'sans-serif'],
-        display: ["'IBM Plex Serif'", 'Georgia', 'serif'],
+        orbitron: ["'Orbitron'", "'Inter'", 'sans-serif'],
+        inter: ["'Inter'", 'sans-serif'],
+        sans: ["'Inter'", "'Space Grotesk'", 'sans-serif'],
+        display: ["'Syne'", "'Orbitron'", 'sans-serif'],
         mono: ["'JetBrains Mono'", 'ui-monospace', 'monospace'],
       },
       spacing: {

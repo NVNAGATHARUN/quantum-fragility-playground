@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Maximize2, ScanLine, Volume2, VolumeX } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type TourStep = {
@@ -78,18 +77,25 @@ const TourCallout = ({
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            className="ql-tour-callout fixed bottom-32 left-1/2 -translate-x-1/2 z-[9999] w-[480px] max-w-[90vw]"
+            className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[9999] w-[480px] max-w-[90vw]"
+            style={{
+                background: 'linear-gradient(135deg, rgba(8,12,20,0.97), rgba(15,20,40,0.97))',
+                border: '1px solid rgba(34,211,238,0.35)',
+                borderRadius: '20px',
+                boxShadow: '0 0 60px rgba(34,211,238,0.12), 0 24px 48px rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(20px)',
+            }}
         >
             {/* Top bar */}
             <div className="flex items-center justify-between px-24 pt-20 pb-8">
                 <div className="flex items-center gap-10">
-                    <GraduationCap size={16} />
-                    <span>Guided lab tour</span>
+                    <div className="w-6 h-6 rounded-full bg-[#22d3ee] animate-pulse" />
+                    <span className="text-[9px] font-orbitron text-[#22d3ee] uppercase tracking-[3px]">Lab Tour</span>
                 </div>
                 <div className="flex items-center gap-8">
                     <span className="text-[9px] font-mono text-white/30">{stepIndex + 1}/{total}</span>
                     <button onClick={onSkip} className="text-[9px] font-orbitron text-white/30 hover:text-white/60 transition-colors uppercase">
-                        Skip
+                        Skip ✕
                     </button>
                 </div>
             </div>
@@ -112,9 +118,14 @@ const TourCallout = ({
             <div className="px-24 pb-20 flex justify-end">
                 <button
                     onClick={onNext}
-                    className="ql-button ql-button-primary"
+                    className="px-20 py-10 rounded-xl font-orbitron text-[11px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(34,211,238,0.2), rgba(99,102,241,0.2))',
+                        border: '1px solid rgba(34,211,238,0.4)',
+                        color: '#22d3ee',
+                    }}
                 >
-                    {stepIndex + 1 < total ? 'Next' : 'Finish'}
+                    {stepIndex + 1 < total ? 'Next →' : 'Finish ✓'}
                 </button>
             </div>
         </motion.div>
@@ -128,9 +139,12 @@ const ToolbarButton = ({ onClick, active, title, children }: {
     <button
         onClick={onClick}
         title={title}
-        aria-label={title}
-        aria-pressed={active}
-        className={`ql-lab-toolbar-button ${active ? 'is-active' : ''}`}
+        className="w-32 h-32 rounded-lg flex items-center justify-center text-sm transition-all"
+        style={{
+            background: active ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${active ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.1)'}`,
+            color: active ? '#22d3ee' : 'rgba(255,255,255,0.4)',
+        }}
     >
         {children}
     </button>
@@ -178,19 +192,19 @@ export default function LabShell({ children, tourSteps = [], labName, soundEnabl
             <CRTOverlay active={crtMode} />
 
             {/* Lab Toolbar */}
-            <div className="ql-lab-toolbar">
-                <ToolbarButton onClick={toggleFullscreen} active={isFullscreen} title="Toggle fullscreen">
-                    <Maximize2 size={16} />
+            <div className="fixed top-[70px] right-16 z-[1001] flex flex-col gap-6">
+                <ToolbarButton onClick={toggleFullscreen} active={isFullscreen} title="Toggle Fullscreen">
+                    {isFullscreen ? '⛶' : '⛶'}
                 </ToolbarButton>
-                <ToolbarButton onClick={() => setCrtMode(c => !c)} active={crtMode} title="Toggle focus display">
-                    <ScanLine size={16} />
+                <ToolbarButton onClick={() => setCrtMode(c => !c)} active={crtMode} title="CRT Retro Mode">
+                    📟
                 </ToolbarButton>
-                <ToolbarButton onClick={() => setSoundEnabled(!soundEnabled)} active={soundEnabled} title="Toggle sound">
-                    {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                <ToolbarButton onClick={() => setSoundEnabled(!soundEnabled)} active={soundEnabled} title="Toggle Sound">
+                    {soundEnabled ? '🔊' : '🔇'}
                 </ToolbarButton>
                 {tourSteps.length > 0 && (
-                    <ToolbarButton onClick={startTour} active={tourActive} title="Start guided lab tour">
-                        <GraduationCap size={16} />
+                    <ToolbarButton onClick={startTour} active={tourActive} title="Start Lab Tour">
+                        🎓
                     </ToolbarButton>
                 )}
             </div>
