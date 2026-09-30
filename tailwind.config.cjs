@@ -44,11 +44,12 @@ module.exports = {
         },
       },
       fontFamily: {
-        orbitron: ["'Orbitron'", "'Inter'", 'sans-serif'],
-        inter: ["'Inter'", 'sans-serif'],
-        sans: ["'Inter'", "'Space Grotesk'", 'sans-serif'],
-        display: ["'Syne'", "'Orbitron'", 'sans-serif'],
-        mono: ["'JetBrains Mono'", 'ui-monospace', 'monospace'],
+        sans: ["'Plus Jakarta Sans'", "'Inter'", 'system-ui', '-apple-system', 'sans-serif'],
+        display: ["'Plus Jakarta Sans'", "'Outfit'", 'system-ui', 'sans-serif'],
+        heading: ["'Plus Jakarta Sans'", "'Outfit'", 'system-ui', 'sans-serif'],
+        inter: ["'Plus Jakarta Sans'", "'Inter'", 'sans-serif'],
+        orbitron: ["'Plus Jakarta Sans'", "'Outfit'", 'sans-serif'],
+        mono: ["'JetBrains Mono'", 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       spacing: {
         '0': '0px',

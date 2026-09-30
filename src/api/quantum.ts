@@ -73,6 +73,10 @@ export interface GateDiffItem {
   gateA?: string | null
   gateB?: string | null
   targets: number[]
+  controlsA?: number[] | null
+  controlsB?: number[] | null
+  paramsA?: any
+  paramsB?: any
   changeType: 'MODIFIED' | 'ADDED' | 'REMOVED'
 }
 

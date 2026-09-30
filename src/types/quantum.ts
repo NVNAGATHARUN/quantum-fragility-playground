@@ -87,6 +87,17 @@ export interface SimulationMetrics {
   executionTimeMs: number
 }
 
+export interface NoiseConfig {
+  enabled: boolean
+  modelType: 'thermal_relaxation' | 'dephasing' | 'depolarizing' | 'readout_error' | 'combined'
+  t1_us: number
+  t2_us: number
+  gate_time_ns: number
+  two_qubit_gate_time_ns: number
+  depolarizing_p: number
+  readout_error_p: number
+}
+
 export interface NormalizedSimulationResult {
   circuitId?: string
   backend: string
@@ -95,6 +106,12 @@ export interface NormalizedSimulationResult {
   statevector: StateAmplitude[]
   counts: Record<string, number>
   probabilities: Record<string, number>
+  noisyCounts?: Record<string, number>
+  noisyProbabilities?: Record<string, number>
+  fidelity?: number
+  noiseExplanation?: string
+  lindbladCompliant?: boolean
+  noiseConfig?: NoiseConfig
   reducedStates: ReducedSubsystemState[]
   timeline: TimelineStep[]
   metrics: SimulationMetrics

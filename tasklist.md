@@ -91,9 +91,52 @@ Qiskit remains a generated export; editable import supports the documented OpenQ
 - [ ] QL-026–029: API and Chromium winning-journey coverage are complete; Firefox/WebKit, formal accessibility and operational scaling remain.
 - [ ] QL-030–033: evidence-based README, repository hygiene and the public seven-minute judge walkthrough are complete; the final technical Q&A package remains.
 
+## Active Sprint — Tier-1 Pedagogy & Hardware Deepening
+
+### 1. In-Studio Noisy Execution (Connecting Fragility to Circuit Studio)
+- [x] Backend API: Add noise model parameters (`NoiseConfig`) to `/api/v1/quantum/simulate` supporting:
+  - Depolarizing channel ($p$)
+  - Energy Relaxation ($T_1$) with gate-duration conversion ($t_{\text{gate}} / T_1$) via Qiskit Aer `thermal_relaxation_error`
+  - Dephasing / Coherence ($T_2$) with Lindblad compliance ($T_2 \le 2T_1$)
+  - Combined thermal relaxation + readout error ($p_{\text{ro}}$)
+- [x] Frontend Studio State & UI:
+  - Physical Noise: `OFF / ON` master switch in Circuit Studio action bar and collapsible drawer
+  - Model selector: Energy Relaxation ($T_1$), Dephasing / Coherence ($T_2$), Depolarizing, Combined Thermal, Readout Error
+  - Simple Sliders ($T_1 = 100\,\mu\text{s}, T_2 = 80\,\mu\text{s}$) vs Advanced Kraus mode ($\gamma = 1 - e^{-t/T_1}$ with Lindblad compliance badge)
+  - Dual Result display: Side-by-side **Ideal vs Noisy** comparative histogram, probability delta $\Delta p$ chips, state fidelity $\mathcal{F}(\rho, |\psi\rangle\langle\psi|)$, and grounded physical explanation card
+- [x] Verification: Backend noise unit tests (171/171 passed), Studio regression tests (14/14 passed), and clean TypeScript compilation
+
+### 2. “What Changed?” Diff Engine
+- [x] Circuit snapshot history & difference tracker:
+  - Track previous executed circuit state vs current active circuit state in `lastExecutedCircuit`
+  - “Why did my result change?” prominent entry button appears in action bar and stale-result empty state when circuit changes after a successful run
+- [x] 4-Layer Diff Modal / Drawer:
+  - Layer 1: Circuit Diff (exact gates added, removed, or parameter altered — step, targets, controls)
+  - Layer 2: State Diff (Dirac ket notation before vs after, fidelity gauge bar with Hilbert space interpretation)
+  - Layer 3: Probability Delta ($\Delta p$ percentage bar transitions with ±% chips per basis state)
+  - Layer 4: Conceptual Explanation (Socratic breakdown — superposition loss, phase kickback, measurement collapse, identity equivalence)
+- [x] Verification: 3 pedagogy engine backend tests pass; 14/14 Studio regression tests pass; TypeScript compiles with zero errors
+
+### 3. Cirq + PennyLane Multi-Engine Code Export
+- [x] Add `Cirq` and `PennyLane` export generators in `src/lib/studio.ts` `circuitCode()` with full gate mapping (H, X, Y, Z, S, T, RX, RY, RZ, CX, CZ, SWAP, MEASURE, RESET) for both frameworks
+- [x] Expand Circuit Studio Code Dock tabs: `OpenQASM 3 | Qiskit | Cirq | PennyLane` with per-format footer captions, download filenames (`quantum-lens-cirq.py`, `quantum-lens-pennylane.py`), and copy-paste helper text
+- [x] Verification: 5 new parity tests added; 19/19 Studio tests pass; TypeScript clean; production build passes
+
+### 4. Gate-to-Hardware Signal Visualizer
+- [x] Rename and scope as "Representative Calibrated Pulse Visualization" (avoiding uncalibrated "exact" claims)
+- [x] Educational parameters for transmon superconducting qubits:
+  - $I(t)$ In-phase Gaussian envelope
+  - $Q(t)$ Quadrature derivative DRAG component
+  - Native hardware instruction mapping ($X \to X_\pi$, $H \to Y_{\pi/2} \to X_\pi$, etc.)
+- [x] Coupling drawer in Studio showing pulse packet for selected or sequenced gates
+- [x] Verification: 2 new pulse visualizer unit tests added; 21/21 Studio tests pass; 171 backend tests pass; TypeScript clean; production build passes
+
 ## Current release notes
 
 - The five lab routes require a working FastAPI/Qiskit backend; they now show an error when it is unavailable rather than presenting invented results.
 - Automated API integration covers the instructor assignment → guided Bell checkpoint → phase challenge → recommendation/completion journey. Cross-browser UI automation remains pending under QL-027.
-- Final verification for the current release candidate: 162 backend tests, 14 Circuit Studio tests and all 3 Chromium journeys pass; the production build, dependency audit and diff check pass. Public deployment smoke testing and the hosted CI rerun remain. The 555 kB BlochSphere3D chunk warning remains.
-- The build succeeds with non-blocking outdated Browserslist data and a large BlochSphere3D chunk warning; bundle cleanup remains pending.
+- Final verification for the current release candidate: 171 backend tests (0 failures), 21 Circuit Studio tests and all 3 Chromium journeys pass; the production build, TypeScript type-check, and diff check pass. Public deployment smoke testing and the hosted CI rerun remain. The OrbitControls chunk warning remains.
+- The build succeeds with non-blocking outdated Browserslist data and a large OrbitControls chunk warning; bundle cleanup remains pending.
+- What Changed? 4-Layer Diff Engine integrated: circuit snapshot diff, Dirac ket notation statevector comparison, fidelity gauge, probability Δp table, and Socratic physics explanation. Bug fix: `NameError: name 'g' is not defined` in `generate_socratic_explanation` measurement check resolved.
+- Representative Calibrated Pulse Visualization integrated: Gate-to-Hardware signal drawer in CircuitStudio showing $I(t)$ Gaussian envelope and $Q(t)$ DRAG derivative waveforms, virtual gate handling (frame rotations), and native hardware decompositions ($X_\pi$, echoed CR sequences, active reset).
+

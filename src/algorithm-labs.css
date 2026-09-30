@@ -44,8 +44,9 @@
 .algorithm-lab h2,
 .algorithm-lab h3,
 .algorithm-lab h4 {
-  font-family: Inter, sans-serif;
-  letter-spacing: -0.025em;
+  font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+  letter-spacing: -0.028em;
+  font-weight: 650;
 }
 .algorithm-lab h1 {
   font-size: clamp(25px, 2.2vw, 35px);
@@ -109,9 +110,9 @@ html.light .algorithm-lab .glass-card:hover {
 }
 .algorithm-lab .btn {
   border-radius: 10px;
-  font-family: Inter, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: 11px;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.02em;
   box-shadow: none;
 }
 .algorithm-lab .btn-primary {

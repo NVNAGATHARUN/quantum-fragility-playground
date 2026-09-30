@@ -163,42 +163,162 @@ export function previewCircuit(circuit: CircuitIR) {
   return { states, bloch, truncatedAt };
 }
 
+export type CodeFormat = "qasm" | "qiskit" | "cirq" | "pennylane";
+
 export function circuitCode(
   circuit: CircuitIR,
-  format: "qasm" | "qiskit" = "qasm",
+  format: CodeFormat = "qasm",
 ) {
-  const operations = ordered(circuit).map((op) => {
-    const wires = [...(op.controls || []), ...op.targets];
-    const args = isRotationGate(op.gate)
-      ? `${Number((op.params?.theta || 0).toFixed(8))}`
-      : "";
-    if (op.gate === "MEASURE") {
-      const classical = op.classicalTargets?.[0] ?? op.targets[0];
-      return format === "qasm" ? `c[${classical}] = measure q[${op.targets[0]}];` : `qc.measure(${op.targets[0]}, ${classical})`;
+  const ops = ordered(circuit);
+
+  // ── OpenQASM 3.0 ────────────────────────────────────────────────────────────
+  if (format === "qasm") {
+    const lines = ops.map((op) => {
+      const wires = [...(op.controls || []), ...op.targets];
+      const args = isRotationGate(op.gate)
+        ? `(${Number((op.params?.theta || 0).toFixed(8))})`
+        : "";
+      if (op.gate === "MEASURE") {
+        const classical = op.classicalTargets?.[0] ?? op.targets[0];
+        return `c[${classical}] = measure q[${op.targets[0]}];`;
+      }
+      if (op.gate === "RESET") return `reset q[${op.targets[0]}];`;
+      return `${op.gate.toLowerCase()}${args} ${wires.map((q) => `q[${q}]`).join(", ")};`;
+    });
+    return [
+      `OPENQASM 3.0;`,
+      `include "stdgates.inc";`,
+      "",
+      `qubit[${circuit.qubits}] q;`,
+      ...(circuit.classicalBits ? [`bit[${circuit.classicalBits}] c;`] : []),
+      ...lines,
+    ].join("\n");
+  }
+
+  // ── Qiskit ──────────────────────────────────────────────────────────────────
+  if (format === "qiskit") {
+    const lines = ops.map((op) => {
+      const wires = [...(op.controls || []), ...op.targets];
+      const args = isRotationGate(op.gate)
+        ? `${Number((op.params?.theta || 0).toFixed(8))}`
+        : "";
+      if (op.gate === "MEASURE") {
+        const classical = op.classicalTargets?.[0] ?? op.targets[0];
+        return `qc.measure(${op.targets[0]}, ${classical})`;
+      }
+      if (op.gate === "RESET") return `qc.reset(${op.targets[0]})`;
+      return `qc.${op.gate.toLowerCase()}(${[...(args ? [args] : []), ...wires].join(", ")})`;
+    });
+    return [
+      "from qiskit import QuantumCircuit",
+      "",
+      `qc = QuantumCircuit(${circuit.qubits}, ${circuit.classicalBits})`,
+      ...lines,
+      "",
+      "print(qc)",
+    ].join("\n");
+  }
+
+  // ── Cirq ────────────────────────────────────────────────────────────────────
+  // Gate mapping: studio gate → cirq.Gate expression
+  if (format === "cirq") {
+    const CIRQ_GATE: Record<string, string | ((theta: number) => string)> = {
+      H: "cirq.H",
+      X: "cirq.X",
+      Y: "cirq.Y",
+      Z: "cirq.Z",
+      S: "cirq.S",
+      T: "cirq.T",
+      RX: (t) => `cirq.rx(${Number(t.toFixed(8))})`,
+      RY: (t) => `cirq.ry(${Number(t.toFixed(8))})`,
+      RZ: (t) => `cirq.rz(${Number(t.toFixed(8))})`,
+      CX: "cirq.CNOT",
+      CZ: "cirq.CZ",
+      SWAP: "cirq.SWAP",
+    };
+    const qLines = Array.from({ length: circuit.qubits }, (_, i) => `q${i} = cirq.LineQubit(${i})`);
+    const opLines: string[] = [];
+    const measureBits: { q: number; c: number }[] = [];
+    for (const op of ops) {
+      if (op.gate === "MEASURE") {
+        measureBits.push({ q: op.targets[0], c: op.classicalTargets?.[0] ?? op.targets[0] });
+        opLines.push(`    cirq.measure(q${op.targets[0]}, key='c${op.classicalTargets?.[0] ?? op.targets[0]}')`);
+        continue;
+      }
+      if (op.gate === "RESET") {
+        opLines.push(`    cirq.reset(q${op.targets[0]})`);
+        continue;
+      }
+      const g = CIRQ_GATE[op.gate];
+      const gExpr = typeof g === "function" ? g(op.params?.theta ?? 0) : g;
+      const wires = [...(op.controls || []), ...op.targets].map((q) => `q${q}`).join(", ");
+      opLines.push(`    ${gExpr}(${wires})`);
     }
-    if (op.gate === "RESET") return format === "qasm" ? `reset q[${op.targets[0]}];` : `qc.reset(${op.targets[0]})`;
-    return format === "qasm" ? `${op.gate.toLowerCase()}${args ? `(${args})` : ""} ${wires.map((q) => `q[${q}]`).join(", ")};` : `qc.${op.gate.toLowerCase()}(${[...(args ? [args] : []), ...wires].join(", ")})`;
-  });
-  return (
-    format === "qasm"
-      ? [
-          `OPENQASM 3.0;`,
-          `include "stdgates.inc";`,
-          "",
-          `qubit[${circuit.qubits}] q;`,
-          ...(circuit.classicalBits ? [`bit[${circuit.classicalBits}] c;`] : []),
-          ...operations,
-        ]
-      : [
-          "from qiskit import QuantumCircuit",
-          "",
-          `qc = QuantumCircuit(${circuit.qubits}, ${circuit.classicalBits})`,
-          ...operations,
-          "",
-          "print(qc)",
-        ]
-  ).join("\n");
+    return [
+      "import cirq",
+      "",
+      "# Qubits",
+      ...qLines,
+      "",
+      "circuit = cirq.Circuit(",
+      ...opLines,
+      ")",
+      "",
+      "print(circuit)",
+      ...(measureBits.length ? ["result = cirq.Simulator().simulate(circuit)", "print(result)"] : [
+        "result = cirq.Simulator().simulate(circuit)",
+        "print(result.final_state_vector)",
+      ]),
+    ].join("\n");
+  }
+
+  // ── PennyLane ───────────────────────────────────────────────────────────────
+  if (format === "pennylane") {
+    const PL_GATE: Record<string, string | ((theta: number, wires: number[]) => string)> = {
+      H: (_, w) => `qml.Hadamard(wires=${w[0]})`,
+      X: (_, w) => `qml.PauliX(wires=${w[0]})`,
+      Y: (_, w) => `qml.PauliY(wires=${w[0]})`,
+      Z: (_, w) => `qml.PauliZ(wires=${w[0]})`,
+      S: (_, w) => `qml.S(wires=${w[0]})`,
+      T: (_, w) => `qml.T(wires=${w[0]})`,
+      RX: (t, w) => `qml.RX(${Number(t.toFixed(8))}, wires=${w[0]})`,
+      RY: (t, w) => `qml.RY(${Number(t.toFixed(8))}, wires=${w[0]})`,
+      RZ: (t, w) => `qml.RZ(${Number(t.toFixed(8))}, wires=${w[0]})`,
+      CX: (_, w) => `qml.CNOT(wires=[${w[0]}, ${w[1]}])`,
+      CZ: (_, w) => `qml.CZ(wires=[${w[0]}, ${w[1]}])`,
+      SWAP: (_, w) => `qml.SWAP(wires=[${w[0]}, ${w[1]}])`,
+      MEASURE: (_, w) => `qml.measure(${w[0]})`,
+      RESET: (_, w) => `qml.measure(${w[0]})  # mid-circuit reset approximation`,
+    };
+
+    const hasMeasure = ops.some((o) => o.gate === "MEASURE");
+    const opLines = ops.map((op) => {
+      const allWires = [...(op.controls || []), ...op.targets];
+      const fn = PL_GATE[op.gate];
+      if (typeof fn === "function") return `    ${fn(op.params?.theta ?? 0, allWires)}`;
+      return `    # unsupported: ${op.gate}`;
+    });
+
+    return [
+      "import pennylane as qml",
+      "import numpy as np",
+      "",
+      `dev = qml.device("default.qubit", wires=${circuit.qubits})`,
+      "",
+      "@qml.qnode(dev)",
+      "def circuit():",
+      ...opLines,
+      hasMeasure
+        ? `    return [qml.expval(qml.PauliZ(i)) for i in range(${circuit.qubits})]`
+        : `    return qml.state()`,
+      "",
+      "print(circuit())",
+    ].join("\n");
+  }
+
+  return "";
 }
+
 
 /** Strict parser for the studio's documented OpenQASM subset; never executes code. */
 export function parseStudioQasm(source: string): CircuitIR {

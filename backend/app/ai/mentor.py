@@ -45,6 +45,7 @@ class MentorRequest(BaseModel):
     mode: Optional[MentorMode] = None
     context: Optional[MentorContext] = None
     history: List[ChatMessage] = Field(default_factory=list)
+    apiKey: Optional[str] = None
 
 
 class MentorEvidenceItem(BaseModel):
@@ -174,6 +175,69 @@ CONCEPT_GUIDANCE = [
         "concept": "Variational algorithms use a parameterized quantum state to estimate an objective and a classical optimizer to update parameters. Convergence does not prove exactness or global optimality.",
         "math": "For VQE, E(θ)=⟨ψ(θ)|H|ψ(θ)⟩ is an upper bound on the modeled ground-state energy when the ansatz state is normalized.",
     },
+    {
+        "id": "bloch",
+        "keywords": ("bloch", "bloch sphere", "state vector", "statevector", "dirac", "bra ket", "ket", "basis vector"),
+        "label": "Bloch sphere and state representations",
+        "route": "/learn/m02-qubits-measurement/statevector-bloch",
+        "nudge": "How does a relative phase difference move a state along the equator of the Bloch sphere?",
+        "concept": "A single qubit pure state is represented on the Bloch sphere as |ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)sin(θ/2)|1⟩, where θ controls ground/excited population and φ controls relative quantum phase.",
+        "math": "The Bloch vector is r = (⟨X⟩, ⟨Y⟩, ⟨Z⟩) = (sinθ cosφ, sinθ sinφ, cosθ). Pure states have |r| = 1 on the sphere surface; mixed states have |r| < 1 inside.",
+    },
+    {
+        "id": "pauli",
+        "keywords": ("pauli", "x gate", "y gate", "z gate", "bit flip", "phase flip", "not gate"),
+        "label": "Pauli quantum gates and axes rotations",
+        "route": "/learn/m03-quantum-gates/pauli-gates",
+        "nudge": "Which Pauli gate flips the computational basis without altering phase, and which flips phase without altering Z-basis probabilities?",
+        "concept": "Pauli X performs a bit-flip (NOT), Pauli Z performs a phase-flip (|1⟩ → -|1⟩), and Pauli Y combines both with a π/2 phase shift.",
+        "math": "X = [[0, 1], [1, 0]], Y = [[0, -i], [i, 0]], Z = [[1, 0], [0, -1]]. All three are Hermitian, unitary, and self-inverse (X² = Y² = Z² = I).",
+    },
+    {
+        "id": "teleportation",
+        "keywords": ("teleport", "teleportation", "alice and bob"),
+        "label": "Quantum state teleportation protocol",
+        "route": "/algorithms",
+        "nudge": "How does Alice communicate her two measurement outcomes to Bob without transmitting the quantum state itself?",
+        "concept": "Quantum teleportation transmits an unknown qubit state using a shared Bell pair and 2 classical bits. The original state is destroyed by Alice's Bell measurement, obeying the no-cloning theorem.",
+        "math": "Alice performs CNOT and H on her qubits, measures them in the Z basis, and Bob applies Z^(m0) X^(m1) to reconstruct |ψ⟩.",
+    },
+    {
+        "id": "deutsch_jozsa",
+        "keywords": ("deutsch", "jozsa", "deutsch-jozsa", "constant or balanced"),
+        "label": "Deutsch-Jozsa quantum algorithm",
+        "route": "/algorithms",
+        "nudge": "Why can a quantum computer determine if f(x) is constant or balanced in 1 query, whereas classical needs up to 2^(n-1)+1?",
+        "concept": "Deutsch-Jozsa exploits phase kickback and quantum interference to evaluate a global property of f(x) in a single oracle query.",
+        "math": "Preparing target in |−⟩ kicks back (-1)^f(x). Applying H^⊗n causes constructive interference at |0...0⟩ if constant, and destructive interference if balanced.",
+    },
+    {
+        "id": "qkd",
+        "keywords": ("qkd", "bb84", "quantum key", "cryptography", "eavesdrop"),
+        "label": "Quantum key distribution (BB84)",
+        "route": "/algorithms",
+        "nudge": "How does the no-cloning theorem prevent an eavesdropper from intercepting the key undetected?",
+        "concept": "BB84 uses conjugate measurement bases (Z and X). Eavesdropping disturbs the quantum states, causing a detectable error rate (QBER) above the security threshold.",
+        "math": "If Eve measures in the wrong basis (50% probability), Bob's measurement will disagree with Alice with 25% probability per intercepted photon.",
+    },
+    {
+        "id": "qft",
+        "keywords": ("qft", "quantum fourier", "fourier transform", "phase estimation"),
+        "label": "Quantum Fourier Transform (QFT)",
+        "route": "/algorithms",
+        "nudge": "How does the QFT transform computational basis states into phase-encoded relative phases?",
+        "concept": "The QFT maps computational basis states |j⟩ to uniform superpositions with relative phases proportional to 2π j / 2^n. It is the quantum analogue of the discrete Fourier transform.",
+        "math": "QFT|j⟩ = (1/√N) Σ_k e^(2πi j k / N) |k⟩. It achieves exponential speedup: O(n²) quantum gates versus O(n 2^n) classical FFT operations.",
+    },
+    {
+        "id": "quantum_basics",
+        "keywords": ("quantum computing", "quantum computer", "what is quantum", "classical vs quantum", "advantage"),
+        "label": "Foundations of quantum information",
+        "route": "/learn/m02-qubits-measurement/qubit-states",
+        "nudge": "What allows n qubits to span an information space of 2^n complex dimensions?",
+        "concept": "Quantum computing replaces classical binary bits (0 or 1) with qubits that exploit superposition and entanglement to execute parallel unitary interference across 2^n state branches simultaneously.",
+        "math": "An n-qubit register state |ψ⟩ lives in a 2^n-dimensional Hilbert space: |ψ⟩ = Σ c_i |i⟩ with normalization Σ |c_i|² = 1.",
+    },
 ]
 
 
@@ -188,22 +252,80 @@ def _match_concept(message: str) -> Optional[Dict[str, Any]]:
 
 
 def _conversational_reply(message: str) -> Optional[str]:
-    """Handle social/capability turns without pretending circuit evidence exists."""
-    normalized = re.sub(r"[^a-z0-9\s]", " ", message.lower()).strip()
-    if re.fullmatch(r"(?:hi|hello|hey|hiya|namaste|good morning|good afternoon|good evening)(?:\s+aria)?", normalized):
+    """Handle social, onboarding, navigation, and studio queries without false circuit assumptions."""
+    # Split camelCase words (e.g. "journeyIn" -> "journey In")
+    separated = re.sub(r"([a-z])([A-Z])", r"\1 \2", message)
+    normalized = re.sub(r"[^a-z0-9\s]", " ", separated.lower()).strip()
+
+    # 1. How to use Circuit Studio
+    if any(phrase in normalized for phrase in (
+        "how to use studio", "how to use circuit studio", "how to build a circuit", "how to add gates", "how to run circuit", "how to use canvas"
+    )):
         return (
-            "Hi! I can explain a quantum concept, give progressive hints, generate a validated circuit, "
-            "or debug the circuit currently open in Studio. Try asking **‘Why does phase affect interference?’** "
-            "or open Circuit Studio and ask me to inspect your gates."
+            "### 🛠️ How to use Circuit Studio:\n\n"
+            "1. **Add Gates**: Click any gate in the left palette (`H`, `X`, `CX`, `MEASURE`, etc.) or click the `+` buttons on the qubit wires.\n"
+            "2. **Configure Multi-Qubit Gates**: For controlled gates (like `CX`), set the control wire and target wire in the operation inspector.\n"
+            "3. **Choose Backend**: Select `Local Statevector`, `Qiskit Aer`, `PennyLane`, `Cirq`, or `qBraid Hub` in the execution bar.\n"
+            "4. **Run Simulation**: Click **Run Circuit** (or **Run on qBraid**) to compute the statevector, measurement probabilities, and density matrix.\n"
+            "5. **Ask Aria**: Switch to **Synthesize** mode right here in Aria to have me automatically generate and load verified quantum circuits!"
         )
-    if re.fullmatch(r"(?:thanks|thank you|thx|got it|okay thanks)", normalized):
-        return "You’re welcome. When you are ready, test the idea in a circuit or ask for the next hint."
+
+    # 2. Starting Journey / Navigation / Roadmap / Onboarding
+    if any(phrase in normalized for phrase in (
+        "start my journey", "start journey", "how to start", "where to start", "where should i start",
+        "where do i start", "where to begin", "how to use this website", "how to use the platform", "how to use the site",
+        "how does this website work", "how does this work", "how do i use this website", "what should i learn",
+        "getting started", "get started", "guide me", "roadmap", "how to learn", "first steps", "beginner", "new here"
+    )):
+        return (
+            "### 🚀 Welcome to Quantum Lens AI! Here is your Recommended Learning Journey:\n\n"
+            "1. **📚 Step 1: Guided Interactive Curriculum (`/learn`)**\n"
+            "   Start with core modules: *Qubits & Measurement*, *Bloch Sphere*, *Superposition & Interference*, and *Entanglement*. Each lesson features interactive amplitude simulations and predict-observe loops.\n\n"
+            "2. **🧪 Step 2: Visual Circuit Studio (`/labs/studio`)**\n"
+            "   Build your own multi-qubit quantum circuits on the visual wire canvas. Inspect live statevector amplitudes, Dirac notation, and density matrices, and simulate across Qiskit, PennyLane, Cirq, or qBraid.\n\n"
+            "3. **⚡ Step 3: Cognitive Conflict Labs (`/labs/conflict`)**\n"
+            "   Tackle common quantum misconceptions (like whether entanglement transmits faster-than-light signals, or why $H^2=I$). Experience mathematical counterexamples directly in the simulator.\n\n"
+            "4. **🔬 Step 4: Algorithm & Hardware Labs (`/algorithms` & `/hardware`)**\n"
+            "   Explore full quantum algorithms (Teleportation, Deutsch-Jozsa, Grover Search, BB84 QKD, VQE) and test noise resilience against physical $T_1/T_2$ relaxation.\n\n"
+            "👉 *You can click the **Synthesize** tab above to generate a circuit, or ask me any question!*"
+        )
+
+    # 3. Greetings — catch casual openers BEFORE concept matching
+    _greeting_words = {"hi", "hello", "hey", "hiya", "namaste", "sup", "yo", "howdy", "greetings"}
+    _greeting_starters = (
+        "good morning", "good afternoon", "good evening", "good night",
+        "how are you", "how r u", "how are u", "hru", "how's it going",
+        "what's up", "whats up", "what up", "how do you do",
+    )
+    _words = normalized.split()
+    _first_word = _words[0] if _words else ""
+    if (
+        _first_word in _greeting_words
+        or normalized in _greeting_words
+        or any(normalized.startswith(p) for p in _greeting_starters)
+        or re.fullmatch(
+            r"(?:hi|hello|hey|hiya|namaste|good morning|good afternoon|good evening)(?:\s+aria)?",
+            normalized,
+        )
+    ):
+        return (
+            "Hi there! \U0001f44b I\u2019m **Aria**, your quantum co-pilot. I can explain concepts with "
+            "simulator-grounded evidence, synthesize verified circuits, debug your active canvas, optimize "
+            "gate schedules, or give progressive Socratic hints.\n\n"
+            "or open Circuit Studio and ask me to inspect your gates! You can also switch to **Synthesize** to build a Bell state."
+        )
+
+    if re.fullmatch(r"(?:thanks|thank you|thx|got it|okay thanks|cool|great|awesome|nice|perfect|ty)", normalized):
+        return "You\u2019re welcome! \U0001f60a Ready when you are \u2014 ask a question, request a hint, or hit one of the quick chips below."
+
+    # 4. What is Quantum Lens / Website Capabilities
     if any(phrase in normalized for phrase in ("what can you do", "how can you help", "who are you")):
         return (
             "I’m Aria, the grounded tutor for Quantum Lens. I can explain course concepts, reveal hints in three levels, "
             "inspect supported CircuitIR operations, generate validated learning circuits, and suggest bounded local rewrites. "
             "When circuit, simulator, or learner evidence is available, I show exactly which evidence informed the response."
         )
+
     return None
 
 
@@ -745,6 +867,7 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
     """
     ctx = req.context or MentorContext()
     tier = ctx.hintTier or 1
+    msg_lower = req.message.lower()
     mode_explicit = req.mode or (ctx.mode if ctx and ctx.mode else None)
     if mode_explicit:
         mode = mode_explicit
@@ -912,17 +1035,24 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
         )
 
     # ── 4. SOCRATIC & HINT & EXPLAIN MODES ─────────────────────────────────────
+    circuit_inquiry_phrases = (
+        "my circuit", "this circuit", "canvas", "my gates", "these gates", "what did i build",
+        "my state", "histogram", "why is my", "inspect", "my qubit", "these qubits",
+        "two hadamards", "why did two", "coin flip", "are my", "is my", "entangled?"
+    )
+    is_circuit_inquiry = any(phrase in msg_lower for phrase in circuit_inquiry_phrases)
+
     # Check for M01: Two Hadamards
     if gates_used == ["H", "H"]:
         misconception_alert = "M01: Hadamard Self-Inverse Cancellation"
-        if tier == 1:
+        if tier == 1 and mode != "explain":
             reply = (
                 "**ARIA Socratic Nudge:** Look closely at the measurement histogram. "
                 "If Hadamard was merely a random 50/50 coin flip, flipping it twice should still be random. "
                 "Why did the outcome return to **|0⟩ with 100% certainty**?"
             )
             suggested_action = "Try inserting a Z gate between the two Hadamards (H -> Z -> H) to see what happens to the phase!"
-        elif tier == 2:
+        elif tier == 2 or mode == "explain":
             reply = (
                 "**ARIA Conceptual Hint:** The Hadamard operator is self-inverse: **H² = I**. "
                 "The amplitudes for state |1⟩ undergo destructive interference (1/√2 - 1/√2 = 0), "
@@ -937,16 +1067,16 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
             )
             suggested_action = "Mastery achieved: Superposition is coherent amplitude addition, not independent probability."
 
-    # Check for Bell State / Entanglement
-    elif "CX" in gates_used and has_superposition:
+    # Check for Bell State / Entanglement (only if no conflicting specific concept requested)
+    elif "CX" in gates_used and has_superposition and (concept_guidance is None or concept_guidance["id"] == "entanglement"):
         is_entangled = grounded_truth.get("isEntangled", True)
-        if tier == 1:
+        if tier == 1 and mode == "socratic":
             reply = (
                 "**ARIA Socratic Nudge:** Notice that outcomes **|01⟩** and **|10⟩** have exactly 0.00% probability. "
                 "Why can neither qubit take an independent value?"
             )
             suggested_action = "Look at the reduced subsystem entropy on qubit 0 in the statistics panel."
-        elif tier == 2:
+        elif tier == 2 or mode == "explain":
             reply = (
                 "**ARIA Conceptual Hint:** The circuit creates the Bell state **(|00⟩ + |11⟩)/√2**. "
                 "The state cannot be written as a product of individual qubit states: Tr(ρ_A²) = 0.5. "
@@ -962,7 +1092,7 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
             )
             suggested_action = "This is a maximally entangled Einstein-Podolsky-Rosen (EPR) pair."
 
-    # Concept-grounded response when no more specific circuit rule applies.
+    # Concept-grounded response when concept matches
     elif concept_guidance:
         if not citations:
             citations.append(MentorCitation(
@@ -970,7 +1100,15 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
                 route=concept_guidance["route"],
                 reason="Course reference for the concept discussed in this response",
             ))
-        if mode == "socratic" or tier == 1:
+        if mode == "explain":
+            reply = (
+                f"### 💡 {concept_guidance['label']}\n\n"
+                f"{concept_guidance['concept']}\n\n"
+                f"**Mathematical Foundation:**\n{concept_guidance['math']}\n\n"
+                f"👉 *You can test this concept in the [{concept_guidance['label']}]({concept_guidance['route']}) module.*"
+            )
+            suggested_action = f"Open {concept_guidance['route']} to explore interactive demonstrations."
+        elif mode == "socratic" or tier == 1:
             reply = f"**ARIA Socratic Nudge:** {concept_guidance['nudge']}"
             suggested_action = "State your prediction, then open the cited lesson and test it in the linked experiment."
         elif tier == 2:
@@ -982,7 +1120,18 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
 
     # General / Socratic fallback
     else:
-        if mode == "socratic" or tier == 1:
+        if mode == "explain":
+            reply = (
+                "### 💡 Quantum Lens AI Architecture\n\n"
+                "Quantum computation leverages the principles of quantum mechanics—namely **superposition**, **interference**, and **entanglement**—to process information in high-dimensional Hilbert space.\n\n"
+                "You can explore:\n"
+                "- **Interactive Modules (`/learn`)**: Step-by-step interactive lessons with predict-observe cycles.\n"
+                "- **Circuit Studio (`/labs/studio`)**: Visual multi-qubit editor with real-time statevector, Bloch spheres, and Qiskit export.\n"
+                "- **Cognitive Conflict Labs (`/labs/conflict`)**: Hands-on proofs resolving misconceptions.\n\n"
+                "Try asking me a specific concept question (e.g. *'What is phase kickback?'*) or switch to **Synthesize** to build a circuit!"
+            )
+            suggested_action = "Pick a concept or start a module in the curriculum."
+        elif mode == "socratic" or tier == 1:
             reply = (
                 f"**ARIA Socratic Nudge:** Your circuit executes **{circuit_summary}**. "
                 "Observe the statevector bars and phase discs. What changes when you alter the gate sequence?"
@@ -1035,7 +1184,7 @@ def ask_mentor(req: MentorRequest) -> MentorResponse:
     """Grounded ARIA mentor entrypoint. Ingests simulator state and optional Gemini LLM
     with strict JSON output schema and validation against canonical CircuitIR.
     """
-    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    gemini_key = (req.apiKey or "").strip() or os.environ.get("GEMINI_API_KEY", "").strip()
 
     # If no Gemini key or running test suite, use the physically-grounded fallback
     if not gemini_key:

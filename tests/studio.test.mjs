@@ -190,3 +190,135 @@ test("unitary mixtures keep total probability at one", () => {
     );
   }
 });
+
+test("Cirq export produces valid cirq.Circuit structure for Bell pair", () => {
+  const bell = presetCircuit("bell");
+  const code = circuitCode(bell, "cirq");
+  assert.ok(code.includes("import cirq"), "Missing: import cirq");
+  assert.ok(code.includes("q0 = cirq.LineQubit(0)"), "Missing: q0 LineQubit");
+  assert.ok(code.includes("q1 = cirq.LineQubit(1)"), "Missing: q1 LineQubit");
+  assert.ok(code.includes("cirq.H(q0)"), "Missing: H gate on q0");
+  assert.ok(code.includes("cirq.CNOT(q0, q1)"), "Missing: CNOT(q0, q1)");
+  assert.ok(code.includes("circuit = cirq.Circuit("), "Missing: circuit assignment");
+  assert.ok(code.includes("print(circuit)"), "Missing: print(circuit)");
+  assert.ok(code.includes("final_state_vector"), "Missing: final_state_vector simulation");
+});
+
+test("PennyLane export produces valid @qml.qnode structure for Bell pair", () => {
+  const bell = presetCircuit("bell");
+  const code = circuitCode(bell, "pennylane");
+  assert.ok(code.includes("import pennylane as qml"), "Missing: import pennylane");
+  assert.ok(code.includes('dev = qml.device("default.qubit"'), "Missing: device declaration");
+  assert.ok(code.includes("@qml.qnode(dev)"), "Missing: qnode decorator");
+  assert.ok(code.includes("def circuit():"), "Missing: circuit function");
+  assert.ok(code.includes("qml.Hadamard(wires=0)"), "Missing: Hadamard on wire 0");
+  assert.ok(code.includes("qml.CNOT(wires=[0, 1])"), "Missing: CNOT on wires [0,1]");
+  assert.ok(code.includes("return qml.state()"), "Missing: qml.state() return");
+  assert.ok(code.includes("print(circuit())"), "Missing: print(circuit())");
+});
+
+test("Cirq export maps all rotation gates with correct angles", () => {
+  const circuit = qasm("rx(1.5707963) q[0]; ry(3.14159265) q[1]; rz(0.78539816) q[0];");
+  const code = circuitCode(circuit, "cirq");
+  assert.ok(code.includes("cirq.rx("), "Missing: cirq.rx");
+  assert.ok(code.includes("cirq.ry("), "Missing: cirq.ry");
+  assert.ok(code.includes("cirq.rz("), "Missing: cirq.rz");
+  // Angles should be numeric
+  const angles = [...code.matchAll(/cirq\.r[xyz]\(([\d.]+)\)/g)].map((m) => Number(m[1]));
+  assert.ok(angles.length === 3, `Expected 3 rotation angles, got ${angles.length}`);
+  assert.ok(angles.every((a) => Number.isFinite(a) && a > 0), "Rotation angles must be positive finite numbers");
+});
+
+test("PennyLane export maps all single-qubit gates correctly", () => {
+  const circuit = qasm("h q[0]; x q[1]; y q[0]; z q[1]; s q[0]; t q[1];");
+  const code = circuitCode(circuit, "pennylane");
+  assert.ok(code.includes("qml.Hadamard"), "Missing: Hadamard");
+  assert.ok(code.includes("qml.PauliX"), "Missing: PauliX");
+  assert.ok(code.includes("qml.PauliY"), "Missing: PauliY");
+  assert.ok(code.includes("qml.PauliZ"), "Missing: PauliZ");
+  assert.ok(code.includes("qml.S"), "Missing: S gate");
+  assert.ok(code.includes("qml.T"), "Missing: T gate");
+});
+
+test("all four export formats produce non-empty output for GHZ circuit", () => {
+  const ghz = presetCircuit("ghz");
+  for (const fmt of ["qasm", "qiskit", "cirq", "pennylane"]) {
+    const code = circuitCode(ghz, fmt);
+    assert.ok(code.length > 40, `Format ${fmt} produced suspiciously short output: ${code.length} chars`);
+  }
+});
+
+// ── Pulse Visualizer Math & Gate Mapping Tests ───────────────────────────────
+
+const pulseSource = readFileSync(
+  new URL("../src/lib/pulse.ts", import.meta.url),
+  "utf8",
+);
+const { outputText: pulseOutput } = ts.transpileModule(pulseSource, {
+  compilerOptions: {
+    target: ts.ScriptTarget.ES2020,
+    module: ts.ModuleKind.ESNext,
+  },
+});
+const { computePulse, GATE_PULSE } = await import(
+  `data:text/javascript;base64,${Buffer.from(pulseOutput).toString("base64")}`
+);
+
+test("computePulse generates Gaussian I(t) envelope and DRAG Q(t) derivative", () => {
+  const params = {
+    duration: 1,
+    sigma: 0.18,
+    beta: 0.3,
+    amplitude: 1.0,
+    nativeCount: 1,
+    decomposition: "test",
+    color: "#22d3ee",
+  };
+  const points = computePulse(params, 200);
+  assert.equal(points.length, 201, "Steps=200 should yield 201 sample points");
+
+  // Center point (t = 0.5)
+  const mid = points[100];
+  assert.ok(Math.abs(mid.t - 0.5) < 1e-4, "Middle point is at t = 0.5");
+  assert.ok(Math.abs(mid.I - 1.0) < 1e-3, "Gaussian envelope reaches peak amplitude 1.0 at center");
+  assert.ok(Math.abs(mid.Q) < 1e-6, "DRAG Q channel derivative crosses zero at pulse peak");
+
+  // First and last points should have near-zero amplitude
+  const start = points[0];
+  const end = points[200];
+  assert.ok(start.I < 0.05, "Pulse starts near zero");
+  assert.ok(end.I < 0.05, "Pulse ends near zero");
+
+  // DRAG derivative is anti-symmetric: Q before center has opposite sign to Q after center
+  const quarter = points[50];
+  const threeQuarter = points[150];
+  assert.ok(quarter.Q * threeQuarter.Q < 0, "Q channel derivative changes sign across pulse peak");
+});
+
+test("GATE_PULSE correctly distinguishes virtual frame rotations from physical pulses", () => {
+  // Virtual gates: Z, S, T, RZ require 0 microwave pulses
+  const virtualGates = ["Z", "S", "T", "RZ"];
+  for (const g of virtualGates) {
+    const entry = GATE_PULSE[g];
+    assert.ok(entry, `Missing GATE_PULSE entry for ${g}`);
+    assert.equal(entry.amplitude, 0, `Virtual gate ${g} must have amplitude 0`);
+    assert.equal(entry.nativeCount, 0, `Virtual gate ${g} must have nativeCount 0`);
+    assert.ok(entry.decomposition.toLowerCase().includes("virtual"), `Decomposition for ${g} should mention virtual`);
+  }
+
+  // Physical microwave gates: X, Y, H, CX, CZ, SWAP
+  const physicalGates = ["X", "Y", "H", "CX", "CZ", "SWAP"];
+  for (const g of physicalGates) {
+    const entry = GATE_PULSE[g];
+    assert.ok(entry, `Missing GATE_PULSE entry for ${g}`);
+    assert.ok(entry.amplitude > 0, `Physical gate ${g} must have positive amplitude`);
+    assert.ok(entry.nativeCount > 0, `Physical gate ${g} must have nativeCount > 0`);
+  }
+
+  // Accurate native counts
+  assert.equal(GATE_PULSE["H"].nativeCount, 2, "Hadamard decomposes into 2 native pulses (Y_pi/2 -> X_pi)");
+  assert.equal(GATE_PULSE["CX"].nativeCount, 4, "Echoed CR cross-resonance CX decomposes into 4 pulses");
+  assert.equal(GATE_PULSE["SWAP"].nativeCount, 12, "SWAP decomposes into 3 CX = 12 native pulses");
+});
+
+

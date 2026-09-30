@@ -4,7 +4,8 @@
   color: #edf2ff;
   max-width: 1520px;
   margin: 0 auto;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.011em;
 }
 .gl-page button,
 .gl-page select {

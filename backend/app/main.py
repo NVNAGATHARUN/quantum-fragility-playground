@@ -215,7 +215,7 @@ def run_simulation(req: SimulateRequest):
     enforce_circuit_budget(req.circuit)
     try:
         result = simulate_selected_backend(
-            req.circuit, backend=req.backend, shots=req.shots
+            req.circuit, backend=req.backend, shots=req.shots, noise=req.noise
         )
         return result
     except ValueError as e:

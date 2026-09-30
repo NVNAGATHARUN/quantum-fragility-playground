@@ -7,7 +7,7 @@ phase angles, reduced density matrices, and purity according to the SRS Build Co
 import time
 import math
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Statevector, partial_trace, DensityMatrix
 from qiskit_aer import AerSimulator
@@ -20,6 +20,7 @@ from ..models.circuit_ir import (
     ReducedSubsystemState,
     TimelineStep,
     SimulationMetrics,
+    NoiseConfig,
 )
 from .validator import validate_circuit_ir
 
@@ -188,13 +189,127 @@ def compute_reduced_states(sv: Statevector, num_qubits: int) -> List[ReducedSubs
     return reduced_states
 
 
-def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulationResult:
+def build_qiskit_noise_model(noise: NoiseConfig) -> Tuple[Any, bool]:
+    """Constructs a qiskit_aer.noise.NoiseModel from physical user parameters.
+
+    Converts T1 and T2 from microseconds into seconds and computes channel decay
+    using representative single-qubit and two-qubit gate durations (nanoseconds).
+    Enforces the fundamental Lindblad physical bound: T2 <= 2*T1.
+    """
+    from qiskit_aer.noise import (
+        NoiseModel,
+        thermal_relaxation_error,
+        depolarizing_error,
+        ReadoutError,
+    )
+
+    nm = NoiseModel()
+    t1_s = noise.t1_us * 1e-6
+    lindblad_ok = noise.t2_us <= (2.0 * noise.t1_us + 1e-9)
+    t2_s = min(noise.t2_us * 1e-6, 2.0 * t1_s)
+
+    t_single = max(1e-9, noise.gate_time_ns * 1e-9)
+    t_two = max(1e-9, noise.two_qubit_gate_time_ns * 1e-9)
+
+    single_gates = ["h", "x", "y", "z", "s", "t", "rx", "ry", "rz", "p", "u"]
+    two_gates = ["cx", "cz", "swap"]
+
+    mtype = noise.modelType
+    if mtype == "thermal_relaxation":
+        e1 = thermal_relaxation_error(t1_s, t2_s, t_single)
+        e2 = thermal_relaxation_error(t1_s, t2_s, t_two).tensor(
+            thermal_relaxation_error(t1_s, t2_s, t_two)
+        )
+        nm.add_all_qubit_quantum_error(e1, single_gates)
+        nm.add_all_qubit_quantum_error(e2, two_gates)
+    elif mtype == "dephasing":
+        t1_effective = 1e3
+        e1 = thermal_relaxation_error(t1_effective, t2_s, t_single)
+        e2 = thermal_relaxation_error(t1_effective, t2_s, t_two).tensor(
+            thermal_relaxation_error(t1_effective, t2_s, t_two)
+        )
+        nm.add_all_qubit_quantum_error(e1, single_gates)
+        nm.add_all_qubit_quantum_error(e2, two_gates)
+    elif mtype == "depolarizing":
+        p = max(0.0, min(0.5, noise.depolarizing_p))
+        e1 = depolarizing_error(p, 1)
+        e2 = depolarizing_error(min(0.5, 2.0 * p), 2)
+        nm.add_all_qubit_quantum_error(e1, single_gates)
+        nm.add_all_qubit_quantum_error(e2, two_gates)
+    elif mtype == "readout_error":
+        p_ro = max(0.0, min(0.5, noise.readout_error_p))
+        ro = ReadoutError([[1.0 - p_ro, p_ro], [p_ro, 1.0 - p_ro]])
+        nm.add_all_qubit_readout_error(ro)
+    elif mtype == "combined":
+        e1 = thermal_relaxation_error(t1_s, t2_s, t_single)
+        e2 = thermal_relaxation_error(t1_s, t2_s, t_two).tensor(
+            thermal_relaxation_error(t1_s, t2_s, t_two)
+        )
+        nm.add_all_qubit_quantum_error(e1, single_gates)
+        nm.add_all_qubit_quantum_error(e2, two_gates)
+        p_ro = max(0.0, min(0.5, noise.readout_error_p))
+        ro = ReadoutError([[1.0 - p_ro, p_ro], [p_ro, 1.0 - p_ro]])
+        nm.add_all_qubit_readout_error(ro)
+
+    return nm, lindblad_ok
+
+
+def compute_distribution_fidelity(p_ideal: Dict[str, float], p_noisy: Dict[str, float]) -> float:
+    """Computes classical distribution fidelity F = (sum_x sqrt(p_ideal(x) * p_noisy(x)))^2."""
+    coeff = 0.0
+    all_keys = set(p_ideal.keys()) | set(p_noisy.keys())
+    for basis in all_keys:
+        p = max(0.0, p_ideal.get(basis, 0.0))
+        q = max(0.0, p_noisy.get(basis, 0.0))
+        coeff += math.sqrt(p * q)
+    return round(float(min(1.0, max(0.0, coeff ** 2))), 5)
+
+
+def generate_noise_explanation(noise: NoiseConfig, fidelity: float, lindblad_ok: bool) -> str:
+    """Produces pedagogical grounded commentary explaining observed error degradation."""
+    pct = round(fidelity * 100.0, 1)
+    lindblad_note = (
+        ""
+        if lindblad_ok
+        else " (Note: T2 requested exceeded the physical Lindblad upper bound T2 <= 2*T1; simulator clamped T2 to maintain physical validity)."
+    )
+
+    if noise.modelType == "thermal_relaxation":
+        return (
+            f"Under Energy Relaxation (T1 = {noise.t1_us:.1f}μs, T2 = {noise.t2_us:.1f}μs with gate time {noise.gate_time_ns:.0f}ns), "
+            f"excited state amplitudes decay toward the ground state |0⟩. State fidelity against ideal unitary evolution is {pct}%.{lindblad_note}"
+        )
+    elif noise.modelType == "dephasing":
+        return (
+            f"Under Dephasing / Coherence decay (T2 = {noise.t2_us:.1f}μs), relative quantum phases attenuate exponentially without energy loss, "
+            f"erasing quantum superposition and yielding an experimental fidelity of {pct}%.{lindblad_note}"
+        )
+    elif noise.modelType == "depolarizing":
+        return (
+            f"Isotropic Depolarizing noise (p = {noise.depolarizing_p:.3f} per gate) uniformly mixes the quantum state toward the identity I/2^n, "
+            f"generating an error floor across all basis states with {pct}% fidelity."
+        )
+    elif noise.modelType == "readout_error":
+        return (
+            f"Readout error (p_ro = {noise.readout_error_p * 100:.1f}%) models classical measurement detector bit-flips during collapse. "
+            f"Basis probabilities are perturbed by detector noise, producing {pct}% fidelity."
+        )
+    else:  # combined
+        return (
+            f"Combined NISQ processor noise (T1={noise.t1_us:.1f}μs, T2={noise.t2_us:.1f}μs, readout error={noise.readout_error_p * 100:.1f}%) "
+            f"simulates simultaneous thermal dissipation, dephasing, and detector bit-flips, yielding a total experimental fidelity of {pct}%.{lindblad_note}"
+        )
+
+
+def simulate_circuit(
+    circuit: CircuitIR, shots: int = 1024, noise: Optional[NoiseConfig] = None
+) -> NormalizedSimulationResult:
     """Execute CircuitIR shots with Aer and return an ideal state preview.
 
     Counts always come from the full circuit, including intermediate measurements
-    and reset operations. The statevector/reduced-state fields describe the
-    pure state immediately before the first non-unitary operation because a
-    single statevector cannot represent the later mixed ensemble.
+    and reset operations. When noise is provided and enabled, Qiskit Aer executes
+    under the configured Kraus/Lindblad physical noise model, returning both ideal
+    reference distributions and physical noisy experimental counts with fidelity.
     """
     valid, err = validate_circuit_ir(circuit)
     if not valid:
@@ -259,6 +374,26 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
         probabilities_dict = {
             basis: round(count / shots, 5) for basis, count in sorted(counts.items())
         }
+
+    # Execute physical Kraus noise simulation if requested and enabled
+    noisy_counts: Optional[Dict[str, int]] = None
+    noisy_probabilities: Optional[Dict[str, float]] = None
+    fidelity: Optional[float] = None
+    noise_explanation: Optional[str] = None
+    lindblad_ok: Optional[bool] = None
+
+    if noise and noise.enabled:
+        nm, lindblad_ok = build_qiskit_noise_model(noise)
+        aer_noisy = AerSimulator(noise_model=nm)
+        raw_noisy = aer_noisy.run(transpile(qc_shots, aer_noisy), shots=shots).result().get_counts()
+        noisy_counts = {str(key).replace(" ", ""): int(value) for key, value in raw_noisy.items()}
+        for idx in range(2 ** num_qubits):
+            noisy_counts.setdefault(format(idx, f"0{num_qubits}b"), 0)
+        noisy_probabilities = {
+            basis: round(count / shots, 5) for basis, count in sorted(noisy_counts.items())
+        }
+        fidelity = compute_distribution_fidelity(probabilities_dict, noisy_probabilities)
+        noise_explanation = generate_noise_explanation(noise, fidelity, lindblad_ok)
 
     # 4. Reduced states per qubit
     reduced_states = compute_reduced_states(sv, num_qubits)
@@ -327,6 +462,12 @@ def simulate_circuit(circuit: CircuitIR, shots: int = 1024) -> NormalizedSimulat
         statevector=statevector_list,
         counts=counts,
         probabilities=probabilities_dict,
+        noisyCounts=noisy_counts,
+        noisyProbabilities=noisy_probabilities,
+        fidelity=fidelity,
+        noiseExplanation=noise_explanation,
+        lindbladCompliant=lindblad_ok,
+        noiseConfig=noise if (noise and noise.enabled) else None,
         reducedStates=reduced_states,
         timeline=timeline,
         metrics=metrics,

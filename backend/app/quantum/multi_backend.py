@@ -12,6 +12,7 @@ from ..models.circuit_ir import (
     NormalizedSimulationResult,
     SimulationMetrics,
     StateAmplitude,
+    NoiseConfig,
 )
 from .simulator import compute_reduced_states, simulate_circuit
 from .validator import validate_circuit_ir
@@ -34,17 +35,26 @@ def _native_statevector(circuit: CircuitIR, backend: str) -> tuple[np.ndarray, s
 
 
 def simulate_selected_backend(
-    circuit: CircuitIR, backend: str, shots: int = 1024
+    circuit: CircuitIR,
+    backend: str,
+    shots: int = 1024,
+    noise: Optional[NoiseConfig] = None,
 ) -> NormalizedSimulationResult:
     """Execute the requested framework and return the shared result contract.
 
-    Qiskit Aer supports the full editor contract, including measurement and
-    reset. Cirq and PennyLane execute their own native unitary circuits. Their
-    exact framework statevectors are normalized to the platform bit ordering,
-    then shot counts are sampled from those native probability distributions.
+    Qiskit Aer supports the full editor contract, including measurement, reset,
+    and physical Kraus noise modeling. Cirq and PennyLane execute their own native
+    unitary circuits. Their exact framework statevectors are normalized to the
+    platform bit ordering, then shot counts are sampled from those native probability distributions.
     """
+    if noise and noise.enabled and backend not in {"qiskit-aer", "ideal-statevector"}:
+        raise ValueError(
+            f"Physical Kraus noise modeling is currently powered by Qiskit Aer's open-quantum-system kernel. "
+            f"Please switch backend to 'qiskit-aer' to simulate physical noise."
+        )
+
     if backend in {"qiskit-aer", "ideal-statevector"}:
-        return simulate_circuit(circuit, shots=shots)
+        return simulate_circuit(circuit, shots=shots, noise=noise)
 
     valid, error = validate_circuit_ir(circuit)
     if not valid:

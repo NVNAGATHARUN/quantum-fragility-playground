@@ -15,13 +15,18 @@ import {
   RotateCcw,
   Save,
   Share2,
+  ShieldAlert,
+  ShieldCheck,
+  Sliders,
   Sparkles,
   Trash2,
   Undo2,
+  Zap,
 } from "lucide-react";
 import type {
   CircuitIR,
   GateOperation,
+  NoiseConfig,
   NormalizedSimulationResult,
   SupportedGate,
 } from "../types/quantum";
@@ -35,6 +40,7 @@ import {
   previewCircuit,
   STUDIO_GATES,
   validateStudioCircuit,
+  type CodeFormat,
 } from "../lib/studio";
 import { useQuantumSession } from "../providers/QuantumSessionProvider";
 import { apiUrl } from "../api/client";
@@ -48,6 +54,8 @@ import {
 } from "../api/circuit";
 import { SyntaxHighlightedEditor } from "../components/circuit/SyntaxHighlightedEditor";
 import { useAuth } from "../providers/AuthProvider";
+import WhatChangedModal from "../components/pedagogy/WhatChangedModal";
+import { PulseVisualizer } from "../components/PulseVisualizer";
 
 const DRAFT_KEY = "ql_studio_draft_v1";
 const descriptions: Record<string, string> = {
@@ -164,7 +172,7 @@ export default function CircuitStudio() {
     step: number;
     gate: SupportedGate;
   } | null>(null);
-  const [format, setFormat] = useState<"qasm" | "qiskit">("qasm");
+  const [format, setFormat] = useState<CodeFormat>("qasm");
   const [editing, setEditing] = useState(false);
   const [source, setSource] = useState("");
   const [notice, setNotice] = useState("");
@@ -181,11 +189,25 @@ export default function CircuitStudio() {
   const [parity, setParity] = useState<ParityResponse | null>(null);
   const [parityCircuit, setParityCircuit] = useState("");
   const [resultTab, setResultTab] = useState("Probabilities");
+  const [noiseConfig, setNoiseConfig] = useState<NoiseConfig>({
+    enabled: false,
+    modelType: "thermal_relaxation",
+    t1_us: 100.0,
+    t2_us: 80.0,
+    gate_time_ns: 50.0,
+    two_qubit_gate_time_ns: 200.0,
+    depolarizing_p: 0.015,
+    readout_error_p: 0.02,
+  });
+  const [noiseAdvancedMode, setNoiseAdvancedMode] = useState(false);
+  const [showNoiseDrawer, setShowNoiseDrawer] = useState(false);
   const [selectedQubit, setSelectedQubit] = useState(0);
   const [saved, setSaved] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(circuitId ?? null);
   const [savedOwnerId, setSavedOwnerId] = useState<string | null>(null);
   const [circuitTitle, setCircuitTitle] = useState("Untitled circuit");
+  const [lastExecutedCircuit, setLastExecutedCircuit] = useState<CircuitIR | null>(null);
+  const [showWhatChanged, setShowWhatChanged] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const preview = useMemo(() => previewCircuit(circuit), [circuit]);
   const code = circuitCode(circuit, format);
@@ -562,7 +584,8 @@ export default function CircuitStudio() {
     const url = URL.createObjectURL(new Blob([code], { type: "text/plain" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = format === "qasm" ? "quantum-lens.qasm" : "quantum-lens.py";
+    const ext = format === "qasm" ? "quantum-lens.qasm" : `quantum-lens-${format}.py`;
+    a.download = ext;
     a.click();
     URL.revokeObjectURL(url);
     setNotice("Circuit exported.");
@@ -579,7 +602,12 @@ export default function CircuitStudio() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ circuit, shots, backend: simulationBackend }),
+          body: JSON.stringify({
+            circuit,
+            shots,
+            backend: simulationBackend,
+            noise: noiseConfig.enabled ? noiseConfig : undefined,
+          }),
           signal: controller.signal,
         },
       );
@@ -595,9 +623,16 @@ export default function CircuitStudio() {
       setResult(data);
       setResultCircuit(signature);
       setResultBackendRequest(simulationBackend);
-      setResultTab("Shot counts");
+      setLastExecutedCircuit(JSON.parse(JSON.stringify(circuit)));
+      setResultTab(data.noisyCounts ? "Ideal vs Noisy" : "Shot counts");
       recordCircuitRun();
-      setNotice(`Completed ${data.shots} shots with ${data.backend}.`);
+      setNotice(
+        `Completed ${data.shots} shots with ${data.backend}${
+          data.noisyCounts && data.fidelity !== undefined
+            ? ` · Physical Noise Fidelity: ${(data.fidelity * 100).toFixed(1)}%`
+            : ""
+        }.`,
+      );
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -688,6 +723,42 @@ export default function CircuitStudio() {
             <GitCompare size={14} />
             {parityRunning ? "Comparing…" : "Compare engines"}
           </button>
+          {lastExecutedCircuit && JSON.stringify(circuit) !== JSON.stringify(lastExecutedCircuit) && (
+            <button
+              className="ql-button"
+              onClick={() => setShowWhatChanged(true)}
+              title="Compare circuit modifications with the last executed simulation (State, Probabilities & Physics Diff)"
+              style={{
+                borderColor: "#06b6d4",
+                background: "rgba(6, 182, 212, 0.18)",
+                color: "#67e8f9",
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <GitCompare size={14} color="#22d3ee" />
+              Why did my result change?
+            </button>
+          )}
+          <button
+            className={`ql-button ${noiseConfig.enabled ? "ql-button-primary" : "ql-button-white"}`}
+            disabled={running || editing}
+            onClick={() => {
+              setNoiseConfig((prev) => ({ ...prev, enabled: !prev.enabled }));
+              setShowNoiseDrawer(true);
+            }}
+            title="Toggle realistic environmental decoherence and Kraus noise modeling"
+            style={{
+              borderColor: noiseConfig.enabled ? "#f59e0b" : undefined,
+              background: noiseConfig.enabled ? "rgba(245, 158, 11, 0.18)" : undefined,
+              color: noiseConfig.enabled ? "#fde68a" : undefined,
+            }}
+          >
+            <Zap size={14} color={noiseConfig.enabled ? "#f59e0b" : undefined} />
+            Physical Noise: {noiseConfig.enabled ? "ON" : "OFF"}
+          </button>
         </div>
       </div>
       <div className="ql-studio-toolbar">
@@ -751,6 +822,204 @@ export default function CircuitStudio() {
           </label>
         </div>
       </div>
+
+      {showNoiseDrawer && (
+        <div className={`ql-noise-drawer ${noiseConfig.enabled ? "active" : ""}`}>
+          <div className="ql-noise-header">
+            <div className="ql-noise-header-left">
+              <h2>
+                <Zap size={16} color="#f59e0b" />
+                Physical Kraus Noise & Thermal Decoherence Engine
+              </h2>
+              <span className={`ql-noise-badge ${noiseConfig.enabled ? "enabled" : "disabled"}`}>
+                {noiseConfig.enabled ? "Active on Qiskit Aer" : "Disabled (Ideal)"}
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                className="ql-button ql-button-white"
+                style={{ fontSize: "10px", padding: "4px 8px" }}
+                onClick={() => setNoiseAdvancedMode(!noiseAdvancedMode)}
+              >
+                <Sliders size={12} /> {noiseAdvancedMode ? "Simple Sliders" : "Advanced Kraus"}
+              </button>
+              <button
+                className={`ql-button ${noiseConfig.enabled ? "ql-button-primary" : "ql-button-white"}`}
+                style={{
+                  fontSize: "10px",
+                  padding: "4px 12px",
+                  borderColor: noiseConfig.enabled ? "#f59e0b" : undefined,
+                  background: noiseConfig.enabled ? "rgba(245, 158, 11, 0.25)" : undefined,
+                  color: noiseConfig.enabled ? "#fde68a" : undefined,
+                }}
+                onClick={() => setNoiseConfig((n) => ({ ...n, enabled: !n.enabled }))}
+              >
+                {noiseConfig.enabled ? "Turn Noise OFF" : "Turn Noise ON"}
+              </button>
+              <button
+                onClick={() => setShowNoiseDrawer(false)}
+                className="ql-button ql-button-white"
+                style={{ fontSize: "12px", padding: "2px 8px" }}
+                title="Minimize noise panel"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div className="ql-noise-body">
+            <div className="ql-noise-models-grid">
+              {[
+                { id: "thermal_relaxation", label: "Energy Relaxation — T₁", sub: "Spontaneous |0⟩ decay", icon: "🌡️" },
+                { id: "dephasing", label: "Dephasing / Coherence — T₂", sub: "Phase angle diffusion", icon: "🌊" },
+                { id: "depolarizing", label: "Depolarizing (p)", sub: "Isotropic Pauli channel", icon: "🎲" },
+                { id: "readout_error", label: "Readout Error (pro)", sub: "Detector bit-flip noise", icon: "📡" },
+                { id: "combined", label: "Combined NISQ", sub: "Full transmon physics", icon: "⚡" },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  className={`ql-noise-model-btn ${noiseConfig.modelType === m.id ? "active" : ""}`}
+                  onClick={() => setNoiseConfig((n) => ({ ...n, modelType: m.id as any }))}
+                >
+                  <span>{m.icon} {m.label}</span>
+                  <small>{m.sub}</small>
+                </button>
+              ))}
+            </div>
+
+            <div className="ql-noise-params-row">
+              {["thermal_relaxation", "combined"].includes(noiseConfig.modelType) && (
+                <div className="ql-noise-param-item">
+                  <label>
+                    <span>Energy Relaxation T₁:</span>
+                    <strong>{noiseConfig.t1_us.toFixed(1)} μs</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="500"
+                    step="1"
+                    value={noiseConfig.t1_us}
+                    onChange={(e) => setNoiseConfig((n) => ({ ...n, t1_us: Number(e.target.value) }))}
+                  />
+                </div>
+              )}
+
+              {["thermal_relaxation", "dephasing", "combined"].includes(noiseConfig.modelType) && (
+                <div className="ql-noise-param-item">
+                  <label>
+                    <span>Dephasing / Coherence T₂:</span>
+                    <strong>{noiseConfig.t2_us.toFixed(1)} μs</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="500"
+                    step="1"
+                    value={noiseConfig.t2_us}
+                    onChange={(e) => setNoiseConfig((n) => ({ ...n, t2_us: Number(e.target.value) }))}
+                  />
+                </div>
+              )}
+
+              {["depolarizing"].includes(noiseConfig.modelType) && (
+                <div className="ql-noise-param-item">
+                  <label>
+                    <span>Depolarizing Error p:</span>
+                    <strong>{(noiseConfig.depolarizing_p * 100).toFixed(2)}%</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.001"
+                    max="0.25"
+                    step="0.001"
+                    value={noiseConfig.depolarizing_p}
+                    onChange={(e) => setNoiseConfig((n) => ({ ...n, depolarizing_p: Number(e.target.value) }))}
+                  />
+                </div>
+              )}
+
+              {["readout_error", "combined"].includes(noiseConfig.modelType) && (
+                <div className="ql-noise-param-item">
+                  <label>
+                    <span>Readout Error Rate:</span>
+                    <strong>{(noiseConfig.readout_error_p * 100).toFixed(1)}%</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="0.005"
+                    max="0.20"
+                    step="0.005"
+                    value={noiseConfig.readout_error_p}
+                    onChange={(e) => setNoiseConfig((n) => ({ ...n, readout_error_p: Number(e.target.value) }))}
+                  />
+                </div>
+              )}
+
+              <div className="ql-noise-param-item">
+                <label>
+                  <span>1-Qubit Gate Duration:</span>
+                  <strong>{noiseConfig.gate_time_ns} ns</strong>
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="200"
+                  step="5"
+                  value={noiseConfig.gate_time_ns}
+                  onChange={(e) => setNoiseConfig((n) => ({ ...n, gate_time_ns: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+
+            {noiseAdvancedMode && (
+              <div className="ql-noise-math-box">
+                <div className="ql-noise-math-header">
+                  <span>🔬 Open Quantum System Master Equation & Kraus Representation</span>
+                  <span className={`ql-lindblad-indicator ${noiseConfig.t2_us <= 2 * noiseConfig.t1_us ? "valid" : "warning"}`}>
+                    {noiseConfig.t2_us <= 2 * noiseConfig.t1_us ? (
+                      <>
+                        <ShieldCheck size={12} /> Lindblad Bound Valid (T₂ ≤ 2T₁)
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert size={12} /> T₂ {">"} 2T₁ (Simulator clamps to 2T₁ for physics validity)
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div>
+                  {noiseConfig.modelType === "thermal_relaxation" && (
+                    <>
+                      ρ(t) = E₀ ρ E₀† + E₁ ρ E₁† &emsp;|&emsp; γ = 1 - e^(-t_gate/T₁) = {(1 - Math.exp(-(noiseConfig.gate_time_ns * 1e-9) / (noiseConfig.t1_us * 1e-6))).toExponential(3)}
+                    </>
+                  )}
+                  {noiseConfig.modelType === "dephasing" && (
+                    <>
+                      ρ₀₁(t) = ρ₀₁(0) · e^(-t_gate/T_φ) &emsp;|&emsp; 1/T₂ = 1/(2T₁) + 1/T_φ
+                    </>
+                  )}
+                  {noiseConfig.modelType === "depolarizing" && (
+                    <>
+                      E(ρ) = (1 - p)ρ + (p/3)(XρX + YρY + ZρZ) &emsp;|&emsp; Total Gate Error = {(noiseConfig.depolarizing_p * 100).toFixed(2)}%
+                    </>
+                  )}
+                  {noiseConfig.modelType === "readout_error" && (
+                    <>
+                      P(measure 1 | state 0) = P(measure 0 | state 1) = {(noiseConfig.readout_error_p * 100).toFixed(1)}% (Classical Detector Noise)
+                    </>
+                  )}
+                  {noiseConfig.modelType === "combined" && (
+                    <>
+                      Full NISQ Channel: Thermal relaxation on unitaries (T₁={noiseConfig.t1_us}μs, T₂={noiseConfig.t2_us}μs) + Readout confusion (p_ro={(noiseConfig.readout_error_p * 100).toFixed(1)}%)
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="ql-studio-workspace">
         <aside className="ql-gate-palette">
           <div className="ql-panel-title">
@@ -1150,6 +1419,15 @@ export default function CircuitStudio() {
                   Apply gate changes
                 </button>
               </div>
+
+              {/* ── Pulse Coupling Drawer ─────────────────────────────── */}
+              <div style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTop: "1px solid rgba(51,65,85,0.5)",
+              }}>
+                <PulseVisualizer gate={inspected} />
+              </div>
             </section>
           )}
         </section>
@@ -1176,14 +1454,24 @@ export default function CircuitStudio() {
             </span>
           </div>
           <div className="ql-tabs ql-result-tabs">
-            {["Probabilities", "Statevector", "Shot counts"].map((t) => (
+            {[
+              "Probabilities",
+              "Statevector",
+              "Shot counts",
+              ...(currentResult && result?.noisyCounts ? ["Ideal vs Noisy"] : []),
+            ].map((t) => (
               <button
                 key={t}
                 className={resultTab === t ? "active" : ""}
                 aria-pressed={resultTab === t}
                 onClick={() => setResultTab(t)}
+                style={
+                  t === "Ideal vs Noisy"
+                    ? { color: "#f59e0b", fontWeight: 600 }
+                    : undefined
+                }
               >
-                {t}
+                {t === "Ideal vs Noisy" ? "⚡ Ideal vs Noisy" : t}
               </button>
             ))}
           </div>
@@ -1286,6 +1574,136 @@ export default function CircuitStudio() {
                               : "PennyLane"
                         } to see sampled measurement counts.`}
                   </p>
+                  {staleResult && lastExecutedCircuit && (
+                    <button
+                      style={{
+                        marginTop: "10px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        color: "#67e8f9",
+                        background: "rgba(6,182,212,0.12)",
+                        border: "1px solid rgba(6,182,212,0.35)",
+                        borderRadius: "8px",
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setShowWhatChanged(true)}
+                    >
+                      <GitCompare size={13} color="#22d3ee" />
+                      Why did my result change?
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {resultTab === "Ideal vs Noisy" && (
+            <div className="ql-dual-results-wrap">
+              {currentResult && result?.noisyCounts ? (
+                <>
+                  <div className="ql-dual-results-banner">
+                    <div className="ql-fidelity-meter">
+                      <span style={{ fontSize: "11px", color: "var(--ql-muted)" }}>
+                        State Fidelity:
+                      </span>
+                      <span
+                        className={`ql-fidelity-score ${
+                          (result.fidelity ?? 1) >= 0.9
+                            ? "high"
+                            : (result.fidelity ?? 1) >= 0.7
+                              ? "medium"
+                              : "low"
+                        }`}
+                      >
+                        {((result.fidelity ?? 1) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="ql-dual-legend">
+                      <div className="ql-legend-item">
+                        <span className="ql-legend-color ideal" />
+                        <span>Ideal Prob</span>
+                      </div>
+                      <div className="ql-legend-item">
+                        <span className="ql-legend-color noisy" />
+                        <span>Physical Noisy ({result.backend})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="ql-dual-histogram"
+                    role="img"
+                    aria-label="Ideal vs Noisy probability comparison"
+                  >
+                    {Object.entries(result.probabilities).map(([basis, idealP]) => {
+                      const noisyCount = result.noisyCounts?.[basis] ?? 0;
+                      const noisyP =
+                        result.noisyProbabilities?.[basis] ??
+                        noisyCount / result.shots;
+                      const delta = noisyP - idealP;
+                      const deltaPct = (delta * 100).toFixed(1);
+                      return (
+                        <div className="ql-dual-column" key={basis}>
+                          <div className="ql-dual-values">
+                            <span className="ideal-val">
+                              {(idealP * 100).toFixed(0)}%
+                            </span>
+                            <span className="noisy-val">
+                              {(noisyP * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <div className="ql-dual-bars-track">
+                            <i
+                              className="ql-bar-ideal"
+                              style={{
+                                height: `${Math.max(1, idealP * 100)}%`,
+                              }}
+                              title={`Ideal: ${(idealP * 100).toFixed(2)}%`}
+                            />
+                            <i
+                              className="ql-bar-noisy"
+                              style={{
+                                height: `${Math.max(1, noisyP * 100)}%`,
+                              }}
+                              title={`Noisy: ${(noisyP * 100).toFixed(2)}% (${noisyCount} shots)`}
+                            />
+                          </div>
+                          <small>|{basis}⟩</small>
+                          <span
+                            className={`ql-delta-chip ${
+                              Math.abs(delta) < 0.01
+                                ? "neutral"
+                                : delta > 0
+                                  ? "leakage"
+                                  : "loss"
+                            }`}
+                          >
+                            {delta >= 0 ? `+${deltaPct}%` : `${deltaPct}%`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {result.noiseExplanation && (
+                    <div className="ql-noise-explanation-card">
+                      <strong>⚛️ Physical Noise Diagnosis: </strong>
+                      {result.noiseExplanation}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="ql-empty">
+                  <Zap size={24} color="#f59e0b" />
+                  <h3>Physical Noise Simulation</h3>
+                  <p>
+                    {staleResult
+                      ? "Your circuit has changed. Run on Qiskit Aer to see noisy experimental comparison."
+                      : "Enable Physical Noise in the toolbar and click 'Run on Qiskit' to observe experimental Kraus decay."}
+                  </p>
                 </div>
               )}
             </div>
@@ -1382,14 +1800,19 @@ export default function CircuitStudio() {
           </h2>
           <div className="ql-code-tools">
             <div className="ql-tabs">
-              {(["qasm", "qiskit"] as const).map((f) => (
+              {([
+                { id: "qasm", label: "OpenQASM 3" },
+                { id: "qiskit", label: "Qiskit" },
+                { id: "cirq", label: "Cirq" },
+                { id: "pennylane", label: "PennyLane" },
+              ] as { id: CodeFormat; label: string }[]).map((f) => (
                 <button
-                  key={f}
+                  key={f.id}
                   disabled={editing}
-                  className={format === f ? "active" : ""}
-                  onClick={() => setFormat(f)}
+                  className={format === f.id ? "active" : ""}
+                  onClick={() => { setFormat(f.id); if (editing) setEditing(false); }}
                 >
-                  {f === "qasm" ? "OpenQASM 3" : "Qiskit"}
+                  {f.label}
                 </button>
               ))}
             </div>
@@ -1441,13 +1864,18 @@ export default function CircuitStudio() {
             value={code}
             readOnly={true}
             language={format === "qasm" ? "qasm" : "qiskit"}
+            key={format}
           />
         )}
         <div className="ql-code-footer">
           <span>
             {format === "qasm"
               ? "Editable OpenQASM subset · gates, measurement, reset · angles in radians"
-              : "Generated Python · run in your own Qiskit environment"}
+              : format === "qiskit"
+              ? "Generated Qiskit Python · run in your own Qiskit / Aer environment"
+              : format === "cirq"
+              ? "Generated Cirq Python · LineQubit layout · copy-paste into cirq-core environment"
+              : "Generated PennyLane Python · default.qubit device · copy-paste into a PennyLane environment"}
           </span>
           <div>
             {editing ? (
@@ -1479,7 +1907,7 @@ export default function CircuitStudio() {
                 </button>
               </>
             ) : (
-              format === "qasm" && (
+              format === "qasm" ? (
                 <button
                   className="ql-button ql-button-white"
                   onClick={() => {
@@ -1491,6 +1919,11 @@ export default function CircuitStudio() {
                 >
                   Edit code <Code2 size={14} />
                 </button>
+              ) : (
+                <span style={{ fontSize: "11px", color: "var(--ql-muted, #94a3b8)", fontStyle: "italic" }}>
+                  Copy &amp; paste into your{" "}
+                  {format === "qiskit" ? "Qiskit" : format === "cirq" ? "Cirq" : "PennyLane"} environment
+                </span>
               )
             )}
           </div>
@@ -1506,6 +1939,18 @@ export default function CircuitStudio() {
           Advanced QASM visualizer <ChevronRight size={15} />
         </Link>
       </div>
+
+      {/* What Changed? 4-Layer Diff Modal */}
+      {showWhatChanged && lastExecutedCircuit && (
+        <WhatChangedModal
+          isOpen={showWhatChanged}
+          onClose={() => setShowWhatChanged(false)}
+          circuitA={lastExecutedCircuit}
+          circuitB={circuit}
+          titleA="Last Run Circuit"
+          titleB="Current Active Circuit"
+        />
+      )}
     </div>
   );
 }
