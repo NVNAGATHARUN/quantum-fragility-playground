@@ -49,3 +49,6 @@ NOTES.md
 # Tunnel / local binary tools
 .tools/
 
+# Submodules or cloned repo copies
+gst-qlp/
+

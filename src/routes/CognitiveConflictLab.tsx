@@ -161,7 +161,7 @@ export default function CognitiveConflictLab() {
   const currentEval = deltaEvaluations[activeStepIdx];
 
   return (
-    <div className="flex flex-col gap-24">
+    <div className="ql-cognitive-lab flex flex-col gap-24">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-16 pb-16 border-b border-brand-border">
         <div>

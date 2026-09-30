@@ -495,6 +495,25 @@ export default function Navbar({ onOpenCommandPalette }: NavbarProps) {
               Hardware
             </NavLink>
 
+            {/* ── QuantumLens 3D ── glowing pill CTA */}
+            <NavLink
+              to="/quantum-lens"
+              className={({ isActive }) =>
+                "relative px-3.5 py-1.5 rounded-lg text-[13px] font-bold tracking-wide transition-all flex items-center gap-1.5 " +
+                (isActive
+                  ? "text-white border border-cyan-400/60 shadow-lg shadow-cyan-500/25"
+                  : "text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/60 hover:text-white hover:shadow-md hover:shadow-cyan-500/20")
+              }
+              style={({ isActive }) => ({
+                background: isActive
+                  ? "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(99,102,241,0.20))"
+                  : "linear-gradient(135deg, rgba(6,182,212,0.08), rgba(99,102,241,0.06))",
+              })}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              QuantumLens 3D
+            </NavLink>
+
             <NavLink
               to="/progress"
               className={({ isActive }) =>

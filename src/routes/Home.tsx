@@ -22,7 +22,7 @@ import { useLessonProgress } from "../hooks/useLessonProgress";
 
 export default function Home() {
   const { user } = useAuth();
-  const { isCompleted, isLoading, error } = useLessonProgress();
+  const { isCompleted } = useLessonProgress();
   const [angle, setAngle] = useState(90);
   const modules = V3_CURRICULUM.filter(
     (m) => m.status === "available" && m.lessons.length,
@@ -34,41 +34,22 @@ export default function Home() {
   const probability = Math.round(Math.cos((angle * Math.PI) / 360) ** 2 * 100);
 
   return (
-    <div className="ql-page ql-overview">
-      <div className="ql-page-heading">
-        <div>
-          <p className="ql-eyebrow">YOUR QUANTUM JOURNEY</p>
-          <h1>
-            {user
-              ? `Welcome back, ${user.full_name.split(" ")[0]}.`
-              : "A new way to see the world."}
-          </h1>
-          <p>Build intuition. Test ideas. Make quantum computing click.</p>
-        </div>
-        <div className="ql-heading-actions">
-          <Link to="/judge" className="ql-button ql-button-primary">
-            SIH judge walkthrough <Sparkles size={16} />
-          </Link>
-          <Link to="/learn" className="ql-button ql-button-white">
-            Explore learning path <ArrowRight size={16} />
-          </Link>
-        </div>
-      </div>
+    <div className="ql-page ql-overview ql-human-home">
       <section className="ql-hero" aria-label="Begin your quantum journey">
         <div className="ql-hero-copy">
           <span className="ql-hero-label">
-            <span /> THE QUANTUM LEARNING LAB
+            <span /> {user ? `WELCOME BACK, ${user.full_name.split(" ")[0].toUpperCase()}` : "THE QUANTUM LEARNING LAB"}
           </span>
           <h2>
-            Big ideas.
+            Learn quantum
             <br />
-            Small particles.
+            by asking
             <br />
-            <em>Endless possibilities.</em>
+            <em>what changes.</em>
           </h2>
           <p>
-            Go from “what if” to “now I get it.” Learn the concepts, build a
-            circuit, and see quantum theory come alive.
+            Make a prediction, build the circuit, and compare what you expected
+            with what the simulator measures.
           </p>
           <div className="ql-hero-actions">
             <Link
@@ -81,6 +62,9 @@ export default function Home() {
             <Link to="/labs/studio" className="ql-hero-secondary">
               <Play size={15} /> Open the playground
             </Link>
+            <Link to="/judge" className="ql-hero-secondary ql-hero-judge-link">
+              <Sparkles size={15} /> View SIH evidence
+            </Link>
           </div>
           <div className="ql-hero-footnote">
             <span>01 — Learn by doing</span>
@@ -90,32 +74,47 @@ export default function Home() {
           </div>
         </div>
         <div className="ql-hero-art">
-          <span className="ql-art-caption">THE BEAUTY OF POSSIBILITY</span>
-          <QuantumOrb />
-          <div className="ql-state-caption">
-            <span className="ql-state-dot" />
-            <span>|ψ⟩ = α|0⟩ + β|1⟩</span>
-            <span className="ql-art-small">A WORLD BEYOND 0 AND 1</span>
+          <span className="ql-art-caption">A LIVE QUBIT · DRAG TO EXPLORE</span>
+          <div className="ql-hero-experiment">
+            <div className="ql-hero-orb-wrap">
+              <QuantumOrb compact />
+              <span className="ql-hero-state">|ψ⟩</span>
+            </div>
+            <div className="ql-hero-measurement" aria-live="polite">
+              <div><span>|0⟩</span><i><b style={{ width: `${probability}%` }} /></i><strong>{probability}%</strong></div>
+              <div><span>|1⟩</span><i><b style={{ width: `${100 - probability}%` }} /></i><strong>{100 - probability}%</strong></div>
+            </div>
+            <label htmlFor="hero-angle">Rotate the state <span>{angle}°</span></label>
+            <input
+              id="hero-angle"
+              type="range"
+              min="0"
+              max="180"
+              step="1"
+              value={angle}
+              onChange={(e) => setAngle(Number(e.target.value))}
+            />
+            <p>{angle === 90 ? "At 90°, either result is equally possible." : `A measurement now returns |0⟩ with ${probability}% probability.`}</p>
           </div>
         </div>
       </section>
-      <section className="ql-overview-strip" aria-label="Workspace at a glance">
+      <section className="ql-overview-strip ql-learning-loop" aria-label="How learning works">
         <div>
           <span className="ql-stat-icon">
             <BookOpen size={19} />
           </span>
           <span>
-            <strong>{modules.length} learning modules</strong>
-            <small>Build a solid foundation</small>
+            <strong>Learn</strong>
+            <small>Meet one clear idea</small>
           </span>
         </div>
         <div>
           <span className="ql-stat-icon">
-            <FlaskConical size={19} />
+            <Sparkles size={19} />
           </span>
           <span>
-            <strong>Hands-on experiments</strong>
-            <small>Make the abstract tangible</small>
+            <strong>Predict</strong>
+            <small>Commit to what you expect</small>
           </span>
         </div>
         <div>
@@ -123,32 +122,15 @@ export default function Home() {
             <Code2 size={19} />
           </span>
           <span>
-            <strong>Your circuit playground</strong>
-            <small>Build, run, and understand</small>
+            <strong>Build and run</strong>
+            <small>Test it in a real simulator</small>
           </span>
         </div>
-        <Link to="/progress">
-          <span
-            className="ql-progress-ring"
-            style={
-              {
-                "--progress": `${(completed / lessons.length) * 360}deg`,
-              } as React.CSSProperties
-            }
-          >
-            {error ? "—" : isLoading ? "…" : completed}
-          </span>
+        <Link to="/progress" aria-label="Open learning progress">
+          <span className="ql-stat-icon"><FlaskConical size={19} /></span>
           <span>
-            <strong>
-              {error
-                ? "Progress unavailable"
-                : `${completed} of ${lessons.length} lessons`}
-            </strong>
-            <small>
-              {user
-                ? "Your learning progress"
-                : "Sign in to track your journey"}
-            </small>
+            <strong>Understand</strong>
+            <small>Compare evidence with intuition</small>
           </span>
           <ArrowUpRight size={17} />
         </Link>
@@ -169,7 +151,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="ql-course-grid">
-            {modules.map((m, i) => {
+            {modules.slice(0, 3).map((m, i) => {
               const done = m.lessons.filter((l) =>
                 isCompleted(m.id, l.id),
               ).length;
@@ -265,55 +247,6 @@ export default function Home() {
           </div>
         </div>
         <aside className="ql-home-secondary">
-          <div className="ql-sandbox-card">
-            <div className="ql-card-kicker">
-              <span className="ql-dot" /> A LITTLE EXPERIMENT{" "}
-              <FlaskConical size={15} />
-            </div>
-            <h3>A qubit. A world of possibility.</h3>
-            <p>Rotate the state. Watch the odds change.</p>
-            <div className="ql-probability-bars">
-              <div>
-                <span>|0⟩</span>
-                <div>
-                  <i style={{ width: `${probability}%` }} />
-                </div>
-                <strong>{probability}%</strong>
-              </div>
-              <div>
-                <span>|1⟩</span>
-                <div>
-                  <i style={{ width: `${100 - probability}%` }} />
-                </div>
-                <strong>{100 - probability}%</strong>
-              </div>
-            </div>
-            <label className="ql-range-label" htmlFor="quick-angle">
-              Rotation angle θ <span>{angle}°</span>
-            </label>
-            <input
-              id="quick-angle"
-              type="range"
-              min="0"
-              max="180"
-              step="1"
-              value={angle}
-              onChange={(e) => setAngle(Number(e.target.value))}
-            />
-            <div className="ql-range-endpoints">
-              <span>|0⟩</span>
-              <span>|+⟩</span>
-              <span>|1⟩</span>
-            </div>
-            <p className="ql-sandbox-explainer" aria-live="polite">
-              {angle === 90
-                ? "Equal probabilities. Measuring gives 0 or 1 with a 50% chance."
-                : `After a Y rotation, P(0) = cos²(θ/2). Here, that’s ${probability}%.`}
-            </p>
-            <Link to="/labs/studio">
-              Take it to the circuit studio <ArrowRight size={15} />
-            </Link>
-          </div>
           <div className="ql-mentor-card">
             <span className="ql-mentor-symbol">
               <Sparkles size={22} />

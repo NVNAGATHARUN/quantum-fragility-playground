@@ -44,7 +44,7 @@
 .algorithm-lab h2,
 .algorithm-lab h3,
 .algorithm-lab h4 {
-  font-family: Inter, sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   letter-spacing: -0.025em;
 }
 .algorithm-lab h1 {
@@ -82,7 +82,7 @@
   min-height: 36px;
   padding: 7px 12px;
   font:
-    650 11px Inter,
+    650 11px "IBM Plex Sans",
     sans-serif;
   letter-spacing: 0.045em;
 }
@@ -109,7 +109,7 @@ html.light .algorithm-lab .glass-card:hover {
 }
 .algorithm-lab .btn {
   border-radius: 10px;
-  font-family: Inter, sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   font-size: 11px;
   letter-spacing: 0.045em;
   box-shadow: none;

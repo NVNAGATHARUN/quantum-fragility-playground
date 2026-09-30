@@ -58,6 +58,8 @@ const QuantumNetworkLab = lazy(
 const QAOA = lazy(() => import("./routes/Algorithms/QAOA"));
 const VQE = lazy(() => import("./routes/Algorithms/VQE"));
 const HardwareExplorer = lazy(() => import("./routes/HardwareExplorer")); // /explore/hardware
+const QuantumHardwarePage = lazy(() => import("./routes/QuantumHardwarePage")); // /quantum-hardware & /quantum-lens/model
+const QuantumLensLanding = lazy(() => import("./routes/QuantumLensLanding")); // /quantum-lens
 const StudentProgress = lazy(() => import("./routes/StudentProgress")); // /progress
 const ProgressOverview = lazy(() => import("./routes/ProgressOverview"));
 const DiagnosticAssessment = lazy(() => import("./routes/DiagnosticAssessment"));
@@ -103,7 +105,7 @@ export default function App() {
         <AuthProvider>
           <QuantumSessionProvider>
             <AppShell>
-              <div key={location.pathname}>
+              <div key={location.pathname} className="w-full h-full flex-1 flex flex-col min-h-0">
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <Routes>
@@ -257,6 +259,23 @@ export default function App() {
                       <Route
                         path="/explore/hardware"
                         element={<HardwareExplorer />}
+                      />
+                      <Route
+                        path="/quantum-hardware"
+                        element={<QuantumHardwarePage />}
+                      />
+                      {/* QuantumLens: direct 3D interactive model */}
+                      <Route
+                        path="/quantum-lens"
+                        element={<QuantumHardwarePage />}
+                      />
+                      <Route
+                        path="/quantum-lens/model"
+                        element={<QuantumHardwarePage />}
+                      />
+                      <Route
+                        path="/quantum-lens/intro"
+                        element={<QuantumLensLanding />}
                       />
 
                       {/* ── PROGRESS / INSTRUCTOR ───────────────────────────── */}

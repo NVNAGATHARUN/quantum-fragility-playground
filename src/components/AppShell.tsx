@@ -6,40 +6,37 @@ import {
   BookOpen,
   ChartNoAxesCombined,
   ChevronRight,
+  Code2,
   Compass,
   FlaskConical,
   GraduationCap,
-  Home,
+  LayoutDashboard,
   LogOut,
   Menu,
-  Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   Search,
   Sparkles,
-  Sun,
+  Trophy,
   X,
 } from "lucide-react";
 import CommandPalette from "./CommandPalette";
 import { useAuth } from "../providers/AuthProvider";
 import { useRole } from "../providers/RoleProvider";
 import { useDialogFocus } from "../hooks/useDialogFocus";
-import { useTheme } from "../providers/ThemeProvider";
 
 const navigation = [
-  { to: "/", label: "Home", icon: Home, end: true },
-  { to: "/learn", label: "Learn", icon: BookOpen },
-  { to: "/labs", label: "Labs", icon: FlaskConical },
-  { to: "/explore", label: "Explore", icon: Compass },
-  { to: "/progress", label: "Progress", icon: ChartNoAxesCombined },
+  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/learn", label: "Learning path", icon: BookOpen },
+  { to: "/labs", label: "Quantum labs", icon: FlaskConical, end: true },
+  { to: "/labs/studio", label: "Circuit studio", icon: Code2 },
+  { to: "/quantum-lens", label: "QuantumLens 3D", icon: Atom },
+  { to: "/explore", label: "Algorithm library", icon: Compass },
+  { to: "/challenges", label: "Challenges", icon: Trophy },
+  { to: "/progress", label: "My progress", icon: ChartNoAxesCombined },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(
-    () => window.matchMedia("(max-width: 1100px)").matches,
-  );
   const [compact, setCompact] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
   );
@@ -56,33 +53,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   const { user, openAuthModal, logout } = useAuth();
   const { isInstructor } = useRole();
-  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const isWorkbench =
-    location.pathname.startsWith("/labs/studio") ||
-    location.pathname.startsWith("/labs/fragility") ||
-    location.pathname.startsWith("/explore/hardware");
-  useEffect(() => {
-    if (isWorkbench && !compact) setCollapsed(true);
-  }, [isWorkbench, compact]);
   const menuRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const isImmersive =
+    location.pathname.startsWith("/quantum-lens") ||
+    location.pathname.startsWith("/quantum-hardware") ||
+    location.pathname.startsWith("/explore/hardware");
   const current = [...navigation]
     .reverse()
     .find((n) =>
       n.end ? n.to === location.pathname : location.pathname.startsWith(n.to),
     );
-  const title = location.pathname.startsWith("/labs/studio")
-    ? "Circuit Studio"
-    : location.pathname.startsWith("/labs/fragility")
-      ? "Quantum Fragility"
-      : location.pathname.startsWith("/labs/guided/")
-        ? "Guided experiment"
-        : location.pathname.startsWith("/challenges")
-          ? "Challenges"
-          : location.pathname.includes("hardware")
-            ? "Hardware Explorer"
-            : current?.label || "Quantum Lens";
+  const title =
+    (isImmersive
+      ? "QuantumLens 3D Model"
+      : undefined) ||
+    (location.pathname.startsWith("/labs/guided/")
+      ? "Guided experiment"
+      : current?.label) ||
+    "Workspace";
   useEffect(() => {
     setMobileOpen(false);
     window.scrollTo(0, 0);
@@ -102,11 +92,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
-  useEffect(() => {
-    if (mobileOpen) closeRef.current?.focus();
-  }, [mobileOpen]);
+  const isStandalone =
+    location.pathname === "/quantum-lens" ||
+    location.pathname === "/quantum-lens/model" ||
+    location.pathname === "/quantum-hardware";
+
+  if (isStandalone) {
+    return (
+      <div className="w-screen h-screen overflow-hidden bg-[#111214] select-none">
+        {children}
+      </div>
+    );
+  }
+
   return (
-    <div className={`ql-app ${collapsed ? "sidebar-collapsed" : ""} ${isWorkbench ? "is-workbench" : ""}`}>
+    <div className="ql-app">
       <a className="ql-skip" href="#main-content">
         Skip to content
       </a>
@@ -132,7 +132,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <span className="ql-brand-mark">
             <Atom size={26} strokeWidth={1.5} />
           </span>
-          <span className="ql-brand-copy">
+          <span>
             quantum<span className="ql-brand-light">lens</span>
             <small>THE LEARNING LAB</small>
           </span>
@@ -152,7 +152,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <ChevronRight size={14} />
         </div>
-        <p className="ql-nav-label">Workspace</p>
+        <p className="ql-nav-label">WORKSPACE</p>
         <nav className="ql-navigation">
           {navigation.map(({ to, label, icon: Icon, end }) => (
             <NavLink
@@ -165,14 +165,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Icon size={19} strokeWidth={1.7} />
               <span>{label}</span>
+              {to === "/labs/studio" && <span className="ql-nav-tag">LAB</span>}
             </NavLink>
           ))}
-          {isInstructor && (
-            <NavLink to="/instructor" className={({ isActive }) => `ql-nav-link ${isActive ? "is-active" : ""}`}>
-              <GraduationCap size={19} strokeWidth={1.7} />
-              <span>Instructor</span>
-            </NavLink>
-          )}
         </nav>
         <div className="ql-sidebar-bottom">
           <div className="ql-sidebar-note">
@@ -235,11 +230,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <button
               ref={menuRef}
               className="ql-menu-toggle ql-icon-button"
-              aria-label={compact ? "Open navigation" : collapsed ? "Expand navigation" : "Collapse navigation"}
-              aria-expanded={compact ? mobileOpen : !collapsed}
-              onClick={() => compact ? setMobileOpen(true) : setCollapsed((value) => !value)}
+              aria-label="Open navigation"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
             >
-              {compact ? <Menu size={21} /> : collapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
+              <Menu size={22} />
             </button>
             <span>Workspace</span>
             <ChevronRight size={14} />
@@ -256,13 +251,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <kbd>Ctrl K</kbd>
             </button>
             <button
-              className="ql-icon-button ql-theme-toggle"
-              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-              onClick={toggleTheme}
-            >
-              {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
-            </button>
-            <button
               className="ql-mentor-trigger"
               aria-label="Ask AI tutor"
               onClick={() =>
@@ -274,16 +262,34 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main id="main-content" tabIndex={-1} className="ql-main">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className={`ql-main ${isImmersive ? "ql-main-immersive" : ""}`}
+          style={
+            isImmersive
+              ? {
+                  padding: 0,
+                  maxWidth: "100%",
+                  height: "calc(100vh - 76px)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                }
+              : undefined
+          }
+        >
           {children}
         </main>
-        <footer className="ql-footer">
-          <span>Made for curious minds.</span>
-          <span>
-            Quantum Lens <span aria-hidden="true">/</span> Learn. Experiment.
-            Understand.
-          </span>
-        </footer>
+        {!isImmersive && (
+          <footer className="ql-footer">
+            <span>Made for curious minds.</span>
+            <span>
+              Quantum Lens <span aria-hidden="true">/</span> Learn. Experiment.
+              Understand.
+            </span>
+          </footer>
+        )}
       </div>
     </div>
   );

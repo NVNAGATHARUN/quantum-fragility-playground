@@ -40,36 +40,52 @@ export default function ProgressOverview() {
   const done = lessons.filter((l) => isCompleted(l.moduleId, l.id));
   const next =
     lessons.find((l) => !isCompleted(l.moduleId, l.id)) || lessons[0];
+  const completionPercent = lessons.length
+    ? Math.round((done.length / lessons.length) * 100)
+    : 0;
+  const firstName = user?.full_name?.split(" ")[0];
   return (
-    <div className="ql-page">
-      <div className="ql-page-heading">
+    <div className="ql-page ql-progress-page">
+      <div className="ql-page-heading ql-progress-hero">
         <div>
-          <p className="ql-eyebrow">YOUR PROGRESS</p>
-          <h1>Every discovery adds up.</h1>
+          <p className="ql-eyebrow">{firstName ? `Welcome back, ${firstName}` : "Your learning journey"}</p>
+          <h1>Pick up where you left off.</h1>
           <p>
-            A record of the concepts you’ve explored and the experiments you’ve
-            tried.
+            Review the lessons you completed, the questions you tested, and the
+            next useful step in your learning path.
           </p>
+          <div className="ql-progress-hero-actions">
+            <Link to={`/learn/${next.moduleId}/${next.id}`} className="ql-button ql-button-primary">
+              {done.length ? "Continue where you left off" : "Begin your first lesson"}
+              <ArrowRight size={15} />
+            </Link>
+            <Link to="/labs" className="ql-progress-text-link">
+              Explore a lab <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
-        <Link to="/learn" className="ql-button ql-button-white">
-          Keep learning <ArrowRight size={15} />
-        </Link>
+        <div className="ql-progress-portrait" aria-label={`${completionPercent}% of lessons completed`}>
+          <div className="ql-progress-orbit" style={{ "--journey-progress": `${completionPercent}%` } as React.CSSProperties}>
+            <span><strong>{completionPercent}%</strong><small>journey explored</small></span>
+          </div>
+          <p>{done.length ? `${done.length} lessons now part of your foundation` : "Your first insight is waiting"}</p>
+        </div>
       </div>
       {!user && (
-        <div className="ql-progress-welcome">
+        <div className="ql-progress-welcome ql-progress-invitation">
           <Sparkles size={28} />
           <div>
-            <h2>Your journey is just beginning.</h2>
+            <h2>Let your progress follow you.</h2>
             <p>
-              Sign in to save lesson completion. Lab activity below is stored
-              only in this browser.
+              Create a free learning profile to continue on any device. Your
+              current lab activity stays private in this browser until then.
             </p>
           </div>
           <button
             className="ql-button ql-button-primary"
             onClick={() => openAuthModal("signup")}
           >
-            Create an account <ArrowRight size={15} />
+            Save my journey <ArrowRight size={15} />
           </button>
         </div>
       )}
@@ -107,13 +123,13 @@ export default function ProgressOverview() {
           <Link to={`/diagnostic?phase=${diagnostic?.baseline ? 'post' : 'baseline'}`} className="ql-button ql-button-white">{diagnostic?.baseline ? 'Take post diagnostic' : 'Start baseline'} <ArrowRight size={15}/></Link>
         </section>
       )}
-      <div className="ql-progress-stats">
+      <div className="ql-progress-stats ql-progress-vitals" aria-label="Learning momentum">
         {[
           {
             icon: BookOpen,
             number: error ? "—" : isLoading ? "…" : done.length,
-            label: "Lessons completed",
-            detail: `of ${lessons.length} available lessons`,
+            label: "Ideas explored",
+            detail: `Across ${lessons.length} guided lessons`,
           },
           {
             icon: Target,
@@ -122,16 +138,16 @@ export default function ProgressOverview() {
                 m.lessons.length &&
                 m.lessons.every((l) => isCompleted(m.id, l.id)),
             ).length,
-            label: "Modules completed",
-            detail: `${modules.length} modules available`,
+            label: "Foundations built",
+            detail: `From ${modules.length} learning chapters`,
           },
           {
             icon: FlaskConical,
             number: serverProgress?.verified_attempts ?? simulatedCircuitsCount,
-            label: serverProgress ? "Verified attempts" : "Circuit runs",
+            label: serverProgress ? "Ideas tested" : "Experiments run",
             detail: serverProgress
               ? `${serverProgress.passed_attempts} passed · server graded`
-              : "Recorded in this browser",
+              : "Hands-on work in this browser",
           },
         ].map(({ icon: Icon, number, label, detail }) => (
           <div className="ql-panel" key={label}>
@@ -142,11 +158,14 @@ export default function ProgressOverview() {
           </div>
         ))}
       </div>
-      <div className="ql-progress-layout">
-        <section className="ql-panel">
+      <div className="ql-progress-layout ql-progress-journey">
+        <section className="ql-panel ql-journey-panel">
           <div className="ql-panel-title">
-            <h2>Your foundations</h2>
-            <span className="ql-course-meta">LESSON COMPLETION</span>
+            <div>
+              <span className="ql-eyebrow">Your path</span>
+              <h2>Foundations you’re building</h2>
+            </div>
+            <span className="ql-course-meta">{done.length} of {lessons.length} explored</span>
           </div>
           <div className="ql-module-progress">
             {modules.map((m) => {
@@ -168,9 +187,7 @@ export default function ProgressOverview() {
                         }}
                       />
                     </div>
-                    <small>
-                      {count} of {m.lessons.length} lessons complete
-                    </small>
+                    <small>{count ? `${count} of ${m.lessons.length} explored` : "Ready when you are"}</small>
                   </div>
                   <ArrowRight size={16} />
                 </Link>
@@ -178,16 +195,20 @@ export default function ProgressOverview() {
             })}
           </div>
         </section>
-        <aside className="ql-panel ql-next-lesson">
-          <span className="ql-eyebrow">{serverProgress ? "YOUR LEARNING STATE" : "A GOOD NEXT STEP"}</span>
+        <aside className="ql-panel ql-next-lesson ql-human-next-step">
+          <span className="ql-eyebrow">{serverProgress ? "Chosen from your evidence" : "Made for your next 10 minutes"}</span>
           <BookOpen size={30} />
           <h2>{serverProgress?.recommendation.title ?? next.title}</h2>
           <p>{serverProgress?.recommendation.reason ?? next.summary}</p>
+          <div className="ql-next-context">
+            <span>Next up</span>
+            <strong>{next.typeLabel || "Guided concept"}</strong>
+          </div>
           <Link
             to={serverProgress?.recommendation.route ?? `/learn/${next.moduleId}/${next.id}`}
             className="ql-button ql-button-primary"
           >
-            {serverProgress ? "Follow recommendation" : done.length ? "Continue learning" : "Start learning"}
+            {serverProgress ? "Follow my recommendation" : done.length ? "Continue my journey" : "Start this lesson"}
             <ArrowRight size={15} />
           </Link>
         </aside>
@@ -200,15 +221,15 @@ export default function ProgressOverview() {
       </section>}
       <section className="ql-panel ql-progress-history">
         <div className="ql-panel-title">
-          <h2>Your discoveries</h2>
-          <span className="ql-course-meta">COMPLETED LESSONS & LOCAL LABS</span>
+          <div><span className="ql-eyebrow">Your story so far</span><h2>Your discoveries</h2></div>
+          <span className="ql-course-meta">Lessons and experiments</span>
         </div>
         {!done.length && !labRecords.length ? (
           <div className="ql-empty">
             <CheckCircle2 size={27} />
-            <h3>Your first discovery belongs here.</h3>
+            <h3>This space will become uniquely yours.</h3>
             <p>
-              Complete a lesson or a guided experiment to begin your record.
+              Each lesson, prediction, and experiment will leave a useful trace of how your understanding changed.
             </p>
             <Link to="/labs" className="ql-button ql-button-white">
               Explore the labs <ArrowRight size={15} />

@@ -2117,7 +2117,7 @@
   border-radius: 6px;
   padding: 8px 12px;
   font:
-    11px "Inter",
+    11px "IBM Plex Sans",
     sans-serif;
 }
 .ql-app .ql-results-count {
@@ -2402,7 +2402,7 @@ html.dark {
   min-height: 100vh;
   background: var(--ql-bg);
   color: var(--ql-ink);
-  font-family: "Inter", sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -2415,7 +2415,7 @@ html.dark {
 .ql-app h2,
 .ql-app h3,
 .ql-app h4 {
-  font-family: "Inter", sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   letter-spacing: -0.035em;
 }
 .ql-app button,
@@ -2681,7 +2681,7 @@ html.dark {
   border-radius: 4px;
   padding: 3px 5px;
   font:
-    9px "Inter",
+    9px "IBM Plex Sans",
     sans-serif;
   margin-left: 20px;
 }
@@ -2896,7 +2896,7 @@ html.dark {
   border-radius: 50%;
 }
 .ql-art-small {
-  font-family: "Inter", sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   font-size: 7px;
   letter-spacing: 1.7px;
   color: #b5c1e4;
@@ -3045,7 +3045,7 @@ html.dark {
 }
 .ql-math-art small {
   display: block;
-  font-family: "Inter", sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   font-style: normal;
   font-size: 6px;
   letter-spacing: 1.5px;
