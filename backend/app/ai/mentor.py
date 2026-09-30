@@ -745,20 +745,22 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
     """
     ctx = req.context or MentorContext()
     tier = ctx.hintTier or 1
-    mode = req.mode or (ctx.mode if ctx.mode else "socratic")
-    msg_lower = req.message.lower()
-
-    # Deduce mode from message if not explicitly set
-    if "debug" in msg_lower or "why is" in msg_lower and "wrong" in msg_lower:
-        mode = "debug"
-    elif "optimize" in msg_lower or "simplify" in msg_lower or "reduce" in msg_lower:
-        mode = "optimize"
-    elif "generate" in msg_lower or "create" in msg_lower or "build circuit" in msg_lower:
-        mode = "generate"
-    elif "hint" in msg_lower:
-        mode = "hint"
-    elif "explain" in msg_lower:
-        mode = "explain"
+    mode_explicit = req.mode or (ctx.mode if ctx and ctx.mode else None)
+    if mode_explicit:
+        mode = mode_explicit
+    else:
+        mode = "socratic"
+        # Deduce mode from message if not explicitly set
+        if "debug" in msg_lower or ("why is" in msg_lower and "wrong" in msg_lower):
+            mode = "debug"
+        elif "optimize" in msg_lower or "simplify" in msg_lower or "reduce" in msg_lower:
+            mode = "optimize"
+        elif "generate" in msg_lower or "create" in msg_lower or "build circuit" in msg_lower:
+            mode = "generate"
+        elif "hint" in msg_lower:
+            mode = "hint"
+        elif "explain" in msg_lower:
+            mode = "explain"
 
     # Extract ground truth from simulation
     grounded_truth: Dict[str, Any] = {}
@@ -836,7 +838,23 @@ def generate_grounded_fallback_explanation(req: MentorRequest) -> MentorResponse
         )
 
     # ── 2. OPTIMIZE MODE ──────────────────────────────────────────────────────
-    if mode == "optimize" and ctx.circuit:
+    if mode == "optimize":
+        if not ctx.circuit or not ctx.circuit.operations:
+            return MentorResponse(
+                reply=(
+                    "**ARIA Quantum Circuit Optimizer:** No active circuit operations were found to optimize. "
+                    "Open Circuit Studio and place some gates on the visual canvas, or switch to **Synthesize** mode to generate a circuit first!"
+                ),
+                hintTier=tier,
+                mode="optimize",
+                groundedTruth=grounded_truth,
+                suggestedAction="Open Circuit Studio and add quantum gates to the canvas.",
+                isValidated=True,
+                evidenceUsed=evidence_used,
+                citations=citations,
+                verification=deterministic_verification,
+            )
+
         opt_circuit, opt_deltas = optimize_circuit_deterministic(ctx.circuit)
         reduced = opt_deltas["originalGateCount"] - opt_deltas["optimizedGateCount"]
         if reduced > 0:

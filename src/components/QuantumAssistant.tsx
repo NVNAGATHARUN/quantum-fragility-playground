@@ -10,6 +10,15 @@ import {
   Volume2,
   VolumeX,
   X,
+  Cpu,
+  Zap,
+  Search,
+  Lightbulb,
+  CheckCircle2,
+  AlertTriangle,
+  Layers,
+  HelpCircle,
+  Check,
 } from "lucide-react";
 import {
   askMentor,
@@ -33,6 +42,7 @@ interface Message {
   citations?: MentorResponsePayload["citations"];
   verification?: MentorResponsePayload["verification"];
 }
+
 interface SpeechInput {
   start: () => void;
   stop: () => void;
@@ -46,6 +56,7 @@ interface SpeechInput {
   onend: (() => void) | null;
   onerror: (() => void) | null;
 }
+
 function replyContent(text: string) {
   return text.split(/(```[\s\S]*?```)/g).map((part, index) =>
     part.startsWith("```") ? (
@@ -69,21 +80,71 @@ function replyContent(text: string) {
     ),
   );
 }
+
 const welcome: Message = {
   role: "model",
-  text: "Hi, I’m Aria. Let’s make quantum computing a little less mysterious. Tell me what you’re working on, or pick a question below.",
+  text: "Hi, I’m Aria. I’m your quantum co-pilot. I can synthesize circuits, optimize gate schedules, debug subtle misconceptions, and explain principles with verified simulator grounding.",
 };
+
+const MODES: { id: MentorMode; label: string; icon: React.ReactNode; desc: string }[] = [
+  { id: "explain", label: "Explain", icon: <Lightbulb size={13} />, desc: "Physical principles & mathematics" },
+  { id: "generate", label: "Synthesize", icon: <Layers size={13} />, desc: "Build & load circuits to canvas" },
+  { id: "debug", label: "Debug", icon: <Search size={13} />, desc: "Find flaws, collapse & identity errors" },
+  { id: "optimize", label: "Optimize", icon: <Zap size={13} />, desc: "Cancel inverses & reduce depth" },
+  { id: "socratic", label: "Socratic", icon: <Sparkles size={13} />, desc: "Guided inquiry & conceptual tests" },
+  { id: "hint", label: "Hint", icon: <HelpCircle size={13} />, desc: "Progressive hints (Nudge → Math)" },
+];
+
+const MODE_CHIPS: Record<MentorMode, { title: string; prompt: string }[]> = {
+  explain: [
+    { title: "Superposition", prompt: "Why does a Hadamard gate create quantum superposition?" },
+    { title: "Bell States", prompt: "Explain the physics of the Bell state (|00⟩ + |11⟩)/√2." },
+    { title: "Phase Kickback", prompt: "Explain how phase kickback transfers phase from target to control." },
+    { title: "Born Rule", prompt: "What physical changes occur during quantum measurement?" },
+  ],
+  generate: [
+    { title: "🚀 3-Qubit GHZ State", prompt: "Synthesize a 3-qubit GHZ entangled state circuit." },
+    { title: "🔔 Bell State |Φ⁺⟩", prompt: "Build a maximally entangled Bell state circuit." },
+    { title: "🌌 Quantum Teleportation", prompt: "Build the quantum teleportation protocol circuit." },
+    { title: "⚡ Phase Kickback", prompt: "Generate a phase kickback demonstration circuit." },
+    { title: "🔮 Deutsch-Jozsa", prompt: "Generate a Deutsch-Jozsa algorithm circuit." },
+    { title: "🌊 3-Qubit QFT", prompt: "Synthesize a 3-qubit Quantum Fourier Transform circuit." },
+  ],
+  debug: [
+    { title: "🔍 Debug Active Canvas", prompt: "Analyze my active canvas circuit for any quantum bugs or misconceptions." },
+    { title: "⚠️ Check Collapse", prompt: "Check if my circuit executes operations after measurement collapse." },
+    { title: "🔁 Hadamard Redundancy", prompt: "Check if consecutive Hadamards (H -> H) cancel to identity." },
+    { title: "🔗 CNOT Entanglement", prompt: "Check if my CNOT gates actually generate entanglement or act on classical basis states." },
+  ],
+  optimize: [
+    { title: "⚡ Optimize Active Canvas", prompt: "Optimize my active canvas circuit to reduce gate count and depth." },
+    { title: "✂️ Cancel Self-Inverses", prompt: "Identify and eliminate redundant self-inverse gate pairs (H-H, X-X, CX-CX)." },
+    { title: "📐 Combine Continuous Rotations", prompt: "Combine adjacent continuous phase rotations into single operations." },
+  ],
+  socratic: [
+    { title: "💭 Superposition Probe", prompt: "Probe my understanding of superposition vs a classical mixture." },
+    { title: "🎯 Bell Pair Test", prompt: "Ask me a conceptual question about Bell state correlations." },
+    { title: "📊 No-Signalling", prompt: "Test whether I understand why entanglement cannot send faster-than-light signals." },
+  ],
+  hint: [
+    { title: "🎯 Hadamard Hint", prompt: "Give me a hint on why two Hadamards return deterministically to |0⟩." },
+    { title: "🌊 Phase Hint", prompt: "Give me a hint on how relative phase differs from global phase." },
+    { title: "🔗 Entanglement Hint", prompt: "Give me a hint on why measuring qubit 0 affects qubit 1 in an EPR pair." },
+  ],
+};
+
 export default function QuantumAssistant() {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([welcome]);
   const [input, setInput] = useState("");
-  const [mode, setMode] = useState<MentorMode>("socratic");
+  const [mode, setMode] = useState<MentorMode>("explain");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hintTier, setHintTier] = useState(1);
   const [readAloud, setReadAloud] = useState(false);
   const [listening, setListening] = useState(false);
+  const [loadedCircuitId, setLoadedCircuitId] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechInput | null>(null);
   const [studioContext, setStudioContext] = useState<{
     circuit?: CircuitIR;
@@ -98,27 +159,38 @@ export default function QuantumAssistant() {
   const location = useLocation();
   const navigate = useNavigate();
   useDialogFocus(open, ref, () => setOpen(false));
+
   useEffect(() => {
-    const show = () => setOpen(true);
+    const show = () => {
+      setOpen(true);
+      window.dispatchEvent(new CustomEvent("quantum-lens:request-studio-context"));
+    };
     window.addEventListener("quantum-lens:open-mentor", show);
     return () => window.removeEventListener("quantum-lens:open-mentor", show);
   }, []);
+
   useEffect(() => {
     const receive = (event: Event) =>
       setStudioContext((event as CustomEvent).detail);
     window.addEventListener("quantum-lens:studio-context", receive);
+    // Request context on mount
+    window.dispatchEvent(new CustomEvent("quantum-lens:request-studio-context"));
     return () => {
       window.removeEventListener("quantum-lens:studio-context", receive);
       recognitionRef.current?.stop();
       window.speechSynthesis?.cancel();
     };
   }, []);
+
   useEffect(() => {
     if (!open) {
       recognitionRef.current?.stop();
       window.speechSynthesis?.cancel();
+    } else {
+      window.dispatchEvent(new CustomEvent("quantum-lens:request-studio-context"));
     }
   }, [open]);
+
   function dictate() {
     if (listening) {
       recognitionRef.current?.stop();
@@ -154,12 +226,15 @@ export default function QuantumAssistant() {
       setError("Could not start voice input. Please type your question.");
     }
   }
+
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages, loading, open]);
-  async function send(text = input) {
+
+  async function send(text = input, overrideMode?: MentorMode) {
     const value = text.trim();
     if (!value || loading) return;
+    const activeMode = overrideMode || mode;
     setInput("");
     setError("");
     setMessages((m) => [...m, { role: "user", text: value }]);
@@ -171,7 +246,7 @@ export default function QuantumAssistant() {
       );
       const answer = await askMentor({
         message: value,
-        mode,
+        mode: activeMode,
         context: {
           location: location.pathname,
           hintTier,
@@ -220,6 +295,26 @@ export default function QuantumAssistant() {
       setLoading(false);
     }
   }
+
+  function handleLoadCircuit(circuit: CircuitIR, indexKey: string) {
+    if (location.pathname.startsWith("/labs/studio")) {
+      window.dispatchEvent(
+        new CustomEvent("quantum-lens:load-circuit", {
+          detail: { circuit },
+        }),
+      );
+    } else {
+      sessionStorage.setItem("ql_mentor_circuit", JSON.stringify(circuit));
+      navigate("/labs/studio");
+    }
+    setLoadedCircuitId(indexKey);
+    setTimeout(() => setLoadedCircuitId(null), 3000);
+  }
+
+  const canvasOpsCount = studioContext.circuit?.operations?.length ?? 0;
+  const canvasQubitsCount = studioContext.circuit?.qubits ?? 0;
+  const activeChips = MODE_CHIPS[mode] || [];
+
   return (
     <>
       {!open && (
@@ -244,11 +339,21 @@ export default function QuantumAssistant() {
           >
             <header>
               <span className="ql-aria-avatar">
-                <Sparkles size={21} />
+                <Sparkles size={20} />
               </span>
               <div>
-                <h2 id="aria-title">Aria</h2>
-                <p>Your quantum thinking partner</p>
+                <h2 id="aria-title">
+                  Aria
+                  {canvasOpsCount > 0 && (
+                    <span
+                      className="ql-aria-canvas-badge"
+                      title="Studio visual canvas is linked"
+                    >
+                      <Cpu size={10} /> {canvasOpsCount} ops · {canvasQubitsCount}q
+                    </span>
+                  )}
+                </h2>
+                <p>Adaptive Reasoning Intelligence for Algorithms</p>
               </div>
               <button
                 className="ql-icon-button"
@@ -261,7 +366,7 @@ export default function QuantumAssistant() {
                   window.speechSynthesis?.cancel();
                 }}
               >
-                {readAloud ? <Volume2 size={17} /> : <VolumeX size={17} />}
+                {readAloud ? <Volume2 size={16} /> : <VolumeX size={16} />}
               </button>
               <button
                 disabled={loading}
@@ -273,56 +378,190 @@ export default function QuantumAssistant() {
                   window.speechSynthesis?.cancel();
                 }}
               >
-                <Trash2 size={17} />
+                <Trash2 size={16} />
               </button>
               <button
                 className="ql-icon-button"
                 aria-label="Close AI tutor"
                 onClick={() => setOpen(false)}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </header>
-            <div className="ql-aria-mode">
-              <span>LET’S</span>
-              <select
-                aria-label="Tutor mode"
-                value={mode}
-                onChange={(e) => setMode(e.target.value as MentorMode)}
-              >
-                <option value="socratic">Think it through</option>
-                <option value="hint">Get a hint</option>
-                <option value="explain">Explain a concept</option>
-                <option value="generate">Build a circuit</option>
-                <option value="debug">Debug a circuit</option>
-                <option value="optimize">Optimize a circuit</option>
-              </select>
-              {mode === "hint" && (
-                <select
-                  aria-label="Hint depth"
-                  value={hintTier}
-                  onChange={(e) => setHintTier(Number(e.target.value))}
+
+            {/* Segmented Top Mode Switcher */}
+            <div className="ql-aria-mode-tabs" role="tablist">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  role="tab"
+                  aria-selected={mode === m.id}
+                  className={`ql-aria-mode-tab ${mode === m.id ? "active" : ""}`}
+                  onClick={() => setMode(m.id)}
+                  title={m.desc}
                 >
-                  <option value={1}>Gentle nudge</option>
-                  <option value={2}>Conceptual hint</option>
-                  <option value={3}>Mathematical hint</option>
-                </select>
-              )}
+                  {m.icon}
+                  <span>{m.label}</span>
+                </button>
+              ))}
             </div>
+
+            {/* Hint Tier Sub-bar */}
+            {mode === "hint" && (
+              <div className="ql-aria-hint-tier-bar">
+                <span>Hint Depth:</span>
+                {[
+                  { tier: 1, label: "1: Nudge" },
+                  { tier: 2, label: "2: Concept" },
+                  { tier: 3, label: "3: Math Solution" },
+                ].map((t) => (
+                  <button
+                    key={t.tier}
+                    className={`ql-aria-hint-tier-pill ${hintTier === t.tier ? "active" : ""}`}
+                    onClick={() => setHintTier(t.tier)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="ql-aria-messages" aria-live="polite">
               {messages.map((m, i) => (
                 <div className={`ql-message ${m.role}`} key={i}>
                   <span>{m.role === "model" ? "ARIA" : "YOU"}</span>
                   <div>{replyContent(m.text)}</div>
+
+                  {/* Optimization Metrics Dashboard */}
+                  {m.optimization && (
+                    <div className="ql-aria-opt-dashboard">
+                      <div className="ql-aria-opt-grid">
+                        <div className="ql-aria-opt-box">
+                          <div className="val">
+                            {m.optimization.originalGateCount} → {m.optimization.optimizedGateCount}
+                          </div>
+                          <div className="lbl">Gates</div>
+                        </div>
+                        <div className="ql-aria-opt-box">
+                          <div className="val">
+                            {m.optimization.depthOriginal} → {m.optimization.depthOptimized}
+                          </div>
+                          <div className="lbl">Depth</div>
+                        </div>
+                        <div className="ql-aria-opt-box">
+                          <div className="val">
+                            {m.optimization.reductionPercent > 0
+                              ? `-${m.optimization.reductionPercent}%`
+                              : "0%"}
+                          </div>
+                          <div className="lbl">Reduction</div>
+                        </div>
+                      </div>
+
+                      {m.optimization.cancellations?.length > 0 && (
+                        <ul className="ql-aria-opt-cancellations">
+                          {m.optimization.cancellations.map((c, n) => (
+                            <li key={n}>{c}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {m.circuit && (
+                        <button
+                          className="ql-aria-load-circuit-btn"
+                          onClick={() => handleLoadCircuit(m.circuit!, `opt-${i}`)}
+                        >
+                          {loadedCircuitId === `opt-${i}` ? (
+                            <>
+                              <Check size={14} /> Applied to Visual Canvas!
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={14} /> Apply Optimized Circuit to Canvas
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Synthesized Circuit Card */}
+                  {m.circuit && !m.optimization && (
+                    <div className="ql-aria-circuit-card">
+                      <div className="ql-aria-circuit-header">
+                        <span>
+                          <Layers size={13} /> ARIA SYNTHESIZED CIRCUIT
+                        </span>
+                        <span className="ql-aria-circuit-badge">
+                          {m.circuit.qubits} Qubits · {m.circuit.operations.length} Gates
+                        </span>
+                      </div>
+
+                      <div className="ql-aria-circuit-ops">
+                        {m.circuit.operations.slice(0, 8).map((op, idx) => (
+                          <span className="ql-aria-circuit-op" key={idx}>
+                            {op.gate || "GATE"}
+                            {op.controls?.length ? `(${op.controls}→${op.targets})` : `(q${op.targets[0]})`}
+                          </span>
+                        ))}
+                        {m.circuit.operations.length > 8 && (
+                          <span className="ql-aria-circuit-op">
+                            +{m.circuit.operations.length - 8} more
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        className="ql-aria-load-circuit-btn"
+                        onClick={() => handleLoadCircuit(m.circuit!, `circ-${i}`)}
+                      >
+                        {loadedCircuitId === `circ-${i}` ? (
+                          <>
+                            <Check size={14} /> Loaded onto Visual Canvas!
+                          </>
+                        ) : (
+                          <>
+                            <Layers size={14} /> ✦ Load onto Visual Canvas <ArrowRight size={13} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Debug Findings Diagnostics */}
+                  {m.findings?.length ? (
+                    <ul className="ql-aria-findings">
+                      {m.findings.map((f, n) => {
+                        const isClean = f.toLowerCase().includes("sanity analysis") || f.toLowerCase().includes("passes");
+                        return (
+                          <li
+                            key={n}
+                            className={`ql-aria-finding-item ${isClean ? "clean" : ""}`}
+                          >
+                            {isClean ? (
+                              <CheckCircle2 size={16} style={{ flexShrink: 0, color: "#10b981" }} />
+                            ) : (
+                              <AlertTriangle size={16} style={{ flexShrink: 0, color: "#f97316" }} />
+                            )}
+                            <div>{f}</div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+
+                  {/* Provenance & Verification */}
                   {m.source && (
                     <div className="ql-aria-provenance">
-                      <strong>{m.source === "gemini" ? "Gemini response" : "Deterministic tutor"}</strong>
+                      <strong>
+                        {m.source === "gemini" ? "Gemini Neural Response" : "Deterministic ARIA Grounded Tutor"}
+                      </strong>
                       <span>
                         {m.source === "gemini"
                           ? "Generated from the supplied circuit and simulator context."
                           : m.evidence?.length
-                            ? "Rule-based guidance generated locally from the evidence listed below."
-                            : "Rule-based guidance generated locally; no circuit or learner evidence was supplied."}
+                            ? "Rule-based guidance validated against local quantum state & simulator evidence."
+                            : "Grounded guidance generated from verified quantum principles."}
                       </span>
                       {m.validationScope && <small>{m.validationScope}</small>}
                       {m.verification && (
@@ -330,7 +569,7 @@ export default function QuantumAssistant() {
                           {m.verification.status === "verified"
                             ? m.source === "gemini"
                               ? "Numerical claims matched simulator evidence"
-                              : "Deterministic rule checks passed"
+                              : "Deterministic quantum rules verified"
                             : m.verification.status === "rejected"
                               ? "Generated claim rejected; grounded fallback shown"
                               : "Limited verification scope"}
@@ -338,20 +577,11 @@ export default function QuantumAssistant() {
                       )}
                     </div>
                   )}
-                  {m.evidence?.length ? (
-                    <details className="ql-aria-evidence">
-                      <summary>Evidence used ({m.evidence.length})</summary>
-                      {m.evidence.map((item, n) => (
-                        <div key={`${item.kind}-${n}`}>
-                          <strong>{item.label}</strong>
-                          <span>{item.detail}</span>
-                        </div>
-                      ))}
-                    </details>
-                  ) : null}
+
+                  {/* Interactive Course Material Citations */}
                   {m.citations?.length ? (
                     <div className="ql-aria-citations">
-                      <span>Continue with verified course material</span>
+                      <span>Verified Course Modules</span>
                       {m.citations.map((citation) => (
                         <button
                           key={citation.route}
@@ -361,70 +591,21 @@ export default function QuantumAssistant() {
                             setOpen(false);
                           }}
                         >
-                          <BookOpen size={13} /> {citation.label}
+                          <BookOpen size={12} /> {citation.label}
                         </button>
                       ))}
                     </div>
                   ) : null}
-                  {m.findings?.length ? (
-                    <ul className="ql-aria-findings">
-                      {m.findings.map((f, n) => (
-                        <li key={n}>{f}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {m.optimization && (
-                    <p className="ql-aria-optimization">
-                      Gate count: {m.optimization.originalGateCount} →{" "}
-                      {m.optimization.optimizedGateCount} · depth:{" "}
-                      {m.optimization.depthOriginal} →{" "}
-                      {m.optimization.depthOptimized}
-                    </p>
-                  )}
-                  {m.circuit && (
-                    <button
-                      className="ql-button ql-button-white"
-                      onClick={() => {
-                        if (location.pathname.startsWith("/labs/studio"))
-                          window.dispatchEvent(
-                            new CustomEvent("quantum-lens:load-circuit", {
-                              detail: { circuit: m.circuit },
-                            }),
-                          );
-                        else {
-                          sessionStorage.setItem(
-                            "ql_mentor_circuit",
-                            JSON.stringify(m.circuit),
-                          );
-                          navigate("/labs/studio");
-                        }
-                        setOpen(false);
-                      }}
-                    >
-                      Explore this circuit <ArrowRight size={14} />
-                    </button>
-                  )}
                 </div>
               ))}
-              {messages.length === 1 && (
-                <div className="ql-aria-prompts">
-                  {[
-                    "Why does a Hadamard gate create superposition?",
-                    "Help me understand a Bell state.",
-                    "What changes when I measure a qubit?",
-                  ].map((q) => (
-                    <button key={q} onClick={() => send(q)}>
-                      {q}
-                      <ArrowRight size={14} />
-                    </button>
-                  ))}
+
+              {loading && (
+                <div className="ql-aria-thinking" role="status">
+                  <Sparkles size={14} className="animate-spin" />
+                  <span>Aria is analyzing quantum state & compiling…</span>
                 </div>
               )}
-              {loading && (
-                <p className="ql-aria-thinking" role="status">
-                  Aria is thinking…
-                </p>
-              )}
+
               {error && (
                 <p className="ql-notice error" role="alert">
                   {error}
@@ -432,6 +613,22 @@ export default function QuantumAssistant() {
               )}
               <div ref={endRef} />
             </div>
+
+            {/* Quick Action Prompt Chips */}
+            <div className="ql-aria-chip-bar">
+              {activeChips.map((chip, idx) => (
+                <button
+                  key={idx}
+                  className="ql-aria-chip"
+                  onClick={() => send(chip.prompt)}
+                  disabled={loading}
+                >
+                  {chip.title}
+                </button>
+              ))}
+            </div>
+
+            {/* Compose Input */}
             <form
               className="ql-aria-compose"
               onSubmit={(e) => {
@@ -447,25 +644,34 @@ export default function QuantumAssistant() {
                 maxLength={4000}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="A question is a good place to start…"
+                placeholder={
+                  mode === "generate"
+                    ? "E.g. Synthesize a 3-qubit GHZ state or Bell pair…"
+                    : mode === "optimize"
+                      ? "E.g. Optimize my active canvas circuit…"
+                      : mode === "debug"
+                        ? "E.g. Debug the circuit for collapse or M01…"
+                        : "Ask about superposition, phase kickback, entanglement…"
+                }
               />
               <button
                 type="button"
                 aria-label={listening ? "Stop voice input" : "Dictate question"}
                 aria-pressed={listening}
+                className={listening ? "listening" : ""}
                 onClick={dictate}
               >
-                <Mic size={17} />
+                <Mic size={16} />
               </button>
               <button
                 disabled={loading || !input.trim()}
                 aria-label="Send question"
               >
-                <Send size={18} />
+                <Send size={16} />
               </button>
             </form>
             <p className="ql-aria-disclaimer">
-              AI can make mistakes. Verify ideas through experiments.
+              ARIA Quantum Intelligence · Verified against local statevector and Clifford+T algebraic rewrite rules.
             </p>
           </div>
         </div>

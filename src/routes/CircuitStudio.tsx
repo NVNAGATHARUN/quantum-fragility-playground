@@ -211,14 +211,21 @@ export default function CircuitStudio() {
   const currentParity = parity && parityCircuit === signature;
   const staleParity = parity && !currentParity;
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent("quantum-lens:studio-context", {
-        detail: {
-          circuit,
-          simulationResult: currentResult ? result : undefined,
-        },
-      }),
-    );
+    const dispatchContext = () => {
+      window.dispatchEvent(
+        new CustomEvent("quantum-lens:studio-context", {
+          detail: {
+            circuit,
+            simulationResult: currentResult ? result : undefined,
+          },
+        }),
+      );
+    };
+    dispatchContext();
+    window.addEventListener("quantum-lens:request-studio-context", dispatchContext);
+    return () => {
+      window.removeEventListener("quantum-lens:request-studio-context", dispatchContext);
+    };
   }, [circuit, result, currentResult]);
 
   function commit(next: CircuitIR) {
@@ -252,6 +259,67 @@ export default function CircuitStudio() {
     }).catch(error => { if (active) setError(error instanceof Error ? error.message : "Could not load shared circuit"); });
     return () => { active = false; };
   }, [circuitId]);
+
+  // Handle circuit loading from Aria AI Mentor (event or session queue)
+  useEffect(() => {
+    try {
+      const queued = sessionStorage.getItem("ql_mentor_circuit");
+      if (queued) {
+        const parsed = JSON.parse(queued);
+        const normalized: CircuitIR = {
+          version: "1.0",
+          qubits: Math.min(MAX_QUBITS, Math.max(1, parsed.qubits || 2)),
+          classicalBits: Math.max(1, parsed.classicalBits || parsed.qubits || 2),
+          operations: (parsed.operations || []).map((op: any, idx: number) => ({
+            id: op.id || `op-ai-${idx}-${Date.now().toString(36)}`,
+            gate: (op.gate || "H").toUpperCase(),
+            targets: Array.isArray(op.targets) ? op.targets : [0],
+            controls: Array.isArray(op.controls) ? op.controls : [],
+            step: Number.isInteger(op.step) ? op.step : idx,
+            params: op.params?.theta !== undefined ? { theta: Number(op.params.theta) } : undefined,
+            classicalTargets: op.classicalTargets || (op.gate === "MEASURE" ? [0] : undefined),
+          })),
+        };
+        validateStudioCircuit(normalized);
+        commit(normalized);
+        setNotice("Circuit loaded from Aria AI Mentor.");
+        sessionStorage.removeItem("ql_mentor_circuit");
+      }
+    } catch {
+      sessionStorage.removeItem("ql_mentor_circuit");
+    }
+
+    const handleLoadCircuit = (e: Event) => {
+      const custom = e as CustomEvent<{ circuit: any }>;
+      if (custom.detail?.circuit) {
+        try {
+          const raw = custom.detail.circuit;
+          const normalized: CircuitIR = {
+            version: "1.0",
+            qubits: Math.min(MAX_QUBITS, Math.max(1, raw.qubits || 2)),
+            classicalBits: Math.max(1, raw.classicalBits || raw.qubits || 2),
+            operations: (raw.operations || []).map((op: any, idx: number) => ({
+              id: op.id || `op-ai-${idx}-${Date.now().toString(36)}`,
+              gate: (op.gate || "H").toUpperCase(),
+              targets: Array.isArray(op.targets) ? op.targets : [0],
+              controls: Array.isArray(op.controls) ? op.controls : [],
+              step: Number.isInteger(op.step) ? op.step : idx,
+              params: op.params?.theta !== undefined ? { theta: Number(op.params.theta) } : undefined,
+              classicalTargets: op.classicalTargets || (op.gate === "MEASURE" ? [0] : undefined),
+            })),
+          };
+          validateStudioCircuit(normalized);
+          commit(normalized);
+          setNotice("Circuit loaded from Aria AI Mentor.");
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Could not load AI circuit");
+        }
+      }
+    };
+
+    window.addEventListener("quantum-lens:load-circuit", handleLoadCircuit);
+    return () => window.removeEventListener("quantum-lens:load-circuit", handleLoadCircuit);
+  }, []);
   useEffect(() => {
     const close = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
