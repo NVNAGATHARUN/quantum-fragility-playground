@@ -240,7 +240,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <ChevronRight size={14} />
             <strong>{title}</strong>
           </div>
-          <div className="ql-topbar-actions">
+          <div className="ql-topbar-actions flex items-center gap-2.5">
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Qiskit Aer · 15 mK</span>
+            </div>
+
+            <Link
+              to="/quantum-lens"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-400 text-xs font-bold transition-all shadow-sm active:scale-95"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>QuantumLens 3D</span>
+            </Link>
+
             <button
               className="ql-search-trigger"
               aria-label="Search lessons, labs, and algorithms"

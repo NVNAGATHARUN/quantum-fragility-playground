@@ -1,24 +1,30 @@
 /* Quantum Lens premium product foundation.
-   Loaded last while legacy route styles are consolidated incrementally. */
+   High-end obsidian dark theme by default with quantum cyan & violet luminance. */
 
 :root,
-html.light {
-  --ql-bg: #f1efe8;
-  --ql-panel: #fcfbf7;
-  --ql-soft: #eae7de;
-  --ql-ink: #1b2430;
-  --ql-muted: #626b72;
-  --ql-line: #d8d4ca;
-  --ql-accent: #3152a3;
-  --ql-accent-hover: #263f80;
-  --ql-accent-soft: #e4e9f5;
-  --ql-success: #16805c;
-  --ql-warning: #b86e00;
-  --ql-danger: #c43d4b;
-  --ql-shadow: 0 8px 24px rgb(16 24 40 / 6%);
+html.dark {
+  --ql-bg: #060911;
+  --ql-panel: #0d1322;
+  --ql-panel-glass: rgba(13, 19, 34, 0.78);
+  --ql-soft: #141d30;
+  --ql-ink: #f8fafc;
+  --ql-muted: #94a3b8;
+  --ql-line: rgba(255, 255, 255, 0.08);
+  --ql-line-glow: rgba(0, 240, 255, 0.3);
+  --ql-accent: #00f0ff;
+  --ql-accent-hover: #38bdf8;
+  --ql-accent-soft: rgba(0, 240, 255, 0.12);
+  --ql-violet: #8b5cf6;
+  --ql-violet-soft: rgba(139, 92, 246, 0.15);
+  --ql-success: #10b981;
+  --ql-warning: #f59e0b;
+  --ql-danger: #ef4444;
+  --ql-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --ql-glow: 0 0 30px rgba(0, 240, 255, 0.25);
   --ql-radius-sm: 8px;
   --ql-radius-md: 12px;
   --ql-radius-lg: 16px;
+  --ql-radius-xl: 20px;
   --ql-space-1: 4px;
   --ql-space-2: 8px;
   --ql-space-3: 12px;
@@ -27,78 +33,95 @@ html.light {
   --ql-space-8: 32px;
   --ql-space-10: 40px;
   --ql-space-12: 48px;
-  color-scheme: light;
-}
-
-html.dark {
-  --ql-bg: #0d1117;
-  --ql-panel: #131923;
-  --ql-soft: #181f2b;
-  --ql-ink: #f3f5f7;
-  --ql-muted: #94a3b8;
-  --ql-line: #293242;
-  --ql-accent: #8ea4ff;
-  --ql-accent-hover: #a8b8ff;
-  --ql-accent-soft: #1b2540;
-  --ql-shadow: 0 8px 28px rgb(0 0 0 / 18%);
   color-scheme: dark;
 }
 
-body {
-  background: var(--ql-bg);
-  background-image:
-    radial-gradient(circle at 14% 0%, rgb(87 107 159 / 8%), transparent 28rem),
-    radial-gradient(circle at 1px 1px, rgb(42 52 64 / 6%) 1px, transparent 0);
-  background-size: auto, 24px 24px;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+html.light {
+  --ql-bg: #f8fafc;
+  --ql-panel: #ffffff;
+  --ql-panel-glass: rgba(255, 255, 255, 0.85);
+  --ql-soft: #f1f5f9;
+  --ql-ink: #0f172a;
+  --ql-muted: #64748b;
+  --ql-line: #e2e8f0;
+  --ql-line-glow: rgba(2, 132, 199, 0.3);
+  --ql-accent: #0284c7;
+  --ql-accent-hover: #0369a1;
+  --ql-accent-soft: rgba(2, 132, 199, 0.10);
+  --ql-violet: #7c3aed;
+  --ql-violet-soft: rgba(124, 58, 237, 0.10);
+  --ql-success: #059669;
+  --ql-warning: #d97706;
+  --ql-danger: #dc2626;
+  --ql-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --ql-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+  color-scheme: light;
 }
-html.light body,
-:root.light body {
+
+body {
   background-color: var(--ql-bg);
   background-image:
-    radial-gradient(circle at 14% 0%, rgb(87 107 159 / 8%), transparent 28rem),
-    radial-gradient(circle at 1px 1px, rgb(42 52 64 / 6%) 1px, transparent 0);
-  background-size: auto, 24px 24px;
+    radial-gradient(circle at 50% -15%, rgba(0, 240, 255, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at 95% 40%, rgba(139, 92, 246, 0.09) 0%, transparent 45%),
+    radial-gradient(circle at 5% 85%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: auto, auto, auto, 40px 40px, 40px 40px;
+  font-family: "Inter", "Space Grotesk", system-ui, sans-serif;
+  color: var(--ql-ink);
+  min-height: 100vh;
 }
 
 .ql-app {
   background: transparent;
   color: var(--ql-ink);
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
 }
 
 .ql-app h1,
-.ql-app h2,
-.ql-app h3,
-.ql-app h4 {
-  letter-spacing: -0.025em;
+.ql-app h2 {
+  font-family: "Space Grotesk", "Orbitron", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
-.ql-app h1,
-.ql-app h2 { font-family: "IBM Plex Serif", Georgia, serif; }
+
 .ql-app h3,
-.ql-app h4 { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; }
-.ql-app .font-orbitron { font-family: "IBM Plex Sans", "Segoe UI", sans-serif !important; letter-spacing: 0 !important; }
-.ql-app .btn {
-  border-radius: var(--ql-radius-sm);
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  font-size: 13px;
-  letter-spacing: 0;
-  text-transform: none;
-  box-shadow: none;
+.ql-app h4 {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
+
+.font-orbitron,
+.ql-app .font-orbitron {
+  font-family: "Orbitron", monospace !important;
+  letter-spacing: 0.06em !important;
+}
+
+.ql-app .btn {
+  border-radius: var(--ql-radius-md);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gradient-text,
 .ql-app .gradient-text {
-  background: none;
-  color: var(--ql-ink);
-  -webkit-text-fill-color: currentColor;
-  filter: none;
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 45%, #c084fc 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: drop-shadow(0 2px 14px rgba(56, 189, 248, 0.3)) !important;
 }
 
 .ql-app :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--ql-accent) 32%, transparent);
-  outline-offset: 3px;
+  outline: 2px solid var(--ql-accent);
+  outline-offset: 2px;
 }
 
 .ql-sidebar {
@@ -479,8 +502,8 @@ html.light .ql-studio .ql-notice {
 
 .ql-legacy-page-header h1,
 .ql-section-header h2 {
-  font-family: "IBM Plex Serif", Georgia, serif;
-  font-weight: 500;
+  font-family: "Space Grotesk", "Orbitron", sans-serif;
+  font-weight: 700;
 }
 
 .ql-experiments-index { display: grid; gap: 32px; }
@@ -491,31 +514,40 @@ html.light .ql-studio .ql-notice {
   align-items: end;
   min-height: 330px;
   padding: clamp(32px, 5vw, 64px);
-  border: 1px solid #303b52;
-  border-radius: 18px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 20px;
   color: #f7f8fc;
   background:
-    radial-gradient(circle at 84% 18%, rgb(133 154 221 / 22%), transparent 27%),
-    linear-gradient(135deg, #182238, #111a2b);
+    radial-gradient(circle at 84% 18%, rgba(0, 240, 255, 0.18), transparent 35%),
+    radial-gradient(circle at 12% 85%, rgba(139, 92, 246, 0.15), transparent 40%),
+    linear-gradient(135deg, #0e1526, #090e1a);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 .ql-experiments-hero .ql-eyebrow {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #b8c3ef;
+  color: #38bdf8;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 .ql-experiments-hero h1 {
   margin: 14px 0 18px;
   max-width: 760px;
   color: #fff;
-  font: 500 clamp(46px, 5.4vw, 76px)/.98 "IBM Plex Serif", Georgia, serif;
-  letter-spacing: -.05em;
+  font: 700 clamp(42px, 5.2vw, 68px)/1.02 "Space Grotesk", sans-serif;
+  letter-spacing: -.03em;
 }
-.ql-experiments-hero h1 em { color: #b8c3ef; font-weight: 400; }
+.ql-experiments-hero h1 em {
+  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-style: normal;
+}
 .ql-experiments-hero > div > p:last-child {
   max-width: 650px;
-  color: #c9d1e3;
+  color: #94a3b8;
   font-size: 17px;
   line-height: 1.7;
 }
@@ -523,12 +555,13 @@ html.light .ql-studio .ql-notice {
   display: grid;
   gap: 5px;
   padding: 18px;
-  border: 1px solid rgb(184 195 239 / 25%);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(13, 19, 34, 0.75);
+  backdrop-filter: blur(12px);
 }
-.ql-experiments-hero-note strong { color: #fff; font-size: 14px; }
-.ql-experiments-hero-note span { color: #aeb9d1; font-size: 12px; line-height: 1.55; }
+.ql-experiments-hero-note strong { color: #38bdf8; font-size: 14px; font-family: "Orbitron", monospace; }
+.ql-experiments-hero-note span { color: #cbd5e1; font-size: 12px; line-height: 1.55; }
 .ql-experiments-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -542,16 +575,17 @@ html.light .ql-studio .ql-notice {
   justify-content: space-between;
   gap: 24px;
   padding: 28px;
-  border: 1px solid var(--ql-line);
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   color: var(--ql-ink);
-  background: var(--ql-panel);
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  background: rgba(13, 19, 34, 0.7);
+  backdrop-filter: blur(16px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ql-experiment-entry:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--ql-accent) 38%, var(--ql-line));
-  box-shadow: 0 14px 32px rgb(38 45 55 / 9%);
+  transform: translateY(-4px);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 240, 255, 0.15);
 }
 .ql-experiment-entry-head,
 .ql-experiment-entry-footer {
@@ -565,15 +599,17 @@ html.light .ql-studio .ql-notice {
   width: 48px;
   height: 48px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--ql-accent) 22%, var(--ql-line));
+  border: 1px solid rgba(0, 240, 255, 0.3);
   border-radius: 12px;
-  color: var(--ql-accent);
-  background: var(--ql-accent-soft);
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
 }
 .ql-experiment-entry h2 {
   margin: 9px 0 12px;
-  color: var(--ql-ink);
-  font: 500 30px/1.15 "IBM Plex Serif", Georgia, serif;
+  color: #f8fafc;
+  font: 700 26px/1.2 "Space Grotesk", sans-serif;
+  letter-spacing: -0.02em;
 }
 .ql-experiment-entry p { color: var(--ql-muted); font-size: 14px; line-height: 1.7; }
 .ql-experiment-entry-footer { padding-top: 18px; border-top: 1px solid var(--ql-line); }
@@ -609,7 +645,7 @@ html.light .ql-studio .ql-notice {
   color: var(--ql-accent);
   background: var(--ql-accent-soft);
 }
-.ql-simulation-module h2 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 500; }
+.ql-simulation-module h2 { font-family: "Space Grotesk", sans-serif; font-weight: 700; }
 .ql-simulation-module h3 { color: var(--ql-accent) !important; letter-spacing: 0 !important; }
 .ql-simulation-visual { color: #eff3fa; background: #1c2740; }
 .ql-simulation-cta {
@@ -618,47 +654,49 @@ html.light .ql-studio .ql-notice {
   gap: 14px;
   margin-top: 16px;
   padding: 48px 28px;
-  border: 1px solid var(--ql-line);
-  border-radius: 16px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 18px;
   color: var(--ql-ink);
   text-align: center;
-  background: var(--ql-panel);
+  background: rgba(13, 19, 34, 0.75);
+  backdrop-filter: blur(14px);
 }
 .ql-simulation-cta > svg { color: var(--ql-accent); }
-.ql-simulation-cta h3 { margin: 0; font: 500 30px/1.2 "IBM Plex Serif", Georgia, serif; }
+.ql-simulation-cta h3 { margin: 0; font: 700 28px/1.2 "Space Grotesk", sans-serif; }
 .ql-simulation-cta p { max-width: 650px; margin: 0 0 8px; color: var(--ql-muted); }
 
 .ql-physics-lab {
   margin: 0;
   padding: 32px 24px !important;
-  border: 1px solid #303b52;
-  border-radius: 18px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 20px;
   color: #f4f6fb;
-  background: #182238 !important;
-  box-shadow: 0 14px 34px rgb(35 41 50 / 11%);
+  background: linear-gradient(135deg, #0e1526, #090e1a) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
 }
 .ql-app .ql-physics-lab h1 {
   color: #fff !important;
   background: none !important;
   -webkit-text-fill-color: currentColor !important;
-  font-family: "IBM Plex Serif", Georgia, serif !important;
+  font-family: "Space Grotesk", "Orbitron", sans-serif !important;
   font-style: normal !important;
-  font-weight: 500 !important;
-  letter-spacing: -.035em !important;
+  font-weight: 700 !important;
+  letter-spacing: -.03em !important;
 }
 .ql-physics-lab-icon {
   display: grid;
   width: 38px;
   height: 38px;
   place-items: center;
-  border: 1px solid #415071;
+  border: 1px solid rgba(0, 240, 255, 0.3);
   border-radius: 10px;
-  color: #b8c3ef;
-  background: #202c45;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.2);
 }
-.ql-physics-lab .ql-legacy-card { background: #202c45 !important; border-color: #35415b !important; color: #f4f6fb; }
-.ql-physics-lab [class*="text-text-muted"] { color: #9aa8c2 !important; }
-.ql-physics-lab [class*="text-text-secondary"] { color: #c3cce0 !important; }
+.ql-physics-lab .ql-legacy-card { background: rgba(18, 25, 42, 0.7) !important; border-color: rgba(255, 255, 255, 0.08) !important; color: #f4f6fb; backdrop-filter: blur(12px); }
+.ql-physics-lab [class*="text-text-muted"] { color: #94a3b8 !important; }
+.ql-physics-lab [class*="text-text-secondary"] { color: #cbd5e1 !important; }
 
 .ql-lab-toolbar {
   position: fixed;
@@ -669,11 +707,11 @@ html.light .ql-studio .ql-notice {
   flex-direction: column;
   gap: 6px;
   padding: 6px;
-  border: 1px solid #3c4860;
-  border-radius: 12px;
-  background: rgb(24 34 56 / 92%);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
-  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(10, 14, 26, 0.92);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
 }
 .ql-lab-toolbar-button {
   display: grid;
@@ -682,46 +720,46 @@ html.light .ql-studio .ql-notice {
   place-items: center;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: #aab6cc;
+  color: #94a3b8;
   background: transparent;
 }
 .ql-lab-toolbar-button:hover,
-.ql-lab-toolbar-button.is-active { border-color: #53668e; color: #fff; background: #2a3958; }
+.ql-lab-toolbar-button.is-active { border-color: rgba(0, 240, 255, 0.4); color: #00f0ff; background: rgba(0, 240, 255, 0.12); }
 .ql-tour-callout {
-  border: 1px solid #40506e;
+  border: 1px solid rgba(0, 240, 255, 0.3);
   border-radius: 16px;
   color: #f4f6fb;
-  background: rgb(24 34 56 / 97%);
-  box-shadow: 0 20px 48px rgb(0 0 0 / 34%);
+  background: rgba(10, 15, 28, 0.97);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(18px);
 }
-.ql-tour-callout > div:first-of-type span { color: #b8c3ef; font-size: 11px; font-weight: 650; }
-.ql-tour-callout h3 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 500; }
+.ql-tour-callout > div:first-of-type span { color: #38bdf8; font-size: 11px; font-weight: 700; font-family: "Orbitron", monospace; }
+.ql-tour-callout h3 { font-family: "Space Grotesk", sans-serif; font-weight: 700; }
 
 .ql-cognitive-lab > div:first-child { align-items: flex-start; gap: 22px; }
 .ql-cognitive-lab > div:first-child h1 {
-  color: var(--ql-ink) !important;
-  background: none !important;
-  -webkit-text-fill-color: currentColor !important;
-  font: 500 clamp(32px, 3.2vw, 48px)/1.08 "IBM Plex Serif", Georgia, serif !important;
-  letter-spacing: -.035em !important;
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 45%, #c084fc 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font: 700 clamp(32px, 3.2vw, 48px)/1.08 "Space Grotesk", "Orbitron", sans-serif !important;
+  letter-spacing: -.03em !important;
 }
 .ql-cognitive-lab > div:first-child > div:first-child { max-width: 620px; }
 .ql-cognitive-lab > div:first-child > div:first-child > div { flex-wrap: wrap; }
 
 /* Dark scientific workbenches use a controlled navy palette with readable cards. */
 .ql-app .algorithm-lab {
-  --color-text-primary: #f4f6fb;
-  --color-text-secondary: #c3cce0;
-  --color-text-muted: #9aa8c2;
-  background: #182238 !important;
-  border-color: #303b52 !important;
-  border-radius: 18px;
-  box-shadow: 0 14px 34px rgb(35 41 50 / 11%);
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  background: linear-gradient(135deg, #0e1526, #090e1a) !important;
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
 }
 .ql-app .algorithm-lab h1 {
-  font-family: "IBM Plex Serif", Georgia, serif !important;
-  font-weight: 500;
+  font-family: "Space Grotesk", "Orbitron", sans-serif !important;
+  font-weight: 700;
 }
 .ql-app .algorithm-lab :is(.glass-card, .glass-card-raised, .ql-legacy-card),
 html.light .ql-app .algorithm-lab :is(.glass-card, .glass-card-raised, .ql-legacy-card) {
@@ -1663,17 +1701,18 @@ html.light .ql-topbar {
 .ql-page .ql-hero h2,
 .ql-page .ql-section-heading h2,
 .ql-page .ql-library-section-heading h2 {
-  font-family: "IBM Plex Serif", Georgia, serif;
-  font-weight: 500;
-  letter-spacing: -.035em;
+  font-family: "Space Grotesk", "Orbitron", sans-serif;
+  font-weight: 700;
+  letter-spacing: -.03em;
 }
 .ql-eyebrow,
 .ql-course-meta,
 .ql-card-kicker,
 .ql-choice-kicker {
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  font-weight: 600;
-  letter-spacing: .055em;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 .ql-button,
 .ql-nav-link,
@@ -1686,41 +1725,53 @@ html.light .ql-topbar {
 .ql-module-list,
 .ql-mentor-card,
 .ql-sandbox-card {
-  border-color: var(--ql-line);
-  background: var(--ql-panel);
-  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(13, 19, 34, 0.72);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 .ql-course-card:hover,
 .ql-experiment-card:hover,
-.ql-library-card:hover { box-shadow: 0 10px 28px rgb(38 45 55 / 8%); }
+.ql-library-card:hover {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.35);
+}
 
 .ql-human-home .ql-hero,
 .ql-labs-hero,
 .ql-human-learn .ql-path-intro,
 .ql-progress-page .ql-progress-hero {
-  border-color: #303b52;
-  border-radius: 18px;
-  box-shadow: 0 14px 34px rgb(35 41 50 / 11%);
+  border-color: rgba(0, 240, 255, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 .ql-human-home .ql-hero-copy,
 .ql-labs-hero-copy,
 .ql-human-learn .ql-path-intro,
 .ql-progress-page .ql-progress-hero {
-  background: #182238;
+  background: linear-gradient(135deg, #0e1526, #090e1a);
 }
 .ql-human-home .ql-hero h2,
 .ql-labs-hero h1,
 .ql-human-learn .ql-path-intro h1,
 .ql-progress-page .ql-progress-hero h1 {
-  font-family: "IBM Plex Serif", Georgia, serif;
-  font-size: clamp(45px, 4.6vw, 68px);
-  font-weight: 500;
-  line-height: 1.025;
-  letter-spacing: -.045em;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(42px, 4.4vw, 64px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.03em;
 }
 .ql-human-home .ql-hero h2 em,
-.ql-labs-hero h1 em { color: #b8c3ef; font-style: italic; }
-.ql-human-home .ql-hero-art { background: #e5e7e4; }
+.ql-labs-hero h1 em {
+  background: linear-gradient(135deg, #00f0ff 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-style: normal;
+}
+.ql-human-home .ql-hero-art {
+  background: radial-gradient(circle at 50% 50%, #151e33 0%, #0c1220 100%);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
 .ql-labs-hero-art,
 .ql-progress-page .ql-human-next-step,
 .ql-human-labs .ql-feature-banner {
