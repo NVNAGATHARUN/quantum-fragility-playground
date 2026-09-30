@@ -14,6 +14,7 @@ import {
   HelpCircle,
   TrendingDown,
   Compass,
+  GitCompare,
 } from 'lucide-react';
 
 import { Card, Badge, SectionHeader } from '../components/UI';
@@ -21,6 +22,7 @@ import { simulateCircuit, evaluatePrediction, type CognitiveDeltaResponse } from
 import { CANONICAL_CONFLICT_LABS } from '../api/conflictLabsData';
 import { useQuantumSession } from '../providers/QuantumSessionProvider';
 import type { CircuitIR, NormalizedSimulationResult } from '../types/quantum';
+import WhatChangedModal from '../components/pedagogy/WhatChangedModal';
 
 export default function CognitiveConflictLab() {
   const { recordLabCompletion, recordCircuitRun } = useQuantumSession();
@@ -43,6 +45,7 @@ export default function CognitiveConflictLab() {
   const [challengeDelta, setChallengeDelta] = useState<CognitiveDeltaResponse | null>(null);
   const [challengeVerified, setChallengeVerified] = useState<boolean>(false);
   const [challengeLoading, setChallengeLoading] = useState<boolean>(false);
+  const [showWhatChanged, setShowWhatChanged] = useState<boolean>(false);
 
   const lab = CANONICAL_CONFLICT_LABS[selectedLabId];
 
@@ -251,6 +254,15 @@ export default function CognitiveConflictLab() {
                   </button>
                 );
               })}
+              {lab.steps.length > 1 && (
+                <button
+                  onClick={() => setShowWhatChanged(true)}
+                  className="mt-2 w-full p-2.5 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 font-orbitron text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                >
+                  <GitCompare className="w-4 h-4 text-cyan-400" />
+                  <span>Compare Circuits (What Changed?)</span>
+                </button>
+              )}
             </div>
           </Card>
 
@@ -550,6 +562,14 @@ export default function CognitiveConflictLab() {
           </Card>
         </div>
       </div>
+      {lab.steps.length > 1 && (
+        <WhatChangedModal
+          isOpen={showWhatChanged}
+          onClose={() => setShowWhatChanged(false)}
+          circuitA={lab.steps[0].circuit}
+          circuitB={lab.steps[1].circuit}
+        />
+      )}
     </div>
   );
 }
