@@ -362,6 +362,53 @@ def run_cross_framework_parity(req: ParityRequest):
                 "error": str(e),
             }
 
+    # ── qBraid (optional / unified transpiler) ──
+    qbraid_cap = caps.frameworks.get("qbraid")
+    if qbraid_cap and qbraid_cap.status == "available":
+        try:
+            from .quantum.qbraid_adapter import simulate_qbraid_probabilities
+            from .circuit.ir import CircuitIR as _IR3
+
+            pure_ir3 = _IR3(
+                schemaVersion=req.circuit.schemaVersion,
+                qubits=req.circuit.qubits,
+                classicalBits=req.circuit.classicalBits,
+                operations=[
+                    op for op in req.circuit.operations
+                    if op.gate not in ("MEASURE", "RESET")
+                ],
+            )
+            qbraid_probs = simulate_qbraid_probabilities(pure_ir3)
+
+            results["circuits"]["qbraid"] = {
+                "status": "success",
+                "probabilities": qbraid_probs,
+                "backend": "qbraid-unified-transpiler",
+            }
+
+            qk_probs = qk_result.probabilities
+            tvd = 0.5 * sum(
+                abs(qk_probs.get(k, 0.0) - qbraid_probs.get(k, 0.0))
+                for k in set(list(qk_probs.keys()) + list(qbraid_probs.keys()))
+            )
+            parity_pass = tvd <= req.tolerance
+            if not parity_pass:
+                results["all_pass"] = False
+
+            results["parity_checks"].append({
+                "framework_a": "qiskit",
+                "framework_b": "qbraid",
+                "tvd": round(tvd, 6),
+                "tolerance": req.tolerance,
+                "pass": parity_pass,
+            })
+
+        except Exception as e:
+            results["circuits"]["qbraid"] = {
+                "status": "error",
+                "error": str(e),
+            }
+
     return results
 
 

@@ -46,6 +46,7 @@ import {
   shareCircuit,
   type ParityResponse,
 } from "../api/circuit";
+import { SyntaxHighlightedEditor } from "../components/circuit/SyntaxHighlightedEditor";
 import { useAuth } from "../providers/AuthProvider";
 
 const DRAFT_KEY = "ql_studio_draft_v1";
@@ -172,7 +173,7 @@ export default function CircuitStudio() {
   const [parityRunning, setParityRunning] = useState(false);
   const [shots, setShots] = useState(1024);
   const [simulationBackend, setSimulationBackend] = useState<
-    "qiskit-aer" | "cirq" | "pennylane"
+    "qiskit-aer" | "cirq" | "pennylane" | "qbraid"
   >("qiskit-aer");
   const [result, setResult] = useState<NormalizedSimulationResult | null>(null);
   const [resultCircuit, setResultCircuit] = useState("");
@@ -605,7 +606,9 @@ export default function CircuitStudio() {
                     ? "Qiskit"
                     : simulationBackend === "cirq"
                       ? "Cirq"
-                      : "PennyLane"
+                      : simulationBackend === "pennylane"
+                        ? "PennyLane"
+                        : "qBraid"
                 }`}
           </button>
           <button
@@ -656,13 +659,14 @@ export default function CircuitStudio() {
               value={simulationBackend}
               onChange={(event) =>
                 setSimulationBackend(
-                  event.target.value as "qiskit-aer" | "cirq" | "pennylane",
+                  event.target.value as "qiskit-aer" | "cirq" | "pennylane" | "qbraid",
                 )
               }
             >
               <option value="qiskit-aer">Qiskit Aer · full circuit</option>
               <option value="cirq">Cirq Simulator · unitary</option>
               <option value="pennylane">PennyLane · unitary</option>
+              <option value="qbraid">qBraid Hub · unitary</option>
             </select>
           </label>
           <label>
@@ -1308,13 +1312,11 @@ export default function CircuitStudio() {
         </div>
         {editing ? (
           <>
-            <textarea
-              maxLength={20000}
-              aria-label="OpenQASM editor"
-              spellCheck={false}
-              className="ql-code-editor"
+            <SyntaxHighlightedEditor
               value={source}
-              onChange={(e) => setSource(e.target.value)}
+              onChange={setSource}
+              language="qasm"
+              placeholder="// Enter OpenQASM 3.0 code..."
             />
             <div
               className={`ql-code-validation ${codeValidation.error ? "invalid" : ""}`}
@@ -1326,16 +1328,11 @@ export default function CircuitStudio() {
             </div>
           </>
         ) : (
-          <pre className="ql-code-readout">
-            <code>
-              {code.split("\n").map((line, i) => (
-                <span key={i}>
-                  <i>{i + 1}</i>
-                  {line || " "}
-                </span>
-              ))}
-            </code>
-          </pre>
+          <SyntaxHighlightedEditor
+            value={code}
+            readOnly={true}
+            language={format === "qasm" ? "qasm" : "qiskit"}
+          />
         )}
         <div className="ql-code-footer">
           <span>

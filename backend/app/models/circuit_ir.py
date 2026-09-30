@@ -1,4 +1,4 @@
-﻿"""Canonical Circuit IR v1.0 and Normalized Simulation Result Pydantic Models.
+"""Canonical Circuit IR v1.0 and Normalized Simulation Result Pydantic Models.
 
 Single source of truth for all quantum data structures across Quantum Lens AI.
 """
@@ -91,7 +91,7 @@ class NormalizedSimulationResult(BaseModel):
 class SimulateRequest(BaseModel):
     circuit: CircuitIR
     backend: Literal[
-        "qiskit-aer", "ideal-statevector", "cirq", "pennylane"
+        "qiskit-aer", "ideal-statevector", "cirq", "pennylane", "qbraid", "qbraid-unified-transpiler", "qbraid-cloud-qpu"
     ] = "qiskit-aer"
     shots: int = Field(default=1024, ge=1, le=10000)
 

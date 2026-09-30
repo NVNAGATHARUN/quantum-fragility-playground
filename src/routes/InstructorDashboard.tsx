@@ -46,6 +46,13 @@ import {
   ClassroomAssignment,
   ClassroomLearningGains,
 } from '../api/classrooms';
+import {
+  DEMO_CLASSROOM,
+  DEMO_ROSTER,
+  DEMO_MISCONCEPTIONS,
+  DEMO_LEARNING_GAINS,
+  DEMO_ASSIGNMENTS,
+} from '../data/demoClassroom';
 
 type ActiveTab = 'heatmap' | 'roster' | 'catalog';
 
@@ -86,8 +93,22 @@ export default function InstructorDashboard() {
     status: StudentMisconceptionStatus;
   } | null>(null);
 
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+
+  const loadDemoCohort = useCallback(() => {
+    setIsDemoMode(true);
+    setClassrooms([DEMO_CLASSROOM]);
+    setSelectedClassId(DEMO_CLASSROOM.id);
+    setRoster(DEMO_ROSTER);
+    setMisconceptionsData(DEMO_MISCONCEPTIONS);
+    setAssignments(DEMO_ASSIGNMENTS);
+    setLearningGains(DEMO_LEARNING_GAINS);
+    setIsLoading(false);
+  }, []);
+
   // Load classrooms list
   const loadClassroomsList = useCallback(async () => {
+    if (isDemoMode) return;
     if (!token) {
       setIsLoading(false);
       return;
@@ -103,11 +124,18 @@ export default function InstructorDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [token, selectedClassId]);
+  }, [token, selectedClassId, isDemoMode]);
 
   // Load details for selected cohort (roster + misconceptions heatmap)
   const loadCohortData = useCallback(
     async (classId: string) => {
+      if (classId === DEMO_CLASSROOM.id) {
+        setRoster(DEMO_ROSTER);
+        setMisconceptionsData(DEMO_MISCONCEPTIONS);
+        setAssignments(DEMO_ASSIGNMENTS);
+        setLearningGains(DEMO_LEARNING_GAINS);
+        return;
+      }
       if (!token) return;
       try {
         const [rosterData, miscData, assignmentData, gainsData] = await Promise.all([
@@ -262,7 +290,7 @@ export default function InstructorDashboard() {
   }, [misconceptionsData, searchQuery, statusFilter]);
 
   // Unauthenticated or not instructor
-  if (!isAuthenticated || user?.role !== 'instructor') {
+  if ((!isAuthenticated || user?.role !== 'instructor') && !isDemoMode) {
     return (
       <div className="flex flex-col gap-6 max-w-4xl mx-auto py-12 px-4">
         <PageHeader
@@ -277,10 +305,17 @@ export default function InstructorDashboard() {
             Instructor Authentication Required
           </h2>
           <p className="text-sm text-muted-foreground max-w-md">
-            This dashboard displays genuine enrolled students, class access codes, and live laboratory telemetry. Please sign in or register with an Instructor account to view or create cohorts.
+            This dashboard displays genuine enrolled students, class access codes, and live laboratory telemetry. Please sign in or register with an Instructor account, or preview the pre-populated demo cohort for SIH evaluation.
           </p>
 
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-4 flex-wrap justify-center">
+            <button
+              onClick={loadDemoCohort}
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:opacity-95 transition-all flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Preview Demo Cohort (28 Students · SIH Evaluation)</span>
+            </button>
             <button
               onClick={() => openAuthModal('signup')}
               className="px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg shadow-sm hover:bg-primary/95 transition-all"
@@ -325,7 +360,20 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-end">
+        <div className="flex items-center gap-2.5 self-end flex-wrap">
+          <button
+            onClick={loadDemoCohort}
+            className={`px-3 py-1.5 border rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+              isDemoMode
+                ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                : 'border-border hover:bg-surface-secondary text-text-primary'
+            }`}
+            title="Load pre-populated SIH Demo Classroom (28 students, learning gains & misconception heatmaps)"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>{isDemoMode ? 'Demo Cohort Active' : 'Load Demo Cohort'}</span>
+          </button>
+
           <button
             onClick={handleExportCSV}
             disabled={!selectedClass || roster.length === 0}
@@ -480,13 +528,22 @@ export default function InstructorDashboard() {
           <p className="text-xs text-muted-foreground max-w-md">
             Create your first cohort to generate an authentic 6-character join code. Share the code with your students to populate your live roster and misconception heatmaps.
           </p>
-          <button
-            onClick={() => setIsCreatingCohort(true)}
-            className="mt-3 px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 flex items-center gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Your First Cohort</span>
-          </button>
+          <div className="flex items-center gap-3 mt-3 flex-wrap justify-center">
+            <button
+              onClick={loadDemoCohort}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white text-xs font-semibold rounded-lg hover:opacity-95 flex items-center gap-1.5 shadow-md transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Load SIH Evaluation Cohort (IIT Bombay · 28 Students)</span>
+            </button>
+            <button
+              onClick={() => setIsCreatingCohort(true)}
+              className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 flex items-center gap-1.5 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Cohort</span>
+            </button>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">

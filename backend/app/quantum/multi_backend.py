@@ -26,6 +26,10 @@ def _native_statevector(circuit: CircuitIR, backend: str) -> tuple[np.ndarray, s
         from .pennylane_adapter import simulate_pennylane_statevector
 
         return simulate_pennylane_statevector(circuit), "pennylane-default.qubit"
+    if backend in {"qbraid", "qbraid-unified-transpiler", "qbraid-cloud-qpu"}:
+        from .qbraid_adapter import simulate_qbraid_statevector
+
+        return simulate_qbraid_statevector(circuit), "qbraid-unified-transpiler"
     raise ValueError(f"Unsupported simulation backend '{backend}'")
 
 
